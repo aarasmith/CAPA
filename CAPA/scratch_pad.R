@@ -35,11 +35,12 @@ st_write(grid, hdr_db_post, "grid")
 library(RSQLite)
 library(tidyverse)
 library(data.table)
-
+adm2 <- readRDS("C:/Users/andara/PRIO Dropbox/Andrew Arasmith/R Scripts/HDR/adm2.RDS")
 path <- "C:/my/local/path/to/database/hdr_db.sqlite"
 hdr_db <- dbConnect(RSQLite::SQLite(), "C:/Users/andara/Documents/hdr_db_v2(1).sqlite")
 hdr_db_2 <- dbConnect(RSQLite::SQLite(), "C:/Users/andara/Documents/hdr_db_v2(2).sqlite")
 hdr_db_3 <- dbConnect(RSQLite::SQLite(), paste0(drop_path, "hdr_db_new.sqlite"))
+capa_db <- dbConnect(drv = RPostgres::Postgres(), host = prio_host, dbname = "capa", user = prio_user, password = prio_pass, port = prio_port)
 
 ############################
 #     YEARLY ESTIMATES     #
@@ -65,12 +66,12 @@ risk_100_month <- dbGetQuery(hdr_db, "SELECT iso3c, year, month, sum(cell_pop) A
 risk_50_month <- dbGetQuery(hdr_db, "SELECT iso3c, year, month, sum(cell_pop) AS risk_pop_50 FROM (SELECT iso3c, cid, year, month, cell_pop, sum (int_50) AS score FROM comb GROUP BY iso3c, year, month, cid, cell_pop) WHERE score > 0 GROUP BY iso3c, year, month")
 system.time({risk_25_month <- dbGetQuery(hdr_db, "SELECT iso3c, year, month, sum(cell_pop) AS risk_pop_25 FROM (SELECT iso3c, cid, year, month, cell_pop, sum (int_25) AS score FROM comb GROUP BY iso3c, year, month, cid, cell_pop) WHERE score > 0 GROUP BY iso3c, year, month")})
 system.time({risk_25_month_2 <- dbGetQuery(hdr_db_2, "SELECT iso3n, year, month, sum(cell_pop) AS risk_pop_25 FROM (SELECT iso3n, cid, year, month, cell_pop, sum (int_50) AS score FROM comb WHERE iso3n = 760 GROUP BY iso3n, year, month, cid, cell_pop) WHERE score > 0 GROUP BY iso3n, year, month")})
-system.time({risk_25_month <- dbGetQuery(hdr_db_2, glue("SELECT 
-iso3n, year, month, sum(cell_pop) AS risk_pop_25, score 
+system.time({risk_25_month <- dbGetQuery(capa_db, glue("SELECT 
+iso3n, year, month, capa_id_adm1, sum(cell_pop) AS risk_pop_25, score
 FROM 
 (
 SELECT 
-iso3n, cid, year, month, cell_pop,
+iso3n, year, month, cell_pop, capa_id_adm1,
 ((lo_25 * {L25_weight}) +
                 ((lo_50 - lo_25) * {L50_weight}) +
                 ((lo_100 - lo_50) * {L100_weight}) +
@@ -80,11 +81,47 @@ iso3n, cid, year, month, cell_pop,
                 (hi_25 * {H25_weight}) +
                 ((hi_50 - hi_25) * {H50_weight}) +
                 ((hi_100 - hi_50) * {H100_weight})) AS score 
-FROM comb 
-WHERE iso3n in (760)
-) 
-WHERE score > 0 
-GROUP BY iso3n, year, month, score"))})
+FROM cell_stats
+WHERE iso3n = 804
+) foo
+WHERE score > 0
+GROUP BY iso3n, year, month, capa_id_adm1, score"))})
+
+dbGetQuery(capa_db, "SET enable_seqscan = OFF")
+dbGetQuery(capa_db, "SET enable_seqscan = ON")
+
+system.time({x <- st_read(capa_db, query = "SELECT * FROM cell_geos WHERE iso3n = 760")})
+x <- dbGetQuery(capa_db, "EXPLAIN ANALYZE SELECT * FROM cell_geos WHERE iso3n = 760")
+
+system.time({risk_25_month <- dbGetQuery(capa_db, glue("SELECT 
+sid, sum(score) as score
+FROM 
+(
+SELECT 
+sid, year,
+((lo_25 * {L25_weight}) +
+                ((lo_50 - lo_25) * {L50_weight}) +
+                ((lo_100 - lo_50) * {L100_weight}) +
+                (md_25 * {M25_weight}) +
+                ((md_50 - md_25) * {M50_weight}) +
+                ((md_100 - md_50) * {M100_weight}) +
+                (hi_25 * {H25_weight}) +
+                ((hi_50 - hi_25) * {H50_weight}) +
+                ((hi_100 - hi_50) * {H100_weight})) AS score 
+FROM cell_stats
+WHERE iso3n = 760
+) foo
+WHERE score > 0 AND year = 2015
+GROUP BY sid"))})
+
+y <- left_join(risk_25_month, x, by = "sid") %>% st_as_sf()
+y$score <- as.integer.integer64(y$score)
+plot((filter(adm1_cgaz, shape_group == "UKR")$geometry))
+plot(y['score'], add = T)
+ggplot() +
+  geom_sf(data = y, aes(fill = score), color = NA) +
+  geom_sf(data = filter(adm1_cgaz, shape_group == "SYR"), fill = NA) +
+  scale_fill_viridis_c()
 
 total_pop <- dbGetQuery(hdr_db, "SELECT iso3c, year, sum(cell_pop) AS total_pop FROM (SELECT iso3c, year, cell_pop FROM cell_pops) GROUP BY iso3c, year") %>%
   as.data.table()
@@ -261,7 +298,7 @@ worst_adm <- function(iso, years, monthly = TRUE, adm1 = TRUE, L25_weight = 4, L
           			shape_id
           		FROM cgaz
           		WHERE
-          			iso3c = 'SYR'
+          			iso3n = 'SYR'
           	) cgaz_sub
           	
           	ON
@@ -315,3 +352,115 @@ worst_adm <- function(iso, years, monthly = TRUE, adm1 = TRUE, L25_weight = 4, L
   (int_25 * {int25_weight}) +
   ((int_50 - int_25) * {int50_weight}) +
   ((int_100 - int_50) * {int100_weight})
+
+
+
+system.time({risk_25_month <- dbGetQuery(hdr_db_2, glue(
+"SELECT
+iso3n, year, month, sum(cell_pop) AS risk_pop_25
+FROM
+(
+SELECT 
+iso3n, year, month, cell_pop,
+((lo_25 * {L25_weight}) +
+((lo_50 - lo_25) * {L50_weight}) +
+((lo_100 - lo_50) * {L100_weight}) +
+(md_25 * {M25_weight}) +
+((md_50 - md_25) * {M50_weight}) +
+((md_100 - md_50) * {M100_weight}) +
+(hi_25 * {H25_weight}) +
+((hi_50 - hi_25) * {H50_weight}) +
+((hi_100 - hi_50) * {H100_weight})) AS score
+FROM 
+(
+SELECT 
+iso3n, cid, year, month, cell_pop,
+lo_25, lo_50, lo_100,
+md_25, md_50, md_100,
+hi_25, hi_50, hi_100
+FROM comb 
+WHERE iso3n in (760)
+)
+)
+WHERE score > 0 
+GROUP BY iso3n, year, month"))})
+
+
+system.time({risk_25_month <- dbGetQuery(hdr_db_2, glue("SELECT 
+iso3n, year, month, sum(cell_pop) AS risk_pop_25, shape_id 
+FROM 
+(
+SELECT 
+iso3n, sid, cid, year, month, cell_pop,
+((lo_25 * {L25_weight}) +
+                ((lo_50 - lo_25) * {L50_weight}) +
+                ((lo_100 - lo_50) * {L100_weight}) +
+                (md_25 * {M25_weight}) +
+                ((md_50 - md_25) * {M50_weight}) +
+                ((md_100 - md_50) * {M100_weight}) +
+                (hi_25 * {H25_weight}) +
+                ((hi_50 - hi_25) * {H50_weight}) +
+                ((hi_100 - hi_50) * {H100_weight})) AS score 
+FROM comb
+) comb_sub
+LEFT JOIN
+      
+          	(
+          		SELECT
+          			sid as sid_b,
+          			shape_id
+          		FROM cgaz
+          		WHERE
+          			iso3c = 'AFG'
+          	) cgaz_sub
+          	
+          	ON
+          		comb_sub.sid = cgaz_sub.sid_b
+WHERE iso3n = 004 AND score > 0
+GROUP BY iso3n, year, month, shape_id"))})
+
+system.time({x <- dbGetQuery(hdr_db_2, glue("SELECT * FROM comb WHERE iso3n = 760"))})
+dbSendStatement(hdr_db_2, "ANALYZE comb")
+
+
+L25_weight <- 1
+L50_weight <- 1
+L100_weight <- 1
+M25_weight <- 1
+M50_weight <- 1
+M100_weight <- 1
+H25_weight <- 1
+H50_weight <- 1
+H100_weight <- 1
+int25_weight <- 1
+int50_weight <- 1
+int100_weight <- 1
+
+
+system.time({risk_25_month <- dbGetQuery(hdr_db_2, glue("
+SELECT 
+iso3n, year, month, sum(cell_pop) AS risk_pop_25, shape_id 
+FROM 
+  (
+  SELECT 
+  iso3n, sid, cid, year, month, cell_pop, shape_id,
+  ((lo_25 * {L25_weight}) +
+  ((lo_50 - lo_25) * {L50_weight}) +
+  ((lo_100 - lo_50) * {L100_weight}) +
+  (md_25 * {M25_weight}) +
+  ((md_50 - md_25) * {M50_weight}) +
+  ((md_100 - md_50) * {M100_weight}) +
+  (hi_25 * {H25_weight}) +
+  ((hi_50 - hi_25) * {H50_weight}) +
+  ((hi_100 - hi_50) * {H100_weight})) AS score 
+  FROM
+    (
+    SELECT * FROM comb
+    LEFT JOIN
+      (SELECT sid as sid_b, shape_id FROM cgaz) cgaz_sub
+    ON
+      comb.sid = cgaz_sub.sid_b
+    )
+  )
+WHERE iso3n = 004 AND score > 0
+GROUP BY iso3n, year, month, shape_id"))})
