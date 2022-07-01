@@ -14,7 +14,7 @@ library(writexl)
 #library(leaflet)
 library(shinymanager)
 library(dotenv)
-load_dot_env()
+load_dot_env("CAPA/.env")
 
 `%!in%` = Negate(`%in%`)
 
