@@ -24,9 +24,9 @@ drop_path <- "C:/Users/andara/PRIO Dropbox/Andrew Arasmith/R Scripts/HDR/"
 #source("credentials.R")
 source("helpers_post.R")
 
-adm1_cgaz <- readRDS("adm1_cgaz_sub.RDS")
-ged <- readRDS("ged.RDS")
-nid_grid <- readRDS("nid_grid.RDS")
+adm1_cgaz <- readRDS("data/adm1_cgaz_sub.RDS")
+ged <- readRDS("data/ged.RDS")
+nid_grid <- readRDS("data/nid_grid.RDS")
 
 credentials <- data.frame(
   user = c(Sys.getenv("USER1")), # mandatory
