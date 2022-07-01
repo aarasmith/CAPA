@@ -1,5 +1,5 @@
 #Sys.setenv("_SF_USE_S2" = "false")
-#parallel processes in future_lapply will use S2 if this isn't set
+#parallel processes in future_lapply will use S2 (slower, unnecessary, changes results...) if this isn't set
 
 nid_grid
 poprast_list
@@ -50,21 +50,6 @@ generate_comb <- function(iso, year_range = 1990:2020){
   country_grid$gid <- 1:nrow(country_grid)
   country_cells <- join_cells_to_grid()
   
-  #Extract pop data from the rasters to the vector-geometry grid-cells
-  var_list <- paste0("ipop", year_range)
-  
-
-  i = 1:length(poprast_list)
-  extract_pops <- function(i, country_cells, var_list, poprast_list_c){
-    country_cells <- country_cells %>% mutate(!!var_list[i] := round(exact_extract(poprast_list_c[[i]], country_cells, fun = "sum", progress = FALSE))) %>% st_drop_geometry() %>%
-      dplyr::select(cid, contains("ipop"))
-    return(country_cells)
-  }
-  
-  system.time({
-  x <- list(country_cells) %>% append(future_lapply(1:length(poprast_list), extract_pops, country_cells = country_cells, var_list = var_list, poprast_list_c = poprast_list_c))
-  y <- reduce(x, left_join, by = "cid")
-  })
   country_cells <- country_cells %>%
     mutate(iso3c = countrycode(iso, origin = "iso3c", destination = "iso3n")) %>%
     rename(iso3n = iso3c) %>%
@@ -73,6 +58,26 @@ generate_comb <- function(iso, year_range = 1990:2020){
   
   cell_geos <- country_cells %>%
     dplyr::select(sid, gid, iso3n)
+  
+  #Extract pop data from the rasters to the vector-geometry grid-cells
+  var_list <- paste0("ipop", year_range)
+  
+
+  i = 1:length(poprast_list)
+  extract_pops <- function(i, country_cells, var_list, poprast_list_c){
+    country_cells <- country_cells %>% mutate(!!var_list[i] := round(exact_extract(poprast_list_c[[i]], country_cells, fun = "sum", progress = FALSE))) %>% st_drop_geometry() %>%
+      dplyr::select(sid, contains("ipop"))
+    return(country_cells)
+  }
+  
+  
+  country_cells <- list(country_cells) %>%
+    append(future_lapply(1:length(poprast_list), extract_pops, country_cells = country_cells, var_list = var_list, poprast_list_c = poprast_list_c)) %>%
+    reduce(left_join, by = "sid")
+  
+  
+  
+  
   
   #Filter geds
   ged25_c <- ged25 %>% filter(iso3c == iso) %>% dplyr::select(int_cat, best, year, month, id)
@@ -146,7 +151,7 @@ generate_comb <- function(iso, year_range = 1990:2020){
               int50 = sum(best, na.rm = TRUE))
   
   
-  system.time({comb100 <- future_lapply(grid_sub, ged_intersect, ged_grid = grid100, cell_geos = cell_geos)})
+  comb100 <- future_lapply(grid_sub, ged_intersect, ged_grid = grid100, cell_geos = cell_geos)
   comb100 <- rbindlist(comb100) %>% 
     group_by(sid, year, month) %>%
     summarize(L100 = sum(int_cat == 1, na.rm = TRUE),
@@ -162,13 +167,13 @@ generate_comb <- function(iso, year_range = 1990:2020){
   #replace(is.na(.), 0)
   comb[is.na(comb)] <- 0
   
-  out_list <- list(comb, country_cells, country_grid)
-  if(run_tests(out_list) == 9){
-    dbWriteTable(hdr_db, "comb", out_list[[1]], append = TRUE)
-    st_write(st_transform(out_list[[2]], crs = crs(out_list[[3]])), hdr_db, "cells", append = TRUE)
-    st_write(out_list[[3]], hdr_db, "grid", append = TRUE)
-    return(1)
-  }else{
+  out_list <- list(comb, cell_geos, country_grid, cell_pops)
+  # if(run_tests(out_list) == 9){
+  #   dbWriteTable(hdr_db, "comb", out_list[[1]], append = TRUE)
+  #   st_write(st_transform(out_list[[2]], crs = crs(out_list[[3]])), hdr_db, "cells", append = TRUE)
+  #   st_write(out_list[[3]], hdr_db, "grid", append = TRUE)
+  #   return(1)
+  # }else{
     return(out_list)
-  }
+  # }
 }
