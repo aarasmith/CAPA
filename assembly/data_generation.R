@@ -9,6 +9,7 @@ library(exactextractr)
 library(purrr)
 library(future)
 library(future.apply)
+library(bit64)
 ged25 <- readRDS(paste0(drop_path, "ged25.RDS"))
 ged50 <- readRDS(paste0(drop_path, "ged50.RDS"))
 ged100 <- readRDS(paste0(drop_path, "ged100.RDS"))
@@ -16,6 +17,7 @@ ged100 <- readRDS(paste0(drop_path, "ged100.RDS"))
 raster_files <- list.files("C:/Users/andara/PRIO Dropbox/Andrew Arasmith/R Scripts/HDR/new_rasters/ipolated", pattern = "tif", full.names = TRUE)
 poprast_list <- lapply(raster_files, raster)
 
+new_poprast_list <- list(raster("C:/Users/andara/PRIO Dropbox/Andrew Arasmith/R Scripts/HDR/new_rasters1/ipolated/ipop_2021.tif"))
 
 ####STEP 1####
 #Crop and mask global rasters to specified country
@@ -84,7 +86,7 @@ generate_pops <- function(cell_geos, poprast_list_c, year_range){
   #Extract pop data from the rasters to the vector-geometry grid-cells
   var_list <- paste0("ipop", year_range)
   
-  #i = 1:length(poprast_list)
+  #i = 1:length(poprast_list_c)
   extract_pops <- function(i, cell_geos, var_list, poprast_list_c){
     cell_pops <- cell_geos %>% mutate(!!var_list[i] := round(exact_extract(poprast_list_c[[i]], cell_geos, fun = "sum", progress = FALSE))) %>% st_drop_geometry() %>%
       dplyr::select(sid, contains("ipop"))
@@ -93,7 +95,7 @@ generate_pops <- function(cell_geos, poprast_list_c, year_range){
   
   system.time({
   cell_pops <- list(cell_geos) %>%
-    append(future_lapply(1:length(poprast_list), extract_pops, cell_geos = cell_geos, var_list = var_list, poprast_list_c = poprast_list_c)) %>%
+    append(future_lapply(1:length(poprast_list_c), extract_pops, cell_geos = cell_geos, var_list = var_list, poprast_list_c = poprast_list_c)) %>%
     reduce(left_join, by = "sid")
   })
   cell_pops <- reshape2::melt(st_drop_geometry(cell_pops), id.vars = c(1:3), variable.name = "year", value.name = "cell_pop") %>%
@@ -107,14 +109,27 @@ generate_pops <- function(cell_geos, poprast_list_c, year_range){
 
 ####STEP 4####
 #Generate the cell_stats table
-generate_stats <- function(ged25, ged50, ged100, grid_geos, cell_geos, cell_pops){
+ged_intersect <- function(i_grid, ged_grid, cell_geos){
+  ged_sub <- filter(ged_grid, gid == i_grid)
+  comb_sub <- st_join(dplyr::select(filter(cell_geos, gid == i_grid), sid), ged_sub) %>% st_drop_geometry()
+  return(comb_sub)
+}
+generate_stats <- function(iso, year_range, ged25, ged50, ged100, grid_geos, cell_geos, cell_pops){
   
-  plan(multisession)
   
   #Filter geds
-  ged25_c <- ged25 %>% filter(iso3c == iso) %>% dplyr::select(int_cat, best, year, month, id)
-  ged50_c <- ged50 %>% filter(iso3c == iso) %>% dplyr::select(int_cat, best, year, month, id)
-  ged100_c <- ged100 %>% filter(iso3c == iso) %>% dplyr::select(int_cat, best, year, month, id)
+  ged25_c <- ged25 %>%
+    filter(iso3c == iso) %>%
+    filter(year %in% year_range) %>%
+    dplyr::select(int_cat, best, year, month, id)
+  ged50_c <- ged50 %>%
+    filter(iso3c == iso) %>%
+    filter(year %in% year_range) %>%
+    dplyr::select(int_cat, best, year, month, id)
+  ged100_c <- ged100 %>%
+    filter(iso3c == iso) %>%
+    filter(year %in% year_range) %>%
+    dplyr::select(int_cat, best, year, month, id)
   
   #subset ged by joining with meta-grid
   grid25 <- st_join(ged25_c, grid_geos) %>%
@@ -132,15 +147,14 @@ generate_stats <- function(ged25, ged50, ged100, grid_geos, cell_geos, cell_pops
     return(list(cell_geos, grid_geos))
   }
   
-  ged_intersect <- function(i_grid, ged_grid, cell_geos){
-    ged_sub <- filter(ged_grid, gid == i_grid)
-    comb_sub <- st_join(dplyr::select(filter(cell_geos, gid == i_grid), sid), ged_sub) %>% st_drop_geometry()
-    return(comb_sub)
-  }
   
-  generate_comb <- function(grid_sub, ged_grid, cell_geos, ged_dist){
+  #DO NOT PASS A FUNCTION DEFINED WITHIN THIS FUNCTION HOLY SHIT JUST DECLARE IT OUTSIDE OR YOU WILL HAVE A BAD TIME
+  comb25 <- future_lapply(grid_sub, ged_intersect, ged_grid = grid25, cell_geos = cell_geos)
+  comb50 <- future_lapply(grid_sub, ged_intersect, ged_grid = grid50, cell_geos = cell_geos)
+  comb100 <- future_lapply(grid_sub, ged_intersect, ged_grid = grid100, cell_geos = cell_geos)
+  
+  generate_comb <- function(comb, ged_dist){
     #adds distance suffix to names 4-7, so change this selection if adding new variables
-    comb <- future_lapply(grid_sub, ged_intersect, ged_grid = ged_grid, cell_geos = cell_geos)
     comb <- rbindlist(comb) %>% 
       group_by(sid, year, month) %>%
       summarize(lo = sum(int_cat == 1, na.rm = TRUE),
@@ -152,9 +166,9 @@ generate_stats <- function(ged25, ged50, ged100, grid_geos, cell_geos, cell_pops
     return(comb)
   }
   
-  comb25 <- generate_comb(grid_sub, grid25, cell_geos, ged_dist = "25")
-  comb50 <- generate_comb(grid_sub, grid50, cell_geos, ged_dist = "50")
-  comb100 <- generate_comb(grid_sub, grid100, cell_geos, ged_dist = "100")
+  comb25 <- generate_comb(comb25, ged_dist = "25")
+  comb50 <- generate_comb(comb50, ged_dist = "50")
+  comb100 <- generate_comb(comb100, ged_dist = "100")
   
   
   #create the monthly framework for each grid-cell. Grid-cells in non-conflict meta-grids are excluded to save space/time
@@ -175,7 +189,7 @@ generate_stats <- function(ged25, ged50, ged100, grid_geos, cell_geos, cell_pops
   return(cell_stats)
 }
 
-generate_comb <- function(iso, year_range = 1990:2020, nid_grid, poprast_list, ged25, ged50, ged100){
+generate_full <- function(iso, year_range = 1990:2020, nid_grid, poprast_list, ged25, ged50, ged100){
   
   iso3n <- countrycode(iso, origin = "iso3c", destination = "iso3n")
   if(is.na(iso3n)){
@@ -190,7 +204,7 @@ generate_comb <- function(iso, year_range = 1990:2020, nid_grid, poprast_list, g
   
   cell_pops <- generate_pops(cell_geos, poprast_list_c, year_range)
   
-  cell_stats <- generate_stats(ged25, ged50, ged100, grid_geos, cell_geos, cell_pops)
+  cell_stats <- generate_stats(iso, year_range, ged25, ged50, ged100, grid_geos, cell_geos, cell_pops)
   
   out_list <- list(cell_stats, cell_geos, grid_geos, cell_pops)
   # if(run_tests(out_list) == 9){
@@ -201,4 +215,28 @@ generate_comb <- function(iso, year_range = 1990:2020, nid_grid, poprast_list, g
   # }else{
     return(out_list)
   # }
+}
+
+update_from_pops <- function(){
+  year_range = c(2021)
+  poprast_list_c <- subset_rasters(iso, nid_grid, new_poprast_list)
+  
+  cell_geos <- st_read(capa_db, query = glue("SELECT * FROM cell_geos WHERE iso3n = '{iso3n}'"))
+  cell_geos$sid <- as.numeric(cell_geos$sid)
+  grid_geos <- st_read(capa_db, query = glue("SELECT * FROM grid_geos WHERE iso3n = '{iso3n}'"))
+
+  cell_pops <- generate_pops(cell_geos, poprast_list_c, year_range)
+  cell_stats <- generate_stats(iso, year_range, ged25, ged50, ged100, grid_geos, cell_geos, cell_pops)
+}
+
+update_from_stats <- function(){
+  year_range = c(2021)
+  poprast_list_c <- subset_rasters(iso, nid_grid, new_poprast_list)
+  
+  cell_geos <- st_read(capa_db, query = glue("SELECT * FROM cell_geos WHERE iso3n = '{iso3n}'"))
+  grid_geos <- st_read(capa_db, query = glue("SELECT * FROM grid_geos WHERE iso3n = '{iso3n}'"))
+
+  cell_pops <- dbGetQuery(capa_db, glue("SELECT * FROM cell_pops WHERE iso3n = '{iso3n}' AND year > {year_range[1] - 1} AND year < {year_range[length(year_range)] + 1}"))
+  cell_pops$sid <- as.numeric(cell_pops$sid)
+  cell_stats <- generate_stats(iso, ged25, ged50, ged100, grid_geos, cell_geos, cell_pops)
 }
