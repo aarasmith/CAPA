@@ -195,7 +195,7 @@ generate_stats <- function(iso, year_range, ged25, ged50, ged100, grid_geos, cel
   return(cell_stats)
 }
 
-generate_full <- function(iso, year_range = 1990:2020, nid_grid, poprast_list, ged25, ged50, ged100){
+generate_full <- function(iso, year_range = 1990:2020, nid_grid, poprast_list, ged25, ged50, ged100, adm1, write_db = NULL){
   
   iso3n <- countrycode(iso, origin = "iso3c", destination = "iso3n")
   if(is.na(iso3n)){
@@ -208,14 +208,26 @@ generate_full <- function(iso, year_range = 1990:2020, nid_grid, poprast_list, g
   grid_geos <- geos[[1]]
   cell_geos <- geos[[2]]
   
-  cell_pops <- generate_pops(cell_geos, poprast_list_c, year_range)
+  adm_join <- add_shapes(iso3n, adm1, cell_geos, grid_geos)
   
-  cell_stats <- generate_stats(iso, year_range, ged25, ged50, ged100, grid_geos, cell_geos, cell_pops)
+  cell_pops <- generate_pops(cell_geos, poprast_list_c, year_range) %>%
+    left_join(adm_join, by = "sid") %>%
+    rename(capa_id_adm1 = capa_id)
   
-  out_list <- list(cell_stats, cell_geos, grid_geos, cell_pops)
-
-  return(out_list)
-
+  cell_stats <- generate_stats(iso, year_range, ged25, ged50, ged100, grid_geos, cell_geos, cell_pops) %>%
+    left_join(adm_join, by = "sid") %>%
+    rename(capa_id_adm1 = capa_id)
+  
+  if(!is.null(write_db)){
+    st_write(grid_geos, write_db, "grid_geos", append = T)
+    st_write(cell_geos, write_db, "cell_geos", append = T)
+    dbWriteTable(write_db, "cell_pops", cell_pops, append = T)
+    dbWriteTable(write_db, "cell_pops", cell_pops, append = T)
+    return(iso)
+  }else{
+    out_list <- list(cell_stats, cell_geos, grid_geos, cell_pops)
+    return(out_list)
+  }
 }
 
 update_from_pops <- function(iso, year_range = c(2021), nid_grid, poprast_list, ged25, ged50, ged100, source_db = capa_db, write_db = NULL){
@@ -224,11 +236,14 @@ update_from_pops <- function(iso, year_range = c(2021), nid_grid, poprast_list, 
   cell_geos <- st_read(source_db, query = glue("SELECT * FROM cell_geos WHERE iso3n = '{iso3n}'")) %>%
     mutate(sid = as.numeric(sid))
   grid_geos <- st_read(source_db, query = glue("SELECT * FROM grid_geos WHERE iso3n = '{iso3n}'"))
+  adm_join <- dbGetQuery(source_db, glue("SELECT sid, capa_id_adm1 FROM cell_geos WHERE iso3n = '{iso3n}'"))
   
   #create
   poprast_list_c <- subset_rasters(iso, nid_grid, new_poprast_list)
-  cell_pops <- generate_pops(cell_geos, poprast_list_c, year_range)
-  cell_stats <- generate_stats(iso, year_range, ged25, ged50, ged100, grid_geos, cell_geos, cell_pops)
+  cell_pops <- generate_pops(cell_geos, poprast_list_c, year_range) %>%
+    left_join(adm_join, by = "sid")
+  cell_stats <- generate_stats(iso, year_range, ged25, ged50, ged100, grid_geos, cell_geos, cell_pops) %>%
+    left_join(adm_join, by = "sid")
   
   #write
   if(!is.null(write_db)){
@@ -248,9 +263,11 @@ update_from_stats <- function(iso, year_range = c(2021), nid_grid, ged25, ged50,
   grid_geos <- st_read(source_db, query = glue("SELECT * FROM grid_geos WHERE iso3n = '{iso3n}'"))
   cell_pops <- dbGetQuery(source_db, glue("SELECT * FROM cell_pops WHERE iso3n = '{iso3n}' AND year > {year_range[1] - 1} AND year < {year_range[length(year_range)] + 1}")) %>%
     mutate(sid = as.numeric(sid))
+  adm_join <- dbGetQuery(source_db, glue("SELECT sid, capa_id_adm1 FROM cell_geos WHERE iso3n = '{iso3n}'"))
   
   #create
-  cell_stats <- generate_stats(iso, year_range, ged25, ged50, ged100, grid_geos, cell_geos, cell_pops)
+  cell_stats <- generate_stats(iso, year_range, ged25, ged50, ged100, grid_geos, cell_geos, cell_pops) %>%
+    left_join(adm_join, by = "sid")
   
   #write
   if(!is.null(write_db)){
