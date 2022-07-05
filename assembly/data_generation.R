@@ -302,7 +302,7 @@ update_pops <- function(iso, year_range = c(2021), nid_grid, poprast_list, sourc
 }
 
 #should probably write to staging db - hard-coded for cgaz adm1 - would be nice to change to an UPDATE TABLE statement
-update_adm <- function(iso, adm1, source_db = capa_db, write_db = NULL){
+update_adm <- function(iso, adm1, source_db = capa_db, write_db = NULL, init_column = FALSE){
   
   iso3n <- countrycode(iso, origin = "iso3c", destination = "iso3n")
   if(is.na(iso3n)){
@@ -318,24 +318,38 @@ update_adm <- function(iso, adm1, source_db = capa_db, write_db = NULL){
   adm_join <- add_shapes(iso3n, adm1, cell_geos, grid_geos) %>%
     rename(capa_id_adm1 = capa_id)
   
-  if(!is.null(cell_geos$capa_id_adm1)){
-    cell_geos <- dplyr::select(-capa_id_adm1)
-  }
-  cell_geos <- cell_geos %>%
-    left_join(adm_join, by = "sid")
-  
-  if(!is.null(cell_stats$capa_id_adm1)){
-    cell_stats <- dplyr::select(-capa_id_adm1)
-  }
-  cell_stats <- cell_stats %>%
-    left_join(adm_join, by = "sid")
-  
   if(!is.null(write_db)){
-    st_write(cell_geos, write_db, "cell_geos", append = T)
-    dbWriteTable(write_db, "cell_stats", cell_stats, append = T)
+    if(init_column){
+      dbExecute(write_db, glue("ALTER TABLE cell_geos ADD capa_id_adm1 BIGINT"))
+      dbExecute(write_db, glue("ALTER TABLE cell_stats ADD capa_id_adm1 BIGINT"))
+    }
+    dbWriteTable(write_db, "temp", adm_join, overwrite = TRUE)
+    dbExecute(write_db, "UPDATE cell_geos SET capa_id_adm1 = temp.capa_id FROM temp WHERE cell_geos.sid = temp.sid")
+    dbExecute(write_db, "UPDATE cell_stats SET capa_id_adm1 = temp.capa_id FROM temp WHERE cell_stats.sid = temp.sid")
     return(iso)
   }else{
+    
+    if(!is.null(cell_geos$capa_id_adm1)){
+      cell_geos <- dplyr::select(-capa_id_adm1)
+    }
+    cell_geos <- cell_geos %>%
+      left_join(adm_join, by = "sid")
+    
+    if(!is.null(cell_stats$capa_id_adm1)){
+      cell_stats <- dplyr::select(-capa_id_adm1)
+    }
+    cell_stats <- cell_stats %>%
+      left_join(adm_join, by = "sid")
+    
     out_list <- list(cell_geos, cell_stats)
     return(out_list)
   }
 }
+
+
+# dbWriteTable(hdr_db_2, "test_comb", test_comb, overwrite = TRUE)
+# dbWriteTable(hdr_db, "temp", join)
+# dbExecute(hdr_db_2, "UPDATE test_comb SET test_comb.capa_id_adm1 = temp.capa_id FROM test_comb LEFT JOIN temp ON test_comb.sid = temp.sid")
+
+dbExecute(hdr_db, "ALTER TABLE test_comb ADD capa_id_adm1 BIGINT")
+dbExecute(hdr_db, "UPDATE test_comb SET capa_id_adm1 = temp.capa_id FROM temp WHERE test_comb.sid = temp.sid")
