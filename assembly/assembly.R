@@ -80,7 +80,7 @@ load_shapes <- function(iso, adm, write_to_db = FALSE){
   
   
   #browser()
-  plan(multisession)
+  #plan(multisession)
   #####PART ONE#############################################################################################################################################################################
   ##SUBSET AND LOAD DATA
   adm_c <- filter(adm, shape_group == iso)

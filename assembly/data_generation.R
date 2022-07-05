@@ -2,7 +2,6 @@ Sys.setenv("_SF_USE_S2" = "false")
 #parallel processes in future_lapply will use S2 (slower, unnecessary, changes results...) if this isn't set
 
 nid_grid
-poprast_list
 library(countrycode)
 library(raster)
 library(exactextractr)
@@ -219,26 +218,44 @@ generate_full <- function(iso, year_range = 1990:2020, nid_grid, poprast_list, g
 
 }
 
-update_from_pops <- function(){
-  year_range = c(2021)
-  poprast_list_c <- subset_rasters(iso, nid_grid, new_poprast_list)
-  
-  cell_geos <- st_read(capa_db, query = glue("SELECT * FROM cell_geos WHERE iso3n = '{iso3n}'")) %>%
-    mutate(sid = as.numeric(sid))
-  grid_geos <- st_read(capa_db, query = glue("SELECT * FROM grid_geos WHERE iso3n = '{iso3n}'"))
+update_from_pops <- function(iso, year_range = c(2021), nid_grid, poprast_list, ged25, ged50, ged100, source_db = capa_db, write_db = NULL){
 
+  #read
+  cell_geos <- st_read(source_db, query = glue("SELECT * FROM cell_geos WHERE iso3n = '{iso3n}'")) %>%
+    mutate(sid = as.numeric(sid))
+  grid_geos <- st_read(source_db, query = glue("SELECT * FROM grid_geos WHERE iso3n = '{iso3n}'"))
+  
+  #create
+  poprast_list_c <- subset_rasters(iso, nid_grid, new_poprast_list)
   cell_pops <- generate_pops(cell_geos, poprast_list_c, year_range)
   cell_stats <- generate_stats(iso, year_range, ged25, ged50, ged100, grid_geos, cell_geos, cell_pops)
+  
+  #write
+  if(!is.null(write_db)){
+    dbWriteTable(write_db, "cell_pops", cell_pops, append = T)
+    dbWriteTable(write_db, "cell_stats", cell_stats, append = T)
+  }else{
+    return(list(cell_pops, cell_stats))
+  }
+  
 }
 
-update_from_stats <- function(){
-  year_range = c(2021)
-  poprast_list_c <- subset_rasters(iso, nid_grid, new_poprast_list)
+update_from_stats <- function(iso, year_range = c(2021), nid_grid, ged25, ged50, ged100, source_db = capa_db, write_db = NULL){
   
-  cell_geos <- st_read(capa_db, query = glue("SELECT * FROM cell_geos WHERE iso3n = '{iso3n}'"))
-  grid_geos <- st_read(capa_db, query = glue("SELECT * FROM grid_geos WHERE iso3n = '{iso3n}'"))
-
-  cell_pops <- dbGetQuery(capa_db, glue("SELECT * FROM cell_pops WHERE iso3n = '{iso3n}' AND year > {year_range[1] - 1} AND year < {year_range[length(year_range)] + 1}")) %>%
+  #read
+  cell_geos <- st_read(source_db, query = glue("SELECT * FROM cell_geos WHERE iso3n = '{iso3n}'")) %>%
     mutate(sid = as.numeric(sid))
-  cell_stats <- generate_stats(iso, ged25, ged50, ged100, grid_geos, cell_geos, cell_pops)
+  grid_geos <- st_read(source_db, query = glue("SELECT * FROM grid_geos WHERE iso3n = '{iso3n}'"))
+  cell_pops <- dbGetQuery(source_db, glue("SELECT * FROM cell_pops WHERE iso3n = '{iso3n}' AND year > {year_range[1] - 1} AND year < {year_range[length(year_range)] + 1}")) %>%
+    mutate(sid = as.numeric(sid))
+  
+  #create
+  cell_stats <- generate_stats(iso, year_range, ged25, ged50, ged100, grid_geos, cell_geos, cell_pops)
+  
+  #write
+  if(!is.null(write_db)){
+    dbWriteTable(write_db, "cell_stats", cell_stats, append = T)
+  }else{
+    return(cell_stats)
+  }
 }
