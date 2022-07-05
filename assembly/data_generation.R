@@ -12,6 +12,9 @@ library(bit64)
 ged25 <- readRDS(paste0(drop_path, "ged25.RDS"))
 ged50 <- readRDS(paste0(drop_path, "ged50.RDS"))
 ged100 <- readRDS(paste0(drop_path, "ged100.RDS"))
+ged25 <- readRDS(paste0(drop_path, "ged25_22.RDS"))
+ged50 <- readRDS(paste0(drop_path, "ged50_22.RDS"))
+ged100 <- readRDS(paste0(drop_path, "ged100_22.RDS"))
 
 raster_files <- list.files("C:/Users/andara/PRIO Dropbox/Andrew Arasmith/R Scripts/HDR/new_rasters/ipolated", pattern = "tif", full.names = TRUE)
 poprast_list <- lapply(raster_files, raster)
@@ -208,21 +211,20 @@ generate_full <- function(iso, year_range = 1990:2020, nid_grid, poprast_list, g
   grid_geos <- geos[[1]]
   cell_geos <- geos[[2]]
   
-  adm_join <- add_shapes(iso3n, adm1, cell_geos, grid_geos)
+  adm_join <- add_shapes(iso3n, adm1, cell_geos, grid_geos) %>%
+    rename(capa_id_adm1 = capa_id)
   
   cell_pops <- generate_pops(cell_geos, poprast_list_c, year_range) %>%
-    left_join(adm_join, by = "sid") %>%
-    rename(capa_id_adm1 = capa_id)
+    left_join(adm_join, by = "sid")
   
   cell_stats <- generate_stats(iso, year_range, ged25, ged50, ged100, grid_geos, cell_geos, cell_pops) %>%
-    left_join(adm_join, by = "sid") %>%
-    rename(capa_id_adm1 = capa_id)
+    left_join(adm_join, by = "sid")
   
   if(!is.null(write_db)){
     st_write(grid_geos, write_db, "grid_geos", append = T)
     st_write(cell_geos, write_db, "cell_geos", append = T)
     dbWriteTable(write_db, "cell_pops", cell_pops, append = T)
-    dbWriteTable(write_db, "cell_pops", cell_pops, append = T)
+    dbWriteTable(write_db, "cell_stats", cell_stats, append = T)
     return(iso)
   }else{
     out_list <- list(cell_stats, cell_geos, grid_geos, cell_pops)
@@ -239,7 +241,7 @@ update_from_pops <- function(iso, year_range = c(2021), nid_grid, poprast_list, 
   adm_join <- dbGetQuery(source_db, glue("SELECT sid, capa_id_adm1 FROM cell_geos WHERE iso3n = '{iso3n}'"))
   
   #create
-  poprast_list_c <- subset_rasters(iso, nid_grid, new_poprast_list)
+  poprast_list_c <- subset_rasters(iso, nid_grid, poprast_list)
   cell_pops <- generate_pops(cell_geos, poprast_list_c, year_range) %>%
     left_join(adm_join, by = "sid")
   cell_stats <- generate_stats(iso, year_range, ged25, ged50, ged100, grid_geos, cell_geos, cell_pops) %>%
@@ -274,5 +276,66 @@ update_from_stats <- function(iso, year_range = c(2021), nid_grid, ged25, ged50,
     dbWriteTable(write_db, "cell_stats", cell_stats, append = T)
   }else{
     return(cell_stats)
+  }
+}
+
+update_pops <- function(iso, year_range = c(2021), nid_grid, poprast_list, source_db = capa_db, write_db = NULL){
+  
+  #read
+  cell_geos <- st_read(source_db, query = glue("SELECT * FROM cell_geos WHERE iso3n = '{iso3n}'")) %>%
+    mutate(sid = as.numeric(sid))
+  grid_geos <- st_read(source_db, query = glue("SELECT * FROM grid_geos WHERE iso3n = '{iso3n}'"))
+  adm_join <- dbGetQuery(source_db, glue("SELECT sid, capa_id_adm1 FROM cell_geos WHERE iso3n = '{iso3n}'"))
+  
+  #create
+  poprast_list_c <- subset_rasters(iso, nid_grid, poprast_list)
+  cell_pops <- generate_pops(cell_geos, poprast_list_c, year_range) %>%
+    left_join(adm_join, by = "sid")
+  
+  #write
+  if(!is.null(write_db)){
+    dbWriteTable(write_db, "cell_pops", cell_pops, append = T)
+  }else{
+    return(cell_pops)
+  }
+  
+}
+
+#should probably write to staging db - hard-coded for cgaz adm1 - would be nice to change to an UPDATE TABLE statement
+update_adm <- function(iso, adm1, source_db = capa_db, write_db = NULL){
+  
+  iso3n <- countrycode(iso, origin = "iso3c", destination = "iso3n")
+  if(is.na(iso3n)){
+    iso3n <- 899
+  }
+  
+  #read
+  cell_geos <- st_read(source_db, query = glue("SELECT * FROM cell_geos WHERE iso3n = '{iso3n}'")) %>%
+    mutate(sid = as.numeric(sid))
+  grid_geos <- st_read(source_db, query = glue("SELECT * FROM grid_geos WHERE iso3n = '{iso3n}'"))
+  cell_stats <- dbGetQuery(source_db, "SELECT * FROM cell_stats WHERE iso3n = '{iso3n}'")
+  
+  adm_join <- add_shapes(iso3n, adm1, cell_geos, grid_geos) %>%
+    rename(capa_id_adm1 = capa_id)
+  
+  if(!is.null(cell_geos$capa_id_adm1)){
+    cell_geos <- dplyr::select(-capa_id_adm1)
+  }
+  cell_geos <- cell_geos %>%
+    left_join(adm_join, by = "sid")
+  
+  if(!is.null(cell_stats$capa_id_adm1)){
+    cell_stats <- dplyr::select(-capa_id_adm1)
+  }
+  cell_stats <- cell_stats %>%
+    left_join(adm_join, by = "sid")
+  
+  if(!is.null(write_db)){
+    st_write(cell_geos, write_db, "cell_geos", append = T)
+    dbWriteTable(write_db, "cell_stats", cell_stats, append = T)
+    return(iso)
+  }else{
+    out_list <- list(cell_geos, cell_stats)
+    return(out_list)
   }
 }
