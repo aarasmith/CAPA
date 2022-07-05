@@ -1,7 +1,8 @@
-
-
-
-
+library(nngeo)
+library(future)
+library(future.apply)
+library(countrycode)
+library(bit64)
 
 
 ##### Function for spatially joining cells to ADM shapes by grid sub-setting - formatted for usage with lapply over a vector of GID's as "i"
