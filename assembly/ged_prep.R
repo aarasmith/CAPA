@@ -5,7 +5,7 @@
 
 ged_country_fix <- function(ged){
   ged_ssd <- ged %>% filter(country == "Sudan" & (year < 2012)) %>% # until july 2011
-    filter(!(year == 2011 & month %in% c("08", "09", "10", "11", "12"))) %>%
+    filter(!(year == 2011 & month > 7)) %>%
     mutate(iso3c = "SSD")
   ged_yugo <- ged %>% filter(country_id == 345) #croatia/slovenia/serbia/nmacedonia/bosnia/
   ged_croatia <- ged_yugo %>% mutate(iso3c = "HRV")
@@ -18,7 +18,7 @@ ged_country_fix <- function(ged){
   ged_eritrea <- ged %>% filter(country_id == 530 & (year < 2001)) %>% #531 - until Dec 2000
     mutate(iso3c = "ERI")
   ged_namibia <- ged %>% filter(country_id == 560 & (year < 1991)) %>% #angola conflict gwnoa
-    filter(!(year == 1990 & month %in% c("04", "05", "06", "07", "08", "09", "10", "11", "12"))) %>%
+    filter(!(year == 1990 & month > 3)) %>%
     mutate(iso3c = "NAM")
   ged_soviets <- ged %>% filter(country_id == 365) #azerbaijan armenia 1990/1991
   ged_azerbaijan <- ged_soviets %>% filter(year %in% c(1989, 1990, 1991)) %>% mutate(iso3c = "AZE")
@@ -34,7 +34,9 @@ ged_country_fix <- function(ged){
   ged_list <- list(ged_ssd, ged_croatia, ged_slovenia, ged_serbia, ged_montenegro, ged_macedonia, ged_bosnia, ged_kosovo, ged_eritrea, ged_namibia, ged_azerbaijan, ged_armenia, ged_palestine,
                    ged_wsh, ged_azerbaijan2, ged_armenia2)
   ged_fix <- rbindlist(ged_list) %>% st_as_sf()
-  ged_out <- bind_rows(ged, ged_fix)
+  ged_out <- bind_rows(ged, ged_fix) %>%
+    filter(!is.na(iso3c)) %>%
+    filter(year > 1989)
   return(ged_out)
 }
 
@@ -48,11 +50,13 @@ non_conflict <- function(ged){
   ged_nc <- ged_nc %>% filter(!(country_id == 200 & year > 1999))
   #Tunisia
   ged_nc <- ged_nc %>% filter(!(country_id == 616 & year == 2002))
+  
+  return(ged_nc)
 }
 
 
 generate_ged <- function(drop_path, buffer_size = 50000, thresh = 1){
-  ged <- read_csv(paste0(drop_path, "GEDEvent_v21_1.csv"))
+  ged <- fread(paste0(drop_path, "GEDEvent_v22_1.csv"))
   ged <- st_as_sf(ged, coords = c("longitude", "latitude"), crs = "+proj=longlat +datum=WGS84")
   ged <- as_Spatial(ged)
   ged <- sp::spTransform(ged, CRSobj = "+proj=eck6 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs")
@@ -61,7 +65,7 @@ generate_ged <- function(drop_path, buffer_size = 50000, thresh = 1){
   ged <- st_as_sf(ged)
   ged <- st_transform(ged,crs = "WGS84")
   
-  ged$month <- substr(ged$date_start, 6, 7)
+  ged$month <- as.numeric(substr(ged$date_start, 6, 7))
   ged$iso3c <- countrycode(ged$country_id, origin = "gwn", destination = "iso3c")
   
   ged <- filter(ged, best >= thresh)
