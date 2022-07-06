@@ -36,8 +36,9 @@ add_shapes <- function(iso, adm, cell_geos, grid_geos){
   #' @description Attach ADM shapes to cells by various spatial joins
   #' 
   #' @param iso iso3n numeric for the desired country
-  #' @param adm sf dataframe of 4 columns: iso3n, capa_id, and geometry
-  #' @param write_to_db If False, returns a dataframe with attached ADM info, else appends to the hdr_db "cgaz" table and returns "1"
+  #' @param adm sf dataframe of 3 columns: iso3n, capa_id, and geometry
+  #' @param cell_geos sf dataframe of the country indicated by iso: new schema format
+  #' @param grid_geos sf dataframe of the country indicated by iso: new schema format
   #' 
   #' @details Attaches ADM info to cells by first intersecting the larger meta-grids with the ADM shapes. Meta-grids only matching one ADM shape have their cells automatically assigned
   #' to the corresponding ADM shape.
