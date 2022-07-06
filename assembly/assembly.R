@@ -1,4 +1,5 @@
-#####Migration funcs#####
+source("data_generation.R")
+source("adm_assembly.R")
 
 
 iso3n_transform <- function(vector){
@@ -6,17 +7,6 @@ iso3n_transform <- function(vector){
 }
 
 iso3n_transform(x$iso3n)
-
-
-
-cid3 + 100 + gid4 + iso3 + 100 + yr4 + month2
-1,000,000,000,000
-
-cid7 + 1,000,000 + iso3+100
-
-iso3n, year, month, month_abs, sid, adm1, cell_pop, confvars 
-
-
 
 
 generate_full <- function(iso, year_range = 1990:2020, nid_grid, poprast_list, ged25, ged50, ged100, adm1, write_db = NULL){
@@ -123,7 +113,7 @@ update_pops <- function(iso, year_range = c(2021), nid_grid, poprast_list, sourc
 }
 
 #should probably write to staging db - hard-coded for cgaz adm1
-update_adm <- function(iso, adm1, source_db = capa_db, write_db = NULL, init_column = FALSE){
+update_adm <- function(iso, adm1, source_db = capa_db, write_db = NULL, adm_column = "capa_id_adm1", init_column = FALSE){
   
   iso3n <- countrycode(iso, origin = "iso3c", destination = "iso3n")
   if(is.na(iso3n)){
@@ -131,22 +121,21 @@ update_adm <- function(iso, adm1, source_db = capa_db, write_db = NULL, init_col
   }
   
   #read
-  cell_geos <- st_read(source_db, query = glue("SELECT * FROM cell_geos WHERE iso3n = '{iso3n}'")) %>%
+  cell_geos <- st_read(source_db, query = glue("SELECT * FROM cell_geos WHERE iso3n = {iso3n}")) %>%
     mutate(sid = as.numeric(sid))
-  grid_geos <- st_read(source_db, query = glue("SELECT * FROM grid_geos WHERE iso3n = '{iso3n}'"))
-  cell_stats <- dbGetQuery(source_db, "SELECT * FROM cell_stats WHERE iso3n = '{iso3n}'")
+  grid_geos <- st_read(source_db, query = glue("SELECT * FROM grid_geos WHERE iso3n = {iso3n}"))
+  cell_stats <- dbGetQuery(source_db, glue("SELECT * FROM cell_stats WHERE iso3n = {iso3n}"))
   
-  adm_join <- add_shapes(iso3n, adm1, cell_geos, grid_geos) %>%
-    rename(capa_id_adm1 = capa_id)
+  adm_join <- add_shapes(iso3n, adm1, cell_geos, grid_geos)
   
   if(!is.null(write_db)){
     if(init_column){
-      dbExecute(write_db, glue("ALTER TABLE cell_geos ADD capa_id_adm1 BIGINT"))
-      dbExecute(write_db, glue("ALTER TABLE cell_stats ADD capa_id_adm1 BIGINT"))
+      dbExecute(write_db, glue("ALTER TABLE cell_pops ADD {adm_column} BIGINT"))
+      dbExecute(write_db, glue("ALTER TABLE cell_stats ADD {adm_column} BIGINT"))
     }
     dbWriteTable(write_db, "temp", adm_join, overwrite = TRUE)
-    dbExecute(write_db, "UPDATE cell_geos SET capa_id_adm1 = temp.capa_id FROM temp WHERE cell_geos.sid = temp.sid")
-    dbExecute(write_db, "UPDATE cell_stats SET capa_id_adm1 = temp.capa_id FROM temp WHERE cell_stats.sid = temp.sid")
+    dbExecute(write_db, "UPDATE cell_pops SET {adm_column} = temp.capa_id FROM temp WHERE cell_pops.sid = temp.sid")
+    dbExecute(write_db, "UPDATE cell_stats SET {adm_column} = temp.capa_id FROM temp WHERE cell_stats.sid = temp.sid")
     return(iso)
   }else{
     
