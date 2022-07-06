@@ -67,28 +67,30 @@ risk_50_month <- dbGetQuery(hdr_db, "SELECT iso3c, year, month, sum(cell_pop) AS
 system.time({risk_25_month <- dbGetQuery(hdr_db, "SELECT iso3c, year, month, sum(cell_pop) AS risk_pop_25 FROM (SELECT iso3c, cid, year, month, cell_pop, sum (int_25) AS score FROM comb GROUP BY iso3c, year, month, cid, cell_pop) WHERE score > 0 GROUP BY iso3c, year, month")})
 system.time({risk_25_month_2 <- dbGetQuery(hdr_db_2, "SELECT iso3n, year, month, sum(cell_pop) AS risk_pop_25 FROM (SELECT iso3n, cid, year, month, cell_pop, sum (int_50) AS score FROM comb WHERE iso3n = 760 GROUP BY iso3n, year, month, cid, cell_pop) WHERE score > 0 GROUP BY iso3n, year, month")})
 system.time({risk_25_month <- dbGetQuery(capa_db, glue("SELECT 
-iso3n, year, month, capa_id_adm1, sum(cell_pop) AS risk_pop_25, score
+iso3n, year, sum(cell_pop) AS risk_pop_25
 FROM 
 (
 SELECT 
 iso3n, year, month, cell_pop, capa_id_adm1,
 ((lo_25 * {L25_weight}) +
-                ((lo_50 - lo_25) * {L50_weight}) +
-                ((lo_100 - lo_50) * {L100_weight}) +
-                (md_25 * {M25_weight}) +
-                ((md_50 - md_25) * {M50_weight}) +
-                ((md_100 - md_50) * {M100_weight}) +
-                (hi_25 * {H25_weight}) +
-                ((hi_50 - hi_25) * {H50_weight}) +
-                ((hi_100 - hi_50) * {H100_weight})) AS score 
+        ((lo_50 - lo_25) * {L50_weight}) +
+        ((lo_100 - lo_50) * {L100_weight}) +
+        (md_25 * {M25_weight}) +
+        ((md_50 - md_25) * {M50_weight}) +
+        ((md_100 - md_50) * {M100_weight}) +
+        (hi_25 * {H25_weight}) +
+        ((hi_50 - hi_25) * {H50_weight}) +
+        ((hi_100 - hi_50) * {H100_weight}) +
+        (int_25 * {int25_weight}) +
+        ((int_50 - int_25) * {int50_weight}) +
+        ((int_100 - int_50) * {int100_weight})) AS score 
 FROM cell_stats
-WHERE iso3n = 804
 ) foo
 WHERE score > 0
-GROUP BY iso3n, year, month, capa_id_adm1, score"))})
+GROUP BY iso3n, year"))})
 
-dbGetQuery(capa_db, "SET enable_seqscan = OFF")
-dbGetQuery(capa_db, "SET enable_seqscan = ON")
+dbExecute(capa_db, "SET enable_seqscan = OFF")
+dbExecute(capa_db, "SET enable_seqscan = ON")
 
 system.time({x <- st_read(capa_db, query = "SELECT * FROM cell_geos WHERE iso3n = 760")})
 x <- dbGetQuery(capa_db, "EXPLAIN ANALYZE SELECT * FROM cell_geos WHERE iso3n = 760")
