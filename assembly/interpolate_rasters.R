@@ -25,3 +25,11 @@ s <- stack(pop1990,pop1995,pop2000,pop2005,pop2010,pop2015,pop2020)
 
 source("assembly/lintemp.R")
 interpolateTemporal(s = s,xin = c(1990,1995,2000,2005,2010,2015,2020),xout = seq(1990,2020,1),outdir = paste0(drop_path, "new_rasters/ipolated/"),prefix = "ipop",progress = TRUE)
+
+
+
+pop2019 <- raster(paste0(drop_path, "new_rasters/ipolated/ipop_2019.tif"))   
+pop2020 <- raster(paste0(drop_path, "new_rasters/ipolated/ipop_2020.tif"))
+s <- stack(pop2019, pop2020)
+
+interpolateTemporal(s = s,xin = c(2019,2020),xout = seq(2019,2021,1),outdir = paste0(drop_path, "new_rasters1/ipolated/"),prefix = "ipop",progress = TRUE)
