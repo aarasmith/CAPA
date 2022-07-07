@@ -81,33 +81,40 @@ worst_adm <- function(iso, years, monthly = TRUE, adm1 = TRUE, weights, threshol
   total_pop <- dbGetQuery(capa_db, total_query)
   
   sql_query <- glue(
-    "SELECT DISTINCT
+    "
+    SELECT
       iso3n, {grouping_vars}, SUM(cell_pop) OVER (PARTITION BY {grouping_vars} ORDER BY score DESC) AS risk_pop, score
-    FROM 
+    FROM
       (
-      SELECT 
-        iso3n, {grouping_vars},
-        AVG(cell_pop) as cell_pop,
-        SUM((lo_25 * {weights['L25']}) +
-        ((lo_50 - lo_25) * {weights['L50']}) +
-        ((lo_100 - lo_50) * {weights['L100']}) +
-        (md_25 * {weights['M25']}) +
-        ((md_50 - md_25) * {weights['M50']}) +
-        ((md_100 - md_50) * {weights['M100']}) +
-        (hi_25 * {weights['H25']}) +
-        ((hi_50 - hi_25) * {weights['H50']}) +
-        ((hi_100 - hi_50) * {weights['H100']}) +
-        (int_25 * {weights['int25']}) +
-        ((int_50 - int_25) * {weights['int50']}) +
-        ((int_100 - int_50) * {weights['int100']})) AS score 
-      FROM cell_stats
-      WHERE iso3n = {iso3n} AND
-        year >= {years[1]} AND
-        year <= {years[length(years)]}
-      GROUP BY iso3n, sid, {grouping_vars}
-      ) agg
-    WHERE score >= {threshold}
-    GROUP BY iso3n, {grouping_vars}, cell_pop, score"
+      SELECT
+        iso3n, {grouping_vars}, SUM(cell_pop) AS cell_pop, score
+      FROM 
+        (
+        SELECT 
+          iso3n, {grouping_vars},
+          AVG(cell_pop) as cell_pop,
+          SUM((lo_25 * {weights['L25']}) +
+          ((lo_50 - lo_25) * {weights['L50']}) +
+          ((lo_100 - lo_50) * {weights['L100']}) +
+          (md_25 * {weights['M25']}) +
+          ((md_50 - md_25) * {weights['M50']}) +
+          ((md_100 - md_50) * {weights['M100']}) +
+          (hi_25 * {weights['H25']}) +
+          ((hi_50 - hi_25) * {weights['H50']}) +
+          ((hi_100 - hi_50) * {weights['H100']}) +
+          (int_25 * {weights['int25']}) +
+          ((int_50 - int_25) * {weights['int50']}) +
+          ((int_100 - int_50) * {weights['int100']})) AS score 
+        FROM cell_stats
+        WHERE iso3n = {iso3n} AND
+          year >= {years[1]} AND
+          year <= {years[length(years)]}
+        GROUP BY iso3n, sid, {grouping_vars}
+        ) agg
+      WHERE score >= {threshold}
+      GROUP BY iso3n, {grouping_vars}, score
+      ) foobar
+    "
   )
   
   data <- dbGetQuery(capa_db, sql_query) %>%
@@ -142,7 +149,7 @@ worst_adm <- function(iso, years, monthly = TRUE, adm1 = TRUE, weights, threshol
   
 }
 
-x <- worst_adm("SYR", 2011:2015, monthly = F, adm1 = T, weights)
+system.time({x <- worst_adm("CAF", 2011:2015, monthly = T, adm1 = T, weights)})
 
 plot_score_sql <- function(iso, years, start_end = c(1,12), weights, draw_points = TRUE){
   
