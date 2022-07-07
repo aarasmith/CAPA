@@ -32,23 +32,12 @@ int100_weight <- 0
 weights <- list(L25_weight, L50_weight, L100_weight, M25_weight, M50_weight, M100_weight, H25_weight, H50_weight, H100_weight,
                 int25_weight, int50_weight, int100_weight)
 
+weights <- list(L25 = L25_weight, L50 = L50_weight, L100 = L100_weight, M25 = M25_weight, M50 = M50_weight, M100 = M100_weight, H25 = H25_weight, H50 = H50_weight, H100 = H100_weight,
+                int25 = int25_weight, int50 = int50_weight, int100 = int100_weight)
+
 worst_adm <- function(iso, years, monthly = TRUE, adm1 = TRUE, weights, threshold = 1, cap = NA){
   
   iso3n <- ison(iso)
-  
-  weight_list <- weights
-  L25_weight <- weight_list[[1]]
-  L50_weight <- weight_list[[2]]
-  L100_weight <- weight_list[[3]]
-  M25_weight <- weight_list[[4]]
-  M50_weight <- weight_list[[5]]
-  M100_weight <- weight_list[[6]]
-  H25_weight <- weight_list[[7]]
-  H50_weight <- weight_list[[8]]
-  H100_weight <- weight_list[[9]]
-  int25_weight <- weight_list[[10]]
-  int50_weight <- weight_list[[11]]
-  int100_weight <- weight_list[[12]]
   
   #browser()
   capa_db <- connect_to_capa()
@@ -58,6 +47,7 @@ worst_adm <- function(iso, years, monthly = TRUE, adm1 = TRUE, weights, threshol
     tot_join_vars <- c("year", "capa_id_adm1")
     if(monthly){
       grouping_vars <- "year, month, capa_id_adm1"
+      grouping_vars2 <- "sid, year, month"
       dplyr_group_vars <- c("year", "month", "capa_id_adm1")
     }else{
       grouping_vars <- "year, capa_id_adm1"
@@ -69,14 +59,15 @@ worst_adm <- function(iso, years, monthly = TRUE, adm1 = TRUE, weights, threshol
     tot_join_vars <- "year"
     if(monthly){
       grouping_vars <- "year, month"
+      grouping_vars2 <- "sid, year, month"
       dplyr_group_vars <- c("year", "month")
     }else{
       grouping_vars <- "year"
+      grouping_vars2 <- "sid, year"
       dplyr_group_vars <- "year"
     }
   }
-  
-  #years_str <- paste(years, collapse = ", ")
+
   
   total_query <- glue(
     "SELECT {tot_group_vars}, SUM(cell_pop) AS total_pop
@@ -90,36 +81,37 @@ worst_adm <- function(iso, years, monthly = TRUE, adm1 = TRUE, weights, threshol
   total_pop <- dbGetQuery(capa_db, total_query)
   
   sql_query <- glue(
-    "SELECT
-      iso3n, {grouping_vars}, SUM(cell_pop) AS risk_pop, score
+    "SELECT DISTINCT
+      iso3n, {grouping_vars}, SUM(cell_pop) OVER (PARTITION BY {grouping_vars} ORDER BY score DESC) AS risk_pop, score
     FROM 
       (
       SELECT 
-        iso3n, year, month, cell_pop, capa_id_adm1,
-        ((lo_25 * {L25_weight}) +
-        ((lo_50 - lo_25) * {L50_weight}) +
-        ((lo_100 - lo_50) * {L100_weight}) +
-        (md_25 * {M25_weight}) +
-        ((md_50 - md_25) * {M50_weight}) +
-        ((md_100 - md_50) * {M100_weight}) +
-        (hi_25 * {H25_weight}) +
-        ((hi_50 - hi_25) * {H50_weight}) +
-        ((hi_100 - hi_50) * {H100_weight}) +
-        (int_25 * {int25_weight}) +
-        ((int_50 - int_25) * {int50_weight}) +
-        ((int_100 - int_50) * {int100_weight})) AS score 
+        iso3n, {grouping_vars},
+        AVG(cell_pop) as cell_pop,
+        SUM((lo_25 * {weights['L25']}) +
+        ((lo_50 - lo_25) * {weights['L50']}) +
+        ((lo_100 - lo_50) * {weights['L100']}) +
+        (md_25 * {weights['M25']}) +
+        ((md_50 - md_25) * {weights['M50']}) +
+        ((md_100 - md_50) * {weights['M100']}) +
+        (hi_25 * {weights['H25']}) +
+        ((hi_50 - hi_25) * {weights['H50']}) +
+        ((hi_100 - hi_50) * {weights['H100']}) +
+        (int_25 * {weights['int25']}) +
+        ((int_50 - int_25) * {weights['int50']}) +
+        ((int_100 - int_50) * {weights['int100']})) AS score 
       FROM cell_stats
       WHERE iso3n = {iso3n} AND
         year >= {years[1]} AND
         year <= {years[length(years)]}
+      GROUP BY iso3n, sid, {grouping_vars}
       ) agg
     WHERE score >= {threshold}
-    GROUP BY iso3n, {grouping_vars}, score"
+    GROUP BY iso3n, {grouping_vars}, cell_pop, score"
   )
   
-  data <- dbGetQuery(capa_db, sql_query)
-  
-  data <- data %>% left_join(total_pop, by = tot_join_vars) %>%
+  data <- dbGetQuery(capa_db, sql_query) %>%
+    left_join(total_pop, by = tot_join_vars) %>%
     mutate(risk_pct = risk_pop/total_pop, score = as.numeric(score))
   
   max_scores <- data %>% group_by_at(dplyr_group_vars) %>% summarize(max = max(score)) %>% filter(max != 0)
@@ -149,6 +141,8 @@ worst_adm <- function(iso, years, monthly = TRUE, adm1 = TRUE, weights, threshol
   return(out_frame %>% within(risk_pct <- round(risk_pct, 4)))
   
 }
+
+x <- worst_adm("SYR", 2011:2015, monthly = F, adm1 = T, weights)
 
 plot_score_sql <- function(iso, years, start_end = c(1,12), weights, draw_points = TRUE){
   
