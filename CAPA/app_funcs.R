@@ -95,67 +95,10 @@ system.time({x <- worst_adm(c("AFG", "IRQ"), 1990:2020, monthly = F, adm1 = F, w
 plot_score_sql <- function(iso, years, start_end = c(1,12), weights, draw_points = TRUE){
   
   iso3n <- ison(iso)
-  
-  weight_list <- weights
-  L25_weight <- weight_list[[1]]
-  L50_weight <- weight_list[[2]]
-  L100_weight <- weight_list[[3]]
-  M25_weight <- weight_list[[4]]
-  M50_weight <- weight_list[[5]]
-  M100_weight <- weight_list[[6]]
-  H25_weight <- weight_list[[7]]
-  H50_weight <- weight_list[[8]]
-  H100_weight <- weight_list[[9]]
-  int25_weight <- weight_list[[10]]
-  int50_weight <- weight_list[[11]]
-  int100_weight <- weight_list[[12]]
-  
-  #browser()
+
   capa_db <- connect_to_capa()
   
-  #years_string <- paste(years, collapse = ", ")
-  
-  sql_query <- glue(
-    "SELECT
-      score,
-      geometry
-    FROM
-      (
-      SELECT
-        sid,
-        SUM(((lo_25 * {L25_weight}) +
-        ((lo_50 - lo_25) * {L50_weight}) +
-        ((lo_100 - lo_50) * {L100_weight}) +
-        (md_25 * {M25_weight}) +
-        ((md_50 - md_25) * {M50_weight}) +
-        ((md_100 - md_50) * {M100_weight}) +
-        (hi_25 * {H25_weight}) +
-        ((hi_50 - hi_25) * {H50_weight}) +
-        ((hi_100 - hi_50) * {H100_weight}) +
-        (int_25 * {int25_weight}) +
-        ((int_50 - int_25) * {int50_weight}) +
-        ((int_100 - int_50) * {int100_weight}))) AS score
-      FROM cell_stats
-      WHERE iso3n = {iso3n} AND
-        year >= {years[1]} AND
-        year <= {years[length(years)]} AND
-        NOT (month < {start_end[1]} AND year = {min(years)}) AND
-        NOT (month > {start_end[2]} AND year = {max(years)})
-      GROUP BY sid
-      ) stats_sub
-      
-      LEFT JOIN
-      
-      (
-      SELECT sid, geometry
-      FROM cell_geos
-      WHERE iso3n = {iso3n}
-      ) cells_sub
-      
-      ON stats_sub.sid = cells_sub.sid"
-  )
-  
-  data <- st_read(capa_db, query = sql_query)
+  data <- get_cell_scores(iso3n, years, start_end, weights)
   
   data$score <- as.numeric(data$score)
   
@@ -176,6 +119,8 @@ plot_score_sql <- function(iso, years, start_end = c(1,12), weights, draw_points
   return(out_list)
   
 }
+
+system.time({x <- plot_score_sql("AFG", 2011, start_end = c(1,11), weights, draw_points = F)})
 
 plot_score <- function(x, legend_size = 2, font_size = 18){
   #browser()

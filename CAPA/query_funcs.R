@@ -110,3 +110,61 @@ get_cell_stats <- function(iso3n, years, weights, threshold, gv, capa_db, score 
   data <- dbGetQuery(capa_db, sql_query)
   return(data)
 }
+
+
+####plot_score_sql####
+get_cell_scores <- function(iso3n, years, start_end, weights){
+  
+  if(start_end[1] == 1 & start_end[2] == 12){
+    table <- "cell_stats_yr"
+    start_end <- ""
+  }else{
+    table <- "cell_stats"
+    start_end <- glue(" AND
+        NOT (month < {start_end[1]} AND year = {min(years)}) AND
+        NOT (month > {start_end[2]} AND year = {max(years)})
+                      ")
+  }
+  
+  sql_query <- glue(
+    "SELECT
+      score,
+      geometry
+    FROM
+      (
+      SELECT
+        sid,
+        SUM((lo_25 * {weights['L25']}) +
+          ((lo_50 - lo_25) * {weights['L50']}) +
+          ((lo_100 - lo_50) * {weights['L100']}) +
+          (md_25 * {weights['M25']}) +
+          ((md_50 - md_25) * {weights['M50']}) +
+          ((md_100 - md_50) * {weights['M100']}) +
+          (hi_25 * {weights['H25']}) +
+          ((hi_50 - hi_25) * {weights['H50']}) +
+          ((hi_100 - hi_50) * {weights['H100']}) +
+          (int_25 * {weights['int25']}) +
+          ((int_50 - int_25) * {weights['int50']}) +
+          ((int_100 - int_50) * {weights['int100']})) AS score
+      FROM {table}
+      WHERE iso3n = {iso3n} AND
+        year >= {years[1]} AND
+        year <= {years[length(years)]}
+        {start_end}
+      GROUP BY sid
+      ) stats_sub
+      
+      LEFT JOIN
+      
+      (
+      SELECT sid, geometry
+      FROM cell_geos
+      WHERE iso3n = {iso3n}
+      ) cells_sub
+      
+      ON stats_sub.sid = cells_sub.sid"
+  )
+  
+  data <- st_read(capa_db, query = sql_query)
+  return(data)
+}
