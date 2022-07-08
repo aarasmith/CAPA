@@ -57,3 +57,24 @@ month SMALLINT,
 quarter SMALLINT,
 half SMALLINT
 )"
+
+
+cell_stats_yr_schema <- "CREATE TABLE cell_stats (
+sid BIGINT,
+iso3n SMALLINT,
+capa_id_adm1 BIGINT,
+year SMALLINT,
+cell_pop INT,
+lo_25 SMALLINT,
+md_25 SMALLINT,
+hi_25 SMALLINT,
+int_25 INT,
+lo_50 SMALLINT,
+md_50 SMALLINT,
+hi_50 SMALLINT,
+int_50 INT,
+lo_100 SMALLINT,
+md_100 SMALLINT,
+hi_100 SMALLINT,
+int_100 INT
+)"
