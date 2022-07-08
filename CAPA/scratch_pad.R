@@ -466,3 +466,131 @@ FROM
   )
 WHERE iso3n = 004 AND score > 0
 GROUP BY iso3n, year, month, shape_id"))})
+
+
+
+#SQL TUNING
+#optimal yma
+"SELECT
+    iso3n, year, month, capa_id_adm1, SUM(cell_pop) AS cell_pop
+  FROM 
+    (
+    SELECT
+      iso3n, year, month, capa_id_adm1,
+      cell_pop,
+      ((lo_25 * 1) +
+      ((lo_50 - lo_25) * 1) +
+      ((lo_100 - lo_50) * 1) +
+      (md_25 * 1) +
+      ((md_50 - md_25) * 1) +
+      ((md_100 - md_50) * 1) +
+      (hi_25 * 1) +
+      ((hi_50 - hi_25) * 1) +
+      ((hi_100 - hi_50) * 1) +
+      (int_25 * 0) +
+      ((int_50 - int_25) * 0) +
+      ((int_100 - int_50) * 0)) AS score 
+    FROM cell_stats
+    WHERE iso3n = 4 AND
+      year >= 2011 AND
+      year <= 2015
+    ) agg
+  WHERE score >= 1
+  GROUP BY iso3n, year, month, capa_id_adm1"
+
+#optimal ya
+" SELECT
+    iso3n, year, month, capa_id_adm1, SUM(cell_pop) AS cell_pop
+  FROM 
+    (
+    SELECT 
+      iso3n, year, month, capa_id_adm1,
+      AVG(cell_pop) as cell_pop,
+      SUM((lo_25 * 1) +
+      ((lo_50 - lo_25) * 1) +
+      ((lo_100 - lo_50) * 1) +
+      (md_25 * 1) +
+      ((md_50 - md_25) * 1) +
+      ((md_100 - md_50) * 1) +
+      (hi_25 * 1) +
+      ((hi_50 - hi_25) * 1) +
+      ((hi_100 - hi_50) * 1) +
+      (int_25 * 0) +
+      ((int_50 - int_25) * 0) +
+      ((int_100 - int_50) * 0)) AS score 
+    FROM cell_stats
+    WHERE iso3n = 4 AND
+      year >= 2011 AND
+      year <= 2015
+    GROUP BY iso3n, sid, year, month, capa_id_adm1
+    ) agg
+  WHERE score >= 1
+  GROUP BY iso3n, year, month, capa_id_adm1"
+
+#optimal ym
+" SELECT
+    iso3n, year, month, SUM(cell_pop) AS cell_pop
+  FROM 
+    (
+    SELECT
+      iso3n, year, month,
+      cell_pop,
+      ((lo_25 * 1) +
+      ((lo_50 - lo_25) * 1) +
+      ((lo_100 - lo_50) * 1) +
+      (md_25 * 1) +
+      ((md_50 - md_25) * 1) +
+      ((md_100 - md_50) * 1) +
+      (hi_25 * 1) +
+      ((hi_50 - hi_25) * 1) +
+      ((hi_100 - hi_50) * 1) +
+      (int_25 * 0) +
+      ((int_50 - int_25) * 0) +
+      ((int_100 - int_50) * 0)) AS score 
+    FROM cell_stats
+    WHERE iso3n = 4 AND
+      year >= 2011 AND
+      year <= 2015
+    ) agg
+  WHERE score >= 1
+  GROUP BY iso3n, year, month"
+
+#optimal y
+#depends...DISTINCT ON approach is best for countries with not that much conflict - also faster on global...
+#new cell_stats_yearly table?
+# agg to cell_stats_yr
+"SELECT
+    sid, iso3n, capa_id_adm1, year, SUM(cell_pop) AS cell_pop,
+    MAX(lo_25) as lo_25,
+    MAX(lo_50) as lo_50,
+    MAX(lo_100) as lo_100,
+    MAX(md_25) as md_25,
+    MAX(md_50) as md_50,
+    MAX(md_100) as md_100,
+    MAX(hi_25) as hi_25,
+    MAX(hi_50) as hi_50,
+    MAX(hi_100) as hi_100,
+    MAX(int_25) as int_25,
+    MAX(int_50) as int_50,
+    MAX(int_100) as int_100
+  FROM 
+    (
+    SELECT 
+      sid, iso3n, capa_id_adm1, year,
+      MAX(cell_pop) as cell_pop,
+      SUM(lo_25) as lo_25,
+      SUM(lo_50) as lo_50,
+      SUM(lo_100) as lo_100,
+      SUM(md_25) as md_25,
+      SUM(md_50) as md_50,
+      SUM(md_100) as md_100,
+      SUM(hi_25) as hi_25,
+      SUM(hi_50) as hi_50,
+      SUM(hi_100) as hi_100,
+      SUM(int_25) as int_25,
+      SUM(int_50) as int_50,
+      SUM(int_100) as int_100 
+    FROM cell_stats
+    GROUP BY iso3n, capa_id_adm1, year, sid
+    ) agg
+  GROUP BY iso3n, capa_id_adm1, year, sid"
