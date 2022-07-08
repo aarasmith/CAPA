@@ -83,14 +83,14 @@ worst_adm <- function(iso, years, monthly = TRUE, adm1 = TRUE, weights, threshol
   
 }
 
-system.time({x <- worst_adm("AFG", 1990:2020, monthly = T, adm1 = T, weights)})
+system.time({x <- worst_adm(c("AFG", "IRQ", "MEX", "CAF"), 1990:2020, monthly = T, adm1 = T, weights)})
 system.time({x <- worst_adm("AFG", 1990:2020, monthly = T, adm1 = F, weights)})
 system.time({x <- worst_adm("AFG", 1990:2020, monthly = F, adm1 = T, weights)})
-system.time({x <- worst_adm("AFG", 1990:2020, monthly = F, adm1 = F, weights)})
+system.time({x <- worst_adm(c("AFG", "IRQ", "MEX", "CAF"), 1990:2020, monthly = F, adm1 = F, weights)})
 system.time({x <- worst_adm("AFG", 1990:2020, monthly = T, adm1 = T, weights, score = T)})
 system.time({x <- worst_adm("AFG", 1990:2020, monthly = T, adm1 = F, weights, score = T)})
 system.time({x <- worst_adm("AFG", 1990:2020, monthly = F, adm1 = T, weights, score = T)})
-system.time({x <- worst_adm("AFG", 1990:2020, monthly = F, adm1 = F, weights, score = T)})
+system.time({x <- worst_adm(c("AFG", "IRQ"), 1990:2020, monthly = F, adm1 = F, weights, score = T)})
 
 plot_score_sql <- function(iso, years, start_end = c(1,12), weights, draw_points = TRUE){
   
