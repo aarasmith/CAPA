@@ -135,3 +135,34 @@ plot_score <- function(x, legend_size = 2, font_size = 18){
   
   return(out_plot)
 }
+
+
+long_duration <- function(iso, years, monthly = FALSE, start_end = c(1,12), adm1 = FALSE, weights, threshold = 1){
+  
+  iso3n <- ison(iso)
+  
+  capa_db <- connect_to_capa()
+  
+  gv <- get_duration_gv(adm1, monthly, start_end, years)
+  
+  total_pop <- get_total_pop(iso3n, years[length(years)], gv, capa_db) %>%
+    rename(capa_id = capa_id_adm1)
+  
+  out_frame <- get_duration(iso3n, years, start_end, adm1, weights, threshold, gv, monthly, capa_db) %>%
+    rename(capa_id = capa_id_adm1) %>%
+    left_join(total_pop, by = c("iso3n", "capa_id")) %>%
+    mutate(risk_pct = risk_pop/total_pop)
+  out_frame$capa_id <- as.numeric(out_frame$capa_id)
+  
+  if(adm1){
+    
+    out_frame <- left_join(out_frame, dplyr::select(adm1_cgaz, capa_id, shape_name) %>% st_drop_geometry(), by = "capa_id")
+  }
+  
+  disconnect_from_capa(capa_db)
+  return(out_frame)
+  
+}
+
+system.time({x <- long_duration(c("SYR", "IRQ"), years = 2014:2015, monthly = F, start_end = c(1,12), adm1 = T, weights, threshold = 50)})
+system.time({y <- long_duration("AFG", years = 2014:2015, monthly = T, start_end = c(1,12), adm1 = T, weights, threshold = 50)})
