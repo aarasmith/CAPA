@@ -176,8 +176,10 @@ get_duration_gv <- function(adm, monthly, start_end, years){
   gv <- list()
   if(adm){
     gv['grouping_vars'] <- "iso3n, capa_id_adm1"
+    gv['tot_group_vars'] <- "iso3n, year, capa_id_adm1"
   }else{
     gv['grouping_vars'] <- "iso3n"
+    gv['tot_group_vars'] <- "iso3n, year"
   }
   if(!monthly){
     gv['table'] <- "cell_stats_yr"
