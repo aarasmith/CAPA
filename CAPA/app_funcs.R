@@ -146,13 +146,16 @@ long_duration <- function(iso, years, monthly = FALSE, start_end = c(1,12), adm1
   gv <- get_duration_gv(adm1, monthly, start_end, years)
   
   total_pop <- get_total_pop(iso3n, years[length(years)], gv, capa_db) %>%
-    rename(capa_id = capa_id_adm1)
+    rename(capa_id = contains("capa_id"))
   
   out_frame <- get_duration(iso3n, years, start_end, weights, threshold, gv, capa_db) %>%
-    rename(capa_id = capa_id_adm1) %>%
-    left_join(total_pop, by = c("iso3n", "capa_id")) %>%
+    rename(capa_id = contains("capa_id")) %>%
+    left_join(total_pop, by = gv[['tot_join_vars']]) %>%
     mutate(risk_pct = risk_pop/total_pop)
-  out_frame$capa_id <- as.numeric(out_frame$capa_id)
+  
+  if(!is.null(out_frame$capa_id)){
+    out_frame$capa_id <- as.numeric(out_frame$capa_id)
+  }
   
   if(adm1){
     
@@ -165,7 +168,9 @@ long_duration <- function(iso, years, monthly = FALSE, start_end = c(1,12), adm1
 }
 
 system.time({x <- long_duration(c("SYR", "IRQ"), years = 2014:2015, monthly = F, start_end = c(1,12), adm1 = T, weights, threshold = 50)})
-system.time({y <- long_duration("AFG", years = 2014:2015, monthly = T, start_end = c(1,12), adm1 = T, weights, threshold = 50)})
+system.time({y <- long_duration(c("SYR", "IRQ"), years = 2014:2015, monthly = T, start_end = c(1,12), adm1 = T, weights, threshold = 50)})
+system.time({z <- long_duration(c("SYR", "IRQ"), years = 2014:2015, monthly = T, start_end = c(1,12), adm1 = F, weights, threshold = 50)})
+system.time({zz <- long_duration(c("SYR", "IRQ"), years = 2014:2015, monthly = F, start_end = c(1,12), adm1 = T, weights, threshold = 50)})
 
 long_frequency <- function(iso, years, monthly = FALSE, start_end = c(1,12), adm1 = FALSE, weights, p_threshold = 1, threshold = 1){
   
@@ -176,13 +181,16 @@ long_frequency <- function(iso, years, monthly = FALSE, start_end = c(1,12), adm
   gv <- get_duration_gv(adm1, monthly, start_end, years)
   
   total_pop <- get_total_pop(iso3n, years[length(years)], gv, capa_db) %>%
-    rename(capa_id = capa_id_adm1)
+    rename(capa_id = contains("capa_id"))
   
   out_frame <- get_frequency(iso3n, years, start_end, weights, threshold, p_threshold, gv, capa_db) %>%
-    rename(capa_id = capa_id_adm1) %>%
-    left_join(total_pop, by = c("iso3n", "capa_id")) %>%
+    rename(capa_id = contains("capa_id")) %>%
+    left_join(total_pop, by = gv[['tot_join_vars']]) %>%
     mutate(risk_pct = risk_pop/total_pop)
-  out_frame$capa_id <- as.numeric(out_frame$capa_id)
+  
+  if(!is.null(out_frame$capa_id)){
+    out_frame$capa_id <- as.numeric(out_frame$capa_id)
+  }
   
   if(adm1){
     
@@ -194,5 +202,7 @@ long_frequency <- function(iso, years, monthly = FALSE, start_end = c(1,12), adm
 }
 
 
-system.time({x <- long_frequency(c("SYR", "IRQ"), years = 2014:2015, monthly = F, start_end = c(1,12), adm1 = T, weights, threshold = 50)})
+system.time({x <- long_frequency(c("SYR", "IRQ"), years = 2014:2015, monthly = F, start_end = c(1,12), adm1 = F, weights, threshold = 50)})
 system.time({y <- long_frequency(c("SYR", "IRQ"), years = 2015, monthly = T, start_end = c(1,12), adm1 = T, weights, threshold = 50)})
+system.time({z <- long_frequency(c("SYR", "IRQ"), years = 2014:2015, monthly = F, start_end = c(1,12), adm1 = T, weights, threshold = 50)})
+system.time({zz <- long_frequency(c("SYR", "IRQ"), years = 2015, monthly = T, start_end = c(1,12), adm1 = F, weights, threshold = 50)})
