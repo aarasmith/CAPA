@@ -176,10 +176,10 @@ get_duration_gv <- function(adm, monthly, start_end, years){
   gv <- list()
   if(adm){
     gv['grouping_vars'] <- "iso3n, capa_id_adm1"
-    gv['tot_group_vars'] <- "iso3n, year, capa_id_adm1"
+    gv['tot_group_vars'] <- "iso3n, capa_id_adm1"
   }else{
     gv['grouping_vars'] <- "iso3n"
-    gv['tot_group_vars'] <- "iso3n, year"
+    gv['tot_group_vars'] <- "iso3n"
   }
   if(!monthly){
     gv['table'] <- "cell_stats_yr"
@@ -241,7 +241,7 @@ get_duration <- function(iso3n, years, start_end, weights, threshold, gv, capa_d
       FROM cell_pops
       WHERE
         iso3n IN ({iso3n}) And
-        year IN ({max(years)})
+        year = {max(years)}
       ) pops
     
     ON min_query.sid = pops.sid
@@ -256,3 +256,67 @@ get_duration <- function(iso3n, years, start_end, weights, threshold, gv, capa_d
 
 system.time({x <- get_duration(iso3n, years = 2014:2018, start_end = c(1,12), adm = T, weights, threshold = 100, gv, monthly = T, capa_db)})
 system.time({y <- get_duration(iso3n, years = 2014:2018, start_end = c(1,12), adm = T, weights, threshold = 100, gv, monthly = F, capa_db)})
+
+
+get_frequency <- function(iso3n, years, start_end, weights, threshold, p_threshold, gv, capa_db){
+  
+  iso3n <- paste(iso3n, collapse = ", ")
+  
+  sql_query <- glue(
+    "SELECT
+      {gv['grouping_vars']}, n_periods, SUM(risk_pop) OVER(PARTITION BY {gv['grouping_vars']} ORDER BY n_periods ASC) AS risk_pop
+    FROM
+      (
+      SELECT
+        {gv['grouping_vars']}, n_periods, SUM(cell_pop) as risk_pop
+      FROM
+        (
+        SELECT
+            iso3n, sid, capa_id_adm1, COUNT(sid) AS n_periods
+          FROM 
+            (
+            SELECT 
+              iso3n, sid, capa_id_adm1,
+              (lo_25 * {weights['L25']}) +
+              ((lo_50 - lo_25) * {weights['L50']}) +
+              ((lo_100 - lo_50) * {weights['L100']}) +
+              (md_25 * {weights['M25']}) +
+              ((md_50 - md_25) * {weights['M50']}) +
+              ((md_100 - md_50) * {weights['M100']}) +
+              (hi_25 * {weights['H25']}) +
+              ((hi_50 - hi_25) * {weights['H50']}) +
+              ((hi_100 - hi_50) * {weights['H100']}) +
+              (int_25 * {weights['int25']}) +
+              ((int_50 - int_25) * {weights['int50']}) +
+              ((int_100 - int_50) * {weights['int100']}) AS score 
+            FROM {gv['table']}
+            WHERE iso3n IN ({iso3n}) AND
+              year >= {years[1]} AND
+              year <= {years[length(years)]}
+              {gv['start_end']}
+            ) agg
+          WHERE score >= {threshold}
+          GROUP BY iso3n, sid, capa_id_adm1
+        ) freq_query
+        
+        LEFT JOIN
+        
+        (
+        SELECT
+          sid,
+          cell_pop
+        FROM cell_pops
+        WHERE
+          iso3n IN ({iso3n}) And
+          year = {max(years)}
+        ) pops
+      
+      ON freq_query.sid = pops.sid
+      WHERE n_periods >= {p_threshold}
+      GROUP BY {gv['grouping_vars']}, n_periods
+      ) pre_cumsum"
+  )
+  
+  data <- dbGetQuery(capa_db, sql_query)
+  return(data)
+}

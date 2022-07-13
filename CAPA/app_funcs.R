@@ -148,7 +148,7 @@ long_duration <- function(iso, years, monthly = FALSE, start_end = c(1,12), adm1
   total_pop <- get_total_pop(iso3n, years[length(years)], gv, capa_db) %>%
     rename(capa_id = capa_id_adm1)
   
-  out_frame <- get_duration(iso3n, years, start_end, adm1, weights, threshold, gv, monthly, capa_db) %>%
+  out_frame <- get_duration(iso3n, years, start_end, weights, threshold, gv, capa_db) %>%
     rename(capa_id = capa_id_adm1) %>%
     left_join(total_pop, by = c("iso3n", "capa_id")) %>%
     mutate(risk_pct = risk_pop/total_pop)
@@ -160,9 +160,39 @@ long_duration <- function(iso, years, monthly = FALSE, start_end = c(1,12), adm1
   }
   
   disconnect_from_capa(capa_db)
-  return(out_frame)
+  return(out_frame %>% within(risk_pct <- round(risk_pct, 4)))
   
 }
 
 system.time({x <- long_duration(c("SYR", "IRQ"), years = 2014:2015, monthly = F, start_end = c(1,12), adm1 = T, weights, threshold = 50)})
 system.time({y <- long_duration("AFG", years = 2014:2015, monthly = T, start_end = c(1,12), adm1 = T, weights, threshold = 50)})
+
+long_frequency <- function(iso, years, monthly = FALSE, start_end = c(1,12), adm1 = FALSE, weights, p_threshold = 1, threshold = 1){
+  
+  iso3n <- ison(iso)
+  
+  capa_db <- connect_to_capa()
+  
+  gv <- get_duration_gv(adm1, monthly, start_end, years)
+  
+  total_pop <- get_total_pop(iso3n, years[length(years)], gv, capa_db) %>%
+    rename(capa_id = capa_id_adm1)
+  
+  out_frame <- get_frequency(iso3n, years, start_end, weights, threshold, p_threshold, gv, capa_db) %>%
+    rename(capa_id = capa_id_adm1) %>%
+    left_join(total_pop, by = c("iso3n", "capa_id")) %>%
+    mutate(risk_pct = risk_pop/total_pop)
+  out_frame$capa_id <- as.numeric(out_frame$capa_id)
+  
+  if(adm1){
+    
+    out_frame <- left_join(out_frame, dplyr::select(adm1_cgaz, capa_id, shape_name) %>% st_drop_geometry(), by = "capa_id")
+  }
+  
+  disconnect_from_capa(capa_db)
+  return(out_frame %>% within(risk_pct <- round(risk_pct, 4)))
+}
+
+
+system.time({x <- long_frequency(c("SYR", "IRQ"), years = 2014:2015, monthly = F, start_end = c(1,12), adm1 = T, weights, threshold = 50)})
+system.time({y <- long_frequency(c("SYR", "IRQ"), years = 2015, monthly = T, start_end = c(1,12), adm1 = T, weights, threshold = 50)})
