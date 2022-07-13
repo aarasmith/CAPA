@@ -170,8 +170,10 @@ get_cell_scores <- function(iso3n, years, start_end, weights){
 }
 
 
-get_duration <- function(iso3n, years, start_end, adm, weights, threshold, gv, monthly, capa_db){
+get_duration_gv <- function(adm, monthly, start_end, years){
+  #creates grouping variables for the SQL query based on whether the query is adm0/adm1 and yearly/monthly. gv['start_end'] is a partial SQL statement added to the middle of sql_query
   
+  gv <- list()
   if(adm){
     gv['grouping_vars'] <- "iso3n, capa_id_adm1"
   }else{
@@ -179,14 +181,21 @@ get_duration <- function(iso3n, years, start_end, adm, weights, threshold, gv, m
   }
   if(!monthly){
     gv['table'] <- "cell_stats_yr"
-    start_end <- ""
+    gv['start_end'] <- ""
   }else{
     gv['table'] <- "cell_stats"
-    start_end <- glue(" AND
+    gv['start_end'] <- glue(" AND
         NOT (month < {start_end[1]} AND year = {min(years)}) AND
         NOT (month > {start_end[2]} AND year = {max(years)})
                       ")
   }
+  
+  return(gv)
+}
+
+get_duration <- function(iso3n, years, start_end, weights, threshold, gv, capa_db){
+  
+  iso3n <- paste(iso3n, collapse = ", ")
   
   sql_query <- glue(
     "SELECT
@@ -215,7 +224,7 @@ get_duration <- function(iso3n, years, start_end, adm, weights, threshold, gv, m
           WHERE iso3n IN ({iso3n}) AND
             year >= {years[1]} AND
             year <= {years[length(years)]}
-            {start_end}
+            {gv['start_end']}
           ) agg
         WHERE score >= {threshold}
         GROUP BY iso3n, sid, capa_id_adm1
@@ -229,7 +238,7 @@ get_duration <- function(iso3n, years, start_end, adm, weights, threshold, gv, m
         cell_pop
       FROM cell_pops
       WHERE
-        iso3n = {iso3n} And
+        iso3n IN ({iso3n}) And
         year IN ({max(years)})
       ) pops
     
