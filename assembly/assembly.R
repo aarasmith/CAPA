@@ -8,6 +8,28 @@ iso3n_transform <- function(vector){
 
 iso3n_transform(x$iso3n)
 
+####
+# These functions are optimized to use parallel processing with the future and future.apply packages
+
+# Consider setting plan(multisession) before running for dramatically increased individual performance
+
+# If running for a global set, you should consider replacing the future_lapply() calls in the sub_functions (found in data_generation.R and adm_assembly.R) with regular lapply() 
+# and running these primary functions over a vector of countries with future_lapply()
+####
+
+####
+# If you need to generate the full dataset and commit it to a DB use generate_full()
+
+# If you need to add new population data and then generate new conflict statistics use update_from_pops()
+# If you need to generate new population tif's for a certain year see interpolate_rasters.R which utilizes the function in lintemp.R
+
+# If you just need to update the conflict statistics use update_from_stats()
+
+# If you want to update population data without then changing/updating the conflict statistics use update_pops()
+
+# If you want to update ADM data which is attached to cell_stats and cell_pops use update_adm()
+# This can be used to either initialize a new column in the DB tables for the generated ADM data or simply update the existing column with init_column = TRUE/FALSE
+####
 
 generate_full <- function(iso, year_range = 1990:2020, nid_grid, poprast_list, ged25, ged50, ged100, adm1, write_db = NULL){
   
