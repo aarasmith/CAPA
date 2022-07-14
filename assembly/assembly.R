@@ -11,10 +11,10 @@ iso3n_transform(x$iso3n)
 ####
 # These functions are optimized to use parallel processing with the future and future.apply packages
 
-# Consider setting plan(multisession) before running for dramatically increased individual performance
+# Consider setting future::plan(multisession) before running for dramatically increased individual performance
 
 # If running for a global set, you should consider replacing the future_lapply() calls in the sub_functions (found in data_generation.R and adm_assembly.R) with regular lapply() 
-# and running these primary functions over a vector of countries with future_lapply()
+# and running these primary functions over a vector of countries with future_lapply(), although I haven't tested whether this approach would actually be faster/slower
 ####
 
 ####
