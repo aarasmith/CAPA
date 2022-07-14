@@ -27,23 +27,22 @@ int25_weight <- 0
 int50_weight <- 0
 int100_weight <- 0
 
-weights <- list(L25_weight, L50_weight, L100_weight, M25_weight, M50_weight, M100_weight, H25_weight, H50_weight, H100_weight,
-                int25_weight, int50_weight, int100_weight)
+#weights <- list(L25_weight, L50_weight, L100_weight, M25_weight, M50_weight, M100_weight, H25_weight, H50_weight, H100_weight, int25_weight, int50_weight, int100_weight)
 
 weights <- list(L25 = L25_weight, L50 = L50_weight, L100 = L100_weight, M25 = M25_weight, M50 = M50_weight, M100 = M100_weight, H25 = H25_weight, H50 = H50_weight, H100 = H100_weight,
                 int25 = int25_weight, int50 = int50_weight, int100 = int100_weight)
 
-worst_adm <- function(iso, years, monthly = TRUE, adm1 = TRUE, weights, threshold = 1, cap = NA, score = FALSE){
+get_standard_aggregation <- function(iso, years, monthly = TRUE, adm1 = TRUE, weights, threshold = 1, cap = NA, score = FALSE){
   
   iso3n <- ison(iso)
 
   capa_db <- connect_to_capa()
   
-  gv <- get_grouping_vars(adm1, monthly)
+  gv <- get_standard_gv(adm1, monthly)
   
-  total_pop <- get_total_pop(iso3n, years, gv, capa_db)
+  total_pop <- query_total_pop(iso3n, years, gv, capa_db)
   
-  data <- get_cell_stats(iso3n, years, weights, threshold, gv, capa_db) %>%
+  data <- query_standard_aggregation(iso3n, years, weights, threshold, gv, capa_db) %>%
     left_join(total_pop, by = gv[['tot_join_vars']]) %>%
     mutate(risk_pct = risk_pop/total_pop)
   
@@ -83,22 +82,22 @@ worst_adm <- function(iso, years, monthly = TRUE, adm1 = TRUE, weights, threshol
   
 }
 
-system.time({x <- worst_adm(c("AFG", "IRQ", "MEX", "CAF"), 1990:2020, monthly = T, adm1 = T, weights)})
-system.time({x <- worst_adm("AFG", 1990:2020, monthly = T, adm1 = F, weights)})
-system.time({x <- worst_adm("AFG", 1990:2020, monthly = F, adm1 = T, weights)})
-system.time({x <- worst_adm(c("AFG", "IRQ", "MEX", "CAF"), 1990:2020, monthly = F, adm1 = F, weights)})
-system.time({x <- worst_adm("AFG", 1990:2020, monthly = T, adm1 = T, weights, score = T)})
-system.time({x <- worst_adm("AFG", 1990:2020, monthly = T, adm1 = F, weights, score = T)})
-system.time({x <- worst_adm("AFG", 1990:2020, monthly = F, adm1 = T, weights, score = T)})
-system.time({x <- worst_adm(c("AFG", "IRQ"), 1990:2020, monthly = F, adm1 = F, weights, score = T)})
+system.time({x <- get_standard_aggregation(c("AFG", "IRQ", "MEX", "CAF"), 1990:2020, monthly = T, adm1 = T, weights)})
+system.time({x <- get_standard_aggregation("AFG", 1990:2020, monthly = T, adm1 = F, weights)})
+system.time({x <- get_standard_aggregation("AFG", 1990:2020, monthly = F, adm1 = T, weights)})
+system.time({x <- get_standard_aggregation(c("AFG", "IRQ", "MEX", "CAF"), 1990:2020, monthly = F, adm1 = F, weights)})
+system.time({x <- get_standard_aggregation("AFG", 1990:2020, monthly = T, adm1 = T, weights, score = T)})
+system.time({x <- get_standard_aggregation("AFG", 1990:2020, monthly = T, adm1 = F, weights, score = T)})
+system.time({x <- get_standard_aggregation("AFG", 1990:2020, monthly = F, adm1 = T, weights, score = T)})
+system.time({x <- get_standard_aggregation(c("AFG", "IRQ"), 1990:2020, monthly = F, adm1 = F, weights, score = T)})
 
-plot_score_sql <- function(iso, years, start_end = c(1,12), weights, draw_points = TRUE){
+get_cell_scores <- function(iso, years, start_end = c(1,12), weights, draw_points = TRUE){
   
   iso3n <- ison(iso)
 
   capa_db <- connect_to_capa()
   
-  data <- get_cell_scores(iso3n, years, start_end, weights)
+  data <- query_cell_scores(iso3n, years, start_end, weights)
   
   data$score <- as.numeric(data$score)
   
@@ -112,7 +111,7 @@ plot_score_sql <- function(iso, years, start_end = c(1,12), weights, draw_points
     conflict_events <- head(conflict_events, n = 0)
   }
   
-  out_list <- list(data, filter(adm1_cgaz, shape_group == iso), conflict_events)
+  out_list <- list(cells = data, adm = filter(adm1_cgaz, shape_group == iso), events = conflict_events)
   
   disconnect_from_capa(capa_db)
   
@@ -120,13 +119,13 @@ plot_score_sql <- function(iso, years, start_end = c(1,12), weights, draw_points
   
 }
 
-system.time({x <- plot_score_sql("AFG", 2011, start_end = c(1,11), weights, draw_points = F)})
+system.time({x <- get_cell_scores("AFG", 2011, start_end = c(1,11), weights, draw_points = F)})
 
-plot_score <- function(x, legend_size = 2, font_size = 18){
+plot_cell_scores <- function(x, legend_size = 2, font_size = 18){
   #browser()
-  out_plot <- ggplot(x[[2]]) +
-    geom_sf(data = x[[1]], aes(fill = score), color = NA) +
-    geom_sf(data = x[[3]], aes(col = int_cat)) +
+  out_plot <- ggplot(x[['adm']]) +
+    geom_sf(data = x[['cells']], aes(fill = score), color = NA) +
+    geom_sf(data = x[['events']], aes(col = int_cat)) +
     geom_sf(fill = NA) +
     scale_fill_viridis_c() +
     theme(legend.key.size = unit(legend_size, 'cm'),
@@ -136,19 +135,33 @@ plot_score <- function(x, legend_size = 2, font_size = 18){
   return(out_plot)
 }
 
+plot_cell_scores(x)
 
-long_duration <- function(iso, years, monthly = FALSE, start_end = c(1,12), adm1 = FALSE, weights, threshold = 1){
+
+get_temporal <- function(type, iso, years, weights, monthly = FALSE, start_end = c(1,12), adm1 = FALSE, threshold = 1, p_threshold = NA){
+  #not ready to implement the p_threshold just yet. Will be easier once I've gone through the stage to create place-holder 0 entries for periods not matching the thresh condition
+  
+  if(type %!in% c("duration", "frequency")){
+    stop("type must be either 'duration' or 'frequency'")
+  }
   
   iso3n <- ison(iso)
   
   capa_db <- connect_to_capa()
   
-  gv <- get_duration_gv(adm1, monthly, start_end, years)
+  gv <- get_temporal_gv(adm1, monthly, start_end, years)
   
-  total_pop <- get_total_pop(iso3n, years[length(years)], gv, capa_db) %>%
+  total_pop <- query_total_pop(iso3n, years[length(years)], gv, capa_db) %>%
     rename(capa_id = contains("capa_id"))
   
-  out_frame <- get_duration(iso3n, years, start_end, weights, threshold, gv, capa_db) %>%
+  if(type == "frequency"){
+    data <- query_frequency(iso3n, years, start_end, weights, threshold, gv, capa_db)
+  }
+  if(type == "duration"){
+    data <- query_duration(iso3n, years, start_end, weights, threshold, gv, capa_db)
+  }
+  
+  out_frame <- data %>%
     rename(capa_id = contains("capa_id")) %>%
     left_join(total_pop, by = gv[['tot_join_vars']]) %>%
     mutate(risk_pct = risk_pop/total_pop)
@@ -158,7 +171,6 @@ long_duration <- function(iso, years, monthly = FALSE, start_end = c(1,12), adm1
   }
   
   if(adm1){
-    
     out_frame <- left_join(out_frame, dplyr::select(adm1_cgaz, capa_id, shape_name) %>% st_drop_geometry(), by = "capa_id")
   }
   
@@ -167,42 +179,13 @@ long_duration <- function(iso, years, monthly = FALSE, start_end = c(1,12), adm1
   
 }
 
-system.time({x <- long_duration(c("SYR", "IRQ"), years = 2014:2015, monthly = F, start_end = c(1,12), adm1 = T, weights, threshold = 50)})
-system.time({y <- long_duration(c("SYR", "IRQ"), years = 2014:2015, monthly = T, start_end = c(1,12), adm1 = T, weights, threshold = 50)})
-system.time({z <- long_duration(c("SYR", "IRQ"), years = 2014:2015, monthly = T, start_end = c(1,12), adm1 = F, weights, threshold = 50)})
-system.time({zz <- long_duration(c("SYR", "IRQ"), years = 2014:2015, monthly = F, start_end = c(1,12), adm1 = T, weights, threshold = 50)})
-
-long_frequency <- function(iso, years, monthly = FALSE, start_end = c(1,12), adm1 = FALSE, weights, p_threshold = 1, threshold = 1){
-  
-  iso3n <- ison(iso)
-  
-  capa_db <- connect_to_capa()
-  
-  gv <- get_duration_gv(adm1, monthly, start_end, years)
-  
-  total_pop <- get_total_pop(iso3n, years[length(years)], gv, capa_db) %>%
-    rename(capa_id = contains("capa_id"))
-  
-  out_frame <- get_frequency(iso3n, years, start_end, weights, threshold, p_threshold, gv, capa_db) %>%
-    rename(capa_id = contains("capa_id")) %>%
-    left_join(total_pop, by = gv[['tot_join_vars']]) %>%
-    mutate(risk_pct = risk_pop/total_pop)
-  
-  if(!is.null(out_frame$capa_id)){
-    out_frame$capa_id <- as.numeric(out_frame$capa_id)
-  }
-  
-  if(adm1){
-    
-    out_frame <- left_join(out_frame, dplyr::select(adm1_cgaz, capa_id, shape_name) %>% st_drop_geometry(), by = "capa_id")
-  }
-  
-  disconnect_from_capa(capa_db)
-  return(out_frame %>% within(risk_pct <- round(risk_pct, 4)))
-}
+system.time({x <- get_temporal("duration", c("SYR", "IRQ"), years = 2014:2015, monthly = F, start_end = c(1,12), adm1 = T, weights, threshold = 50)})
+system.time({y <- get_temporal("duration", c("SYR", "IRQ"), years = 2014:2015, monthly = T, start_end = c(1,12), adm1 = T, weights, threshold = 50)})
+system.time({z <- get_temporal("duration", c("SYR", "IRQ"), years = 2014:2015, monthly = T, start_end = c(1,12), adm1 = F, weights, threshold = 50)})
+system.time({zz <- get_temporal("duration", c("SYR", "IRQ"), years = 2014:2015, monthly = F, start_end = c(1,12), adm1 = T, weights, threshold = 50)})
 
 
-system.time({x <- long_frequency(c("SYR", "IRQ"), years = 2014:2015, monthly = F, start_end = c(1,12), adm1 = F, weights, threshold = 50)})
-system.time({y <- long_frequency(c("SYR", "IRQ"), years = 2015, monthly = T, start_end = c(1,12), adm1 = T, weights, threshold = 50)})
-system.time({z <- long_frequency(c("SYR", "IRQ"), years = 2014:2015, monthly = F, start_end = c(1,12), adm1 = T, weights, threshold = 50)})
-system.time({zz <- long_frequency(c("SYR", "IRQ"), years = 2015, monthly = T, start_end = c(1,12), adm1 = F, weights, threshold = 50)})
+system.time({x <- get_temporal("frequency", c("SYR", "IRQ"), years = 2014:2015, monthly = F, start_end = c(1,12), adm1 = F, weights, threshold = 50)})
+system.time({y <- get_temporal("frequency", c("SYR", "IRQ"), years = 2015, monthly = T, start_end = c(1,12), adm1 = T, weights, threshold = 50)})
+system.time({z <- get_temporal("frequency", c("SYR", "IRQ"), years = 2014:2015, monthly = F, start_end = c(1,12), adm1 = T, weights, threshold = 50)})
+system.time({zz <- get_temporal("frequency", c("SYR", "IRQ"), years = 2015, monthly = T, start_end = c(1,12), adm1 = F, weights, threshold = 50)})

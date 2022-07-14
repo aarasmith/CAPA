@@ -1,7 +1,7 @@
 
 
 
-get_grouping_vars <- function(adm1, monthly){
+get_standard_gv <- function(adm1, monthly){
   if(adm1){
     tot_group_vars <- "iso3n, year, capa_id_adm1"
     tot_join_vars <- c("iso3n", "year", "capa_id_adm1")
@@ -34,7 +34,7 @@ get_grouping_vars <- function(adm1, monthly){
   return(list(tot_group_vars = tot_group_vars, tot_join_vars = tot_join_vars, grouping_vars = grouping_vars, table = table, dplyr_group_vars = dplyr_group_vars))
 }
 
-get_total_pop <- function(iso3n, years, gv, capa_db){
+query_total_pop <- function(iso3n, years, gv, capa_db){
   
   iso3n <- paste(iso3n, collapse = ", ")
   
@@ -51,7 +51,7 @@ get_total_pop <- function(iso3n, years, gv, capa_db){
   return(total_pop)
 }
 
-get_cell_stats <- function(iso3n, years, weights, threshold, gv, capa_db, score = FALSE){
+query_standard_aggregation <- function(iso3n, years, weights, threshold, gv, capa_db, score = FALSE){
   
   iso3n <- paste(iso3n, collapse = ", ")
   
@@ -113,7 +113,7 @@ get_cell_stats <- function(iso3n, years, weights, threshold, gv, capa_db, score 
 
 
 ####plot_score_sql####
-get_cell_scores <- function(iso3n, years, start_end, weights){
+query_cell_scores <- function(iso3n, years, start_end, weights){
   
   if(start_end[1] == 1 & start_end[2] == 12){
     table <- "cell_stats_yr"
@@ -170,7 +170,7 @@ get_cell_scores <- function(iso3n, years, start_end, weights){
 }
 
 
-get_duration_gv <- function(adm, monthly, start_end, years){
+get_temporal_gv <- function(adm, monthly, start_end, years){
   #creates grouping variables for the SQL query based on whether the query is adm0/adm1 and yearly/monthly. gv['start_end'] is a partial SQL statement added to the middle of sql_query
   
   gv <- list()
@@ -197,7 +197,7 @@ get_duration_gv <- function(adm, monthly, start_end, years){
   return(gv)
 }
 
-get_duration <- function(iso3n, years, start_end, weights, threshold, gv, capa_db){
+query_duration <- function(iso3n, years, start_end, weights, threshold, gv, capa_db){
   
   iso3n <- paste(iso3n, collapse = ", ")
   
@@ -256,11 +256,11 @@ get_duration <- function(iso3n, years, start_end, weights, threshold, gv, capa_d
   
 }
 
-system.time({x <- get_duration(iso3n, years = 2014:2018, start_end = c(1,12), adm = T, weights, threshold = 100, gv, monthly = T, capa_db)})
-system.time({y <- get_duration(iso3n, years = 2014:2018, start_end = c(1,12), adm = T, weights, threshold = 100, gv, monthly = F, capa_db)})
+system.time({x <- query_duration(iso3n, years = 2014:2018, start_end = c(1,12), adm = T, weights, threshold = 100, gv, monthly = T, capa_db)})
+system.time({y <- query_duration(iso3n, years = 2014:2018, start_end = c(1,12), adm = T, weights, threshold = 100, gv, monthly = F, capa_db)})
 
 
-get_frequency <- function(iso3n, years, start_end, weights, threshold, p_threshold, gv, capa_db){
+query_frequency <- function(iso3n, years, start_end, weights, threshold, gv, capa_db){
   
   iso3n <- paste(iso3n, collapse = ", ")
   
@@ -314,7 +314,6 @@ get_frequency <- function(iso3n, years, start_end, weights, threshold, p_thresho
         ) pops
       
       ON freq_query.sid = pops.sid
-      WHERE n_periods >= {p_threshold}
       GROUP BY {gv['grouping_vars']}, n_periods
       ) pre_cumsum"
   )
