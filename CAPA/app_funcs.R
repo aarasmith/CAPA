@@ -14,6 +14,13 @@ ison <- function(iso3c){
   return(iso3n)
 }
 
+ison_region <- function(region){
+  capa_db <- connect_to_capa()
+  iso3n <- dbGetQuery(capa_db, glue("SELECT * FROM region_key WHERE region = '{region}'"))$iso3n
+  disconnect_from_capa()
+  return(iso3n)
+}
+
 L25_weight <- 1
 L50_weight <- 1
 L100_weight <- 1
@@ -189,3 +196,44 @@ system.time({x <- get_temporal("frequency", c("SYR", "IRQ"), years = 2014:2015, 
 system.time({y <- get_temporal("frequency", c("SYR", "IRQ"), years = 2015, monthly = T, start_end = c(1,12), adm1 = T, weights, threshold = 50)})
 system.time({z <- get_temporal("frequency", c("SYR", "IRQ"), years = 2014:2015, monthly = F, start_end = c(1,12), adm1 = T, weights, threshold = 50)})
 system.time({zz <- get_temporal("frequency", c("SYR", "IRQ"), years = 2015, monthly = T, start_end = c(1,12), adm1 = F, weights, threshold = 50)})
+
+
+get_region_aggregation <- function(region, years, weights, monthly = TRUE, threshold = 1){
+  
+  capa_db <- connect_to_capa()
+  
+  gv <- list()
+  gv['region'] <- region
+  if(monthly){
+    gv['table'] <- "cell_stats"
+    gv['grouping_vars'] <- "year, month"
+  }else{
+    gv['table'] <- "cell_stats_yr"
+    gv['grouping_vars'] <- "year"
+  }
+  
+  if(region == "World"){
+    iso3n <- unique(dbGetQuery(capa_db, glue("SELECT * FROM region_key"))$iso3n)
+  }else{
+    iso3n <- dbGetQuery(capa_db, glue("SELECT * FROM region_key WHERE region = '{region}'"))$iso3n
+  }
+  
+  total_pop <- query_region_pop(region, years, capa_db)
+  
+  
+  
+  data <- query_region_aggregation(iso3n, years, weights, threshold, gv, capa_db) %>%
+    left_join(total_pop, by = "year") %>%
+    mutate(risk_pct = risk_pop/total_pop)
+  
+  return(data) 
+}
+
+system.time({x <- get_region_aggregation("Western Asia", 2014:2015, weights, monthly = F)})
+system.time({x <- get_region_aggregation("Western Asia", 2014:2015, weights, monthly = T)})
+system.time({x <- get_region_aggregation("Western Asia", 1990:2020, weights, monthly = F)})
+system.time({x <- get_region_aggregation("Western Asia", 1990:2020, weights, monthly = T)})
+system.time({x <- get_region_aggregation("World", 2014:2015, weights, monthly = F)})
+system.time({x <- get_region_aggregation("World", 2014:2015, weights, monthly = T)})
+system.time({x <- get_region_aggregation("World", 1990:2020, weights, monthly = F)})
+system.time({x <- get_region_aggregation("World", 1990:2020, weights, monthly = T)})

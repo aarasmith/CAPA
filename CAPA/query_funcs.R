@@ -321,3 +321,67 @@ query_frequency <- function(iso3n, years, start_end, weights, threshold, gv, cap
   data <- dbGetQuery(capa_db, sql_query)
   return(data)
 }
+
+
+query_region_pop <- function(region, years, capa_db){
+  
+  #iso3n <- paste(iso3n, collapse = ", ")
+  
+  region_query <- glue(
+    "SELECT
+    	region,
+    	year,
+    	total_pop
+    FROM
+    	region_pops
+    WHERE
+      region = '{region}' AND
+      year >= {years[1]} AND
+      year <= {years[length(years)]}"
+  )
+  
+  region_pop <- dbGetQuery(capa_db, region_query)
+  return(region_pop)
+}
+
+query_region_aggregation <- function(iso3n, years, weights, threshold, gv, capa_db){
+  
+  if(gv[['region']] == "World"){
+    iso_compare <- ""
+  }else{
+    iso3n <- paste(iso3n, collapse = ", ")
+    iso_compare <- glue("iso3n IN ({iso3n}) AND")
+  }
+  
+  sql_query <- glue(
+    "SELECT
+        {gv['grouping_vars']}, SUM(cell_pop) AS risk_pop
+      FROM 
+        (
+        SELECT 
+          {gv['grouping_vars']},
+          cell_pop,
+          (lo_25 * {weights['L25']}) +
+          ((lo_50 - lo_25) * {weights['L50']}) +
+          ((lo_100 - lo_50) * {weights['L100']}) +
+          (md_25 * {weights['M25']}) +
+          ((md_50 - md_25) * {weights['M50']}) +
+          ((md_100 - md_50) * {weights['M100']}) +
+          (hi_25 * {weights['H25']}) +
+          ((hi_50 - hi_25) * {weights['H50']}) +
+          ((hi_100 - hi_50) * {weights['H100']}) +
+          (int_25 * {weights['int25']}) +
+          ((int_50 - int_25) * {weights['int50']}) +
+          ((int_100 - int_50) * {weights['int100']}) AS score 
+        FROM {gv['table']}
+        WHERE {iso_compare}
+          year >= {years[1]} AND
+          year <= {years[length(years)]}
+        ) agg
+      WHERE score >= {threshold}
+      GROUP BY {gv['grouping_vars']}"
+  )
+  
+  data <- dbGetQuery(capa_db, sql_query)
+  return(data)
+}
