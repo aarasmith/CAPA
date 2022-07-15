@@ -1,3 +1,7 @@
+#next up
+#work in the exposure map, duration map, and create a frequency map for when a single p_threshold is called
+#explore allowing multi-country input for the cell_score map 
+
 connect_to_capa <- function(){
   #hdr_db <- dbConnect(RSQLite::SQLite(), "C:/Users/andara/Documents/hdr_db_v2(2).sqlite")
   #hdr_db <- dbConnect(drv = RPostgres::Postgres(), host = post_host, dbname = "HDR", user = post_user, password = post_pass, port = post_port)
@@ -17,7 +21,7 @@ ison <- function(iso3c){
 ison_region <- function(region){
   capa_db <- connect_to_capa()
   iso3n <- dbGetQuery(capa_db, glue("SELECT * FROM region_key WHERE region = '{region}'"))$iso3n
-  disconnect_from_capa()
+  disconnect_from_capa(capa_db)
   return(iso3n)
 }
 
@@ -41,7 +45,11 @@ weights <- list(L25 = L25_weight, L50 = L50_weight, L100 = L100_weight, M25 = M2
 
 get_standard_aggregation <- function(iso, years, monthly = TRUE, adm1 = TRUE, weights, threshold = 1, cap = NA, score = FALSE){
   
-  iso3n <- ison(iso)
+  if(is.numeric(iso)){
+    iso3n <- iso
+  }else{
+    iso3n <- ison(iso)
+  }
 
   capa_db <- connect_to_capa()
   
@@ -98,9 +106,19 @@ system.time({x <- get_standard_aggregation("AFG", 1990:2020, monthly = T, adm1 =
 system.time({x <- get_standard_aggregation("AFG", 1990:2020, monthly = F, adm1 = T, weights, score = T)})
 system.time({x <- get_standard_aggregation(c("AFG", "IRQ"), 1990:2020, monthly = F, adm1 = F, weights, score = T)})
 
+iso3n_wa <- ison_region("Western Asia")
+system.time({x <- get_standard_aggregation(iso3n_wa, 1990:2020, monthly = F, adm1 = F, weights)})
+system.time({x <- get_standard_aggregation(iso3n_wa, 1990:2020, monthly = F, adm1 = T, weights)})
+system.time({x <- get_standard_aggregation(iso3n_wa, 1990:2020, monthly = T, adm1 = F, weights)})
+system.time({x <- get_standard_aggregation(iso3n_wa, 1990:2020, monthly = T, adm1 = T, weights)})
+
 get_cell_scores <- function(iso, years, start_end = c(1,12), weights, draw_points = TRUE){
   
-  iso3n <- ison(iso)
+  if(is.numeric(iso)){
+    iso3n <- iso
+  }else{
+    iso3n <- ison(iso)
+  }
 
   capa_db <- connect_to_capa()
   
@@ -152,7 +170,11 @@ get_temporal <- function(type, iso, years, weights, monthly = FALSE, start_end =
     stop("type must be either 'duration' or 'frequency'")
   }
   
-  iso3n <- ison(iso)
+  if(is.numeric(iso)){
+    iso3n <- iso
+  }else{
+    iso3n <- ison(iso)
+  }
   
   capa_db <- connect_to_capa()
   
