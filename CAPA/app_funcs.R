@@ -1,5 +1,5 @@
 #next up
-#work in the exposure map, duration map, and create a frequency map for when a single p_threshold is called
+#plot shapes for non-conflict states in multi iso maps
 #explore allowing multi-country input for the cell_score map
 #give more flexibility for when ADM2 is integrated
 
@@ -202,6 +202,13 @@ get_temporal <- function(type, iso, years, weights, monthly = FALSE, start_end =
   
   if(adm1){
     out_frame <- left_join(out_frame, dplyr::select(adm1_cgaz, capa_id, shape_name) %>% st_drop_geometry(), by = "capa_id")
+    if(!is.na(p_threshold)){
+      out_frame <- out_frame %>%
+        filter(n_periods >= p_threshold) %>%
+        group_by(capa_id) %>%
+        filter(n_periods == min(n_periods)) %>%
+        ungroup()
+    }
   }
   
   disconnect_from_capa(capa_db)
@@ -220,6 +227,12 @@ system.time({y <- get_temporal("frequency", c("SYR", "IRQ"), years = 2015, month
 system.time({z <- get_temporal("frequency", c("SYR", "IRQ"), years = 2014:2015, monthly = F, start_end = c(1,12), adm1 = T, weights, threshold = 50)})
 system.time({zz <- get_temporal("frequency", c("SYR", "IRQ"), years = 2015, monthly = T, start_end = c(1,12), adm1 = F, weights, threshold = 50)})
 
+system.time({z <- get_temporal("frequency", c("SYR", "IRQ"), years = 2014:2016, monthly = F, start_end = c(1,12), adm1 = T, weights, threshold = 50, p_threshold = 1)})
+my_plot <- adm_plot(z)
+my_plot
+system.time({z <- get_temporal("frequency", iso3n_a, years = 2014:2015, monthly = T, start_end = c(1,12), adm1 = T, weights, threshold = 10, p_threshold = 2)})
+my_plot <- adm_plot(z)
+my_plot
 
 get_region_aggregation <- function(region, years, weights, monthly = TRUE, threshold = 1){
   
@@ -279,7 +292,7 @@ adm_plot <- function(x, id_col = "capa_id", legend_size = 2, font_size = 18){
 }
 
 system.time({x <- get_standard_aggregation(iso3n_wa, 2018, monthly = F, adm1 = T, weights)})
-iso3n_a <- ison_region("Africa")
+iso3n_a <- ison_region("Asia")
 system.time({x <- get_standard_aggregation(iso3n_a, 2018, monthly = F, adm1 = T, weights)})
 system.time({my_plot <- adm_plot(x, "capa_id_adm1")})
 my_plot

@@ -266,7 +266,7 @@ query_frequency <- function(iso3n, years, start_end, weights, threshold, gv, cap
   
   sql_query <- glue(
     "SELECT
-      {gv['grouping_vars']}, n_periods, SUM(risk_pop) OVER(PARTITION BY {gv['grouping_vars']} ORDER BY n_periods ASC) AS risk_pop
+      {gv['grouping_vars']}, n_periods, SUM(risk_pop) OVER(PARTITION BY {gv['grouping_vars']} ORDER BY n_periods DESC) AS risk_pop
     FROM
       (
       SELECT
