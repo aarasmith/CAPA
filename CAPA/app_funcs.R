@@ -1,6 +1,7 @@
 #next up
 #work in the exposure map, duration map, and create a frequency map for when a single p_threshold is called
-#explore allowing multi-country input for the cell_score map 
+#explore allowing multi-country input for the cell_score map
+#give more flexibility for when ADM2 is integrated
 
 connect_to_capa <- function(){
   #hdr_db <- dbConnect(RSQLite::SQLite(), "C:/Users/andara/Documents/hdr_db_v2(2).sqlite")
@@ -259,3 +260,26 @@ system.time({x <- get_region_aggregation("World", 2014:2015, weights, monthly = 
 system.time({x <- get_region_aggregation("World", 2014:2015, weights, monthly = T)})
 system.time({x <- get_region_aggregation("World", 1990:2020, weights, monthly = F)})
 system.time({x <- get_region_aggregation("World", 1990:2020, weights, monthly = T)})
+
+
+adm_plot <- function(x, id_col = "capa_id", legend_size = 2, font_size = 18){
+  #browser()
+  x <- left_join(x, adm1_cgaz %>% dplyr::select(capa_id), by = setNames("capa_id", id_col)) %>% st_as_sf()
+  y <- filter(adm1_cgaz, iso3n %in% x$iso3n)
+  my_plot <- ggplot() +
+    geom_sf(data = y) +
+    geom_sf(data = x, aes(fill = risk_pct)) +
+    scale_fill_viridis_c(limits = c(0,1)) +
+    theme(legend.key.size = unit(legend_size, 'cm'),
+          legend.text = element_text(size = font_size),
+          legend.title = element_text(size = font_size))
+  
+  return(my_plot)
+  
+}
+
+system.time({x <- get_standard_aggregation(iso3n_wa, 2018, monthly = F, adm1 = T, weights)})
+iso3n_a <- ison_region("Africa")
+system.time({x <- get_standard_aggregation(iso3n_a, 2018, monthly = F, adm1 = T, weights)})
+system.time({my_plot <- adm_plot(x, "capa_id_adm1")})
+my_plot
