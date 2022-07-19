@@ -68,37 +68,16 @@ ui <- fluidPage(
                sidebarLayout(
                  
                  sidebarPanel(style = "height: 95vh; overflow-y: auto;",
-                              selectInput("country_long_map", "Select Country", choices = country_choices),
+                              selectInput("country_long_map", "Select Country", choices = country_choices, multiple = T),
                               numericInput("year_long_map", "Year:", min = 1990, max = 2020, value = 1990, step = 1),
                               radioButtons(inputId = "monthly_long_map", label = "Period size", choiceNames = c("Year", "Month"), choiceValues = c(FALSE, TRUE), inline = T),
                               numericInput("month_long_map", "Month(if monthly selected):", min = 1, max = 12, value = 1, step = 1),
-                              splitLayout(cellArgs = list(style='white-space: normal;'),
-                                          numericInput(inputId = "L25_weight_long_map", label = "Low 25km Weight", value = 1, min = 0, max = 100, step = 1),
-                                          numericInput(inputId = "L50_weight_long_map", label = "Low 50km Weight", value = 1, min = 0, max = 100, step = 1),
-                                          numericInput(inputId = "L100_weight_long_map", label = "Low 100km Weight", value = 1, min = 0, max = 100, step = 1)
-                              ),
-                              splitLayout(cellArgs = list(style='white-space: normal;'),
-                                          numericInput(inputId = "M25_weight_long_map", label = "Medium 25km Weight", value = 1, min = 0, max = 100, step = 1),
-                                          numericInput(inputId = "M50_weight_long_map", label = "Medium 50km Weight", value = 1, min = 0, max = 100, step = 1),
-                                          numericInput(inputId = "M100_weight_long_map", label = "Medium 100km Weight", value = 1, min = 0, max = 100, step = 1)
-                              ),
-                              splitLayout(cellArgs = list(style='white-space: normal;'),
-                                          numericInput(inputId = "H25_weight_long_map", label = "High 25km Weight", value = 1, min = 0, max = 100, step = 1),
-                                          numericInput(inputId = "H50_weight_long_map", label = "High 50km Weight", value = 1, min = 0, max = 100, step = 1),
-                                          numericInput(inputId = "H100_weight_long_map", label = "High 100km Weight", value = 1, min = 0, max = 100, step = 1)
-                              ),
-                              splitLayout(cellArgs = list(style='white-space: normal;'),
-                                          numericInput(inputId = "int25_weight_long_map", label = "B-deaths 25km Weight", value = 0, min = 0, max = 100, step = 1),
-                                          numericInput(inputId = "int50_weight_long_map", label = "B-deaths 50km Weight", value = 0, min = 0, max = 100, step = 1),
-                                          numericInput(inputId = "int100_weight_long_map", label = "B-deaths 100km Weight", value = 0, min = 0, max = 100, step = 1)
-                              ),
                               numericInput(inputId = "threshold_long_map", label = "Intensity Threshold", value = 1, min = 1, max = 1000000, step = 1),
                               actionButton(inputId = "submit_long_map", label = "Submit"),
                               splitLayout(cellArgs = list(style='white-space: normal;'),
                                           numericInput(inputId = "font_size_long_map", label = "Legend font size", value = 18, min = 1, max = 100, step = 1),
                                           numericInput(inputId = "legend_size_long_map", label = "Legend key size (in CM)", value = 2, min = 0.1, max = 100, step = 0.1)
-                              ),
-                              downloadButton("download_long_map", label = "Download Table")
+                              )
                  ),
                  mainPanel(
                    plotOutput("long_map")

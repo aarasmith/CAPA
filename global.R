@@ -27,6 +27,7 @@ source("CAPA/query_funcs.R")
 source("CAPA/app_funcs.R")
 
 adm1_cgaz <- readRDS("data/adm1_cgaz.RDS")
+adm0_cgaz <- readRDS("data/adm0_cgaz.RDS")
 country_choices <- sort(unique(adm1_cgaz$shape_group))
 capa_db <- connect_to_capa()
 region_choice <- sort(dbGetQuery(capa_db, "SELECT DISTINCT region FROM region_key")$region)

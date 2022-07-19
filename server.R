@@ -43,22 +43,18 @@ server <- function(input, output, session) {
     input_list <- reactiveValuesToList(input)
     toggle_inputs(input_list,F,T)
     
-    worst_adm_map <- worst_adm(iso = input$country_long_map, years = input$year_long_map, monthly = input$monthly_long_map, adm1 = T, L25_weight = input$L25_weight_long_map,
-                               L50_weight = input$L50_weight_long_map, L100_weight = input$L100_weight_long_map, M25_weight = input$M25_weight_long_map, M50_weight = input$M50_weight_long_map,
-                               M100_weight = input$M100_weight_long_map, H25_weight = input$H25_weight_long_map, H50_weight = input$H50_weight_long_map, H100_weight = input$H100_weight_long_map,
-                               int25_weight = input$int25_weight_long_map, int50_weight = input$int50_weight_long_map, int100_weight = input$int100_weight_long_map,
-                               threshold = as.character(input$threshold_long_map))
+    if(input$monthly_long_map){
+      std_agg_output <- get_standard_aggregation(iso = input$country_long_map, years = input$year_long_map, monthly = input$monthly_long_map, adm1 = T, weights = weights(),
+                                                 threshold = input$threshold_long_map, selected_month = input$month_long_map)
+    }else{
+      std_agg_output <- get_standard_aggregation(iso = input$country_long_map, years = input$year_long_map, monthly = input$monthly_long_map, adm1 = T, weights = weights(),
+                                                 threshold = input$threshold_long_map)
+    }
     
     
-    output$long_map <- renderPlot(long_plot(worst_adm_map, input$legend_size_long_map, input$font_size_long_map), height=reactive(ifelse(!is.null(input$innerWidth),input$innerWidth*3/6,0)))
+    output$long_map <- renderPlot(adm_plot(x = std_agg_output, isos = input$country_long_map, id_col = "capa_id_adm1", input$legend_size_long_map, input$font_size_long_map),
+                                  height=reactive(ifelse(!is.null(input$innerWidth),input$innerWidth*3/6,0)))
     
-    
-    output$download_long_map <- downloadHandler(
-      filename = function(){"hdr_data.xlsx"},
-      content = function(fname){
-        write_xlsx(worst_adm_output, fname)
-      }
-    )
     toggle_inputs(input_list,T,T)
   })
   

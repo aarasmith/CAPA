@@ -1,4 +1,5 @@
 #next up
+#allow ADM0 for adm_map
 #explore allowing multi-country input for the cell_score map
 #give more flexibility for when ADM2 is integrated
 
@@ -43,8 +44,8 @@ ison_region <- function(region){
 # weights <- list(L25 = L25_weight, L50 = L50_weight, L100 = L100_weight, M25 = M25_weight, M50 = M50_weight, M100 = M100_weight, H25 = H25_weight, H50 = H50_weight, H100 = H100_weight,
 #                 int25 = int25_weight, int50 = int50_weight, int100 = int100_weight)
 
-get_standard_aggregation <- function(iso, years, monthly = TRUE, adm1 = TRUE, weights, threshold = 1, cap = NA, score = FALSE){
-  
+get_standard_aggregation <- function(iso, years, monthly = TRUE, adm1 = TRUE, weights, threshold = 1, cap = NA, score = FALSE, selected_month = NA){
+  #browser()
   if(is.numeric(iso)){
     iso3n <- iso
   }else{
@@ -90,6 +91,10 @@ get_standard_aggregation <- function(iso, years, monthly = TRUE, adm1 = TRUE, we
     out_frame <- left_join(out_frame %>% within(capa_id_adm1 <- as.numeric(capa_id_adm1)),
                            dplyr::select(adm1_cgaz, capa_id, shape_name) %>% st_drop_geometry(),
                            by = c("capa_id_adm1" = "capa_id"))
+  }
+  
+  if(as.logical(monthly) & !is.na(selected_month)){
+    out_frame <- out_frame %>% filter(month == selected_month)
   }
   
   disconnect_from_capa(capa_db)
@@ -276,9 +281,10 @@ get_region_aggregation <- function(region, years, weights, monthly = TRUE, thres
 
 adm_plot <- function(x, isos, id_col = "capa_id", legend_size = 2, font_size = 18){
   #browser()
+  isos <- ison(isos)
   x <- left_join(x, adm1_cgaz %>% dplyr::select(capa_id), by = setNames("capa_id", id_col)) %>% st_as_sf()
   #isos <- isos[isos %!in% x$iso3n]
-  y <- filter(test, iso3n %in% isos)
+  y <- filter(adm0_cgaz, iso3n %in% isos)
   my_plot <- ggplot() +
     geom_sf(data = x, aes(fill = risk_pct), col = "grey", size = 0.5) +
     geom_sf(data = y, col = "black") +
