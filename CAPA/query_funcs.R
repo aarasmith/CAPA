@@ -47,7 +47,8 @@ query_total_pop <- function(iso3n, years, gv, capa_db){
     GROUP BY {gv['tot_group_vars']}"
   )
   
-  total_pop <- dbGetQuery(capa_db, total_query)
+  total_pop <- dbGetQuery(capa_db, total_query) %>%
+    within(total_pop <- as.numeric(total_pop))
   return(total_pop)
 }
 
@@ -256,8 +257,8 @@ query_duration <- function(iso3n, years, start_end, weights, threshold, gv, capa
   
 }
 
-system.time({x <- query_duration(iso3n, years = 2014:2018, start_end = c(1,12), adm = T, weights, threshold = 100, gv, monthly = T, capa_db)})
-system.time({y <- query_duration(iso3n, years = 2014:2018, start_end = c(1,12), adm = T, weights, threshold = 100, gv, monthly = F, capa_db)})
+# system.time({x <- query_duration(iso3n, years = 2014:2018, start_end = c(1,12), adm = T, weights, threshold = 100, gv, monthly = T, capa_db)})
+# system.time({y <- query_duration(iso3n, years = 2014:2018, start_end = c(1,12), adm = T, weights, threshold = 100, gv, monthly = F, capa_db)})
 
 
 query_frequency <- function(iso3n, years, start_end, weights, threshold, gv, capa_db){

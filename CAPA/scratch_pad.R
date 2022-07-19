@@ -558,7 +558,7 @@ GROUP BY iso3n, year, month, shape_id"))})
 #optimal y
 #depends...DISTINCT ON approach is best for countries with not that much conflict - also faster on global...
 #new cell_stats_yearly table?
-# agg to cell_stats_yr
+# agg to cell_stats_yr - should make this a materialized view
 "SELECT
     sid, iso3n, capa_id_adm1, year, SUM(cell_pop) AS cell_pop,
     MAX(lo_25) as lo_25,

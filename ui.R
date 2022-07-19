@@ -1,13 +1,36 @@
 library(shiny)
 
-#hdr_db <- dbConnect(RSQLite::SQLite(), "hdr_db_v2.sqlite")
-#hdr_db <- dbConnect(drv = RPostgres::Postgres(), host = post_host, dbname = "HDR", user = post_user, password = post_pass, port = post_port)
-hdr_db <- connect_to_hdr_db()
+#capa_db <- dbConnect(RSQLite::SQLite(), "capa_db_v2.sqlite")
+#capa_db <- dbConnect(drv = RPostgres::Postgres(), host = post_host, dbname = "HDR", user = post_user, password = post_pass, port = post_port)
+#capa_db <- connect_to_capa_db()
 ui <- fluidPage(
   useShinyjs(),
   titlePanel("HDR"),
   
     tabsetPanel(
+      
+      tabPanel("Weights", fluid = TRUE,
+               splitLayout(cellArgs = list(style='white-space: normal;'),
+                           numericInput(inputId = "L25_weight", label = "Low 25km Weight", value = 1, min = 0, max = 100, step = 1),
+                           numericInput(inputId = "L50_weight", label = "Low 50km Weight", value = 1, min = 0, max = 100, step = 1),
+                           numericInput(inputId = "L100_weight", label = "Low 100km Weight", value = 1, min = 0, max = 100, step = 1)
+               ),
+               splitLayout(cellArgs = list(style='white-space: normal;'),
+                           numericInput(inputId = "M25_weight", label = "Medium 25km Weight", value = 1, min = 0, max = 100, step = 1),
+                           numericInput(inputId = "M50_weight", label = "Medium 50km Weight", value = 1, min = 0, max = 100, step = 1),
+                           numericInput(inputId = "M100_weight", label = "Medium 100km Weight", value = 1, min = 0, max = 100, step = 1)
+               ),
+               splitLayout(cellArgs = list(style='white-space: normal;'),
+                           numericInput(inputId = "H25_weight", label = "High 25km Weight", value = 1, min = 0, max = 100, step = 1),
+                           numericInput(inputId = "H50_weight", label = "High 50km Weight", value = 1, min = 0, max = 100, step = 1),
+                           numericInput(inputId = "H100_weight", label = "High 100km Weight", value = 1, min = 0, max = 100, step = 1)
+               ),
+               splitLayout(cellArgs = list(style='white-space: normal;'),
+                           numericInput(inputId = "int25_weight", label = "B-deaths 25km Weight", value = 0, min = 0, max = 100, step = 1),
+                           numericInput(inputId = "int50_weight", label = "B-deaths 50km Weight", value = 0, min = 0, max = 100, step = 1),
+                           numericInput(inputId = "int100_weight", label = "B-deaths 100km Weight", value = 0, min = 0, max = 100, step = 1)
+               )
+              ),
       
       ####LONG PANEL####
       
@@ -25,31 +48,11 @@ ui <- fluidPage(
                               ')),
                    
             textOutput("info"),
-            selectInput("country", "Select Country", choices = sort(dbGetQuery(hdr_db, "SELECT DISTINCT iso3c FROM grid")$iso3c)),
+            selectInput("country", "Select Country", choices = country_choices, multiple = T),
             sliderInput("year_slider", "Year Range:", min = 1990, max = 2020, value = c(1990, 2020), sep = ""),
             radioButtons(inputId = "monthly", label = "Period size", choiceNames = c("Year", "Month"), choiceValues = c(FALSE, TRUE), inline = T),
             radioButtons(inputId = "adm", label = "Admin Level", choiceNames = c("ADM0", "ADM1"), choiceValues = c(FALSE, TRUE), inline = T),
-            splitLayout(cellArgs = list(style='white-space: normal;'),
-                        numericInput(inputId = "L25_weight", label = "Low 25km Weight", value = 1, min = 0, max = 100, step = 1),
-                        numericInput(inputId = "L50_weight", label = "Low 50km Weight", value = 1, min = 0, max = 100, step = 1),
-                        numericInput(inputId = "L100_weight", label = "Low 100km Weight", value = 1, min = 0, max = 100, step = 1)
-            ),
-            splitLayout(cellArgs = list(style='white-space: normal;'),
-                        numericInput(inputId = "M25_weight", label = "Medium 25km Weight", value = 1, min = 0, max = 100, step = 1),
-                        numericInput(inputId = "M50_weight", label = "Medium 50km Weight", value = 1, min = 0, max = 100, step = 1),
-                        numericInput(inputId = "M100_weight", label = "Medium 100km Weight", value = 1, min = 0, max = 100, step = 1)
-            ),
-            splitLayout(cellArgs = list(style='white-space: normal;'),
-                        numericInput(inputId = "H25_weight", label = "High 25km Weight", value = 1, min = 0, max = 100, step = 1),
-                        numericInput(inputId = "H50_weight", label = "High 50km Weight", value = 1, min = 0, max = 100, step = 1),
-                        numericInput(inputId = "H100_weight", label = "High 100km Weight", value = 1, min = 0, max = 100, step = 1)
-            ),
-            splitLayout(cellArgs = list(style='white-space: normal;'),
-                        numericInput(inputId = "int25_weight", label = "B-deaths 25km Weight", value = 0, min = 0, max = 100, step = 1),
-                        numericInput(inputId = "int50_weight", label = "B-deaths 50km Weight", value = 0, min = 0, max = 100, step = 1),
-                        numericInput(inputId = "int100_weight", label = "B-deaths 100km Weight", value = 0, min = 0, max = 100, step = 1)
-            ),
-            textInput(inputId = "threshold", label = "Intensity Threshold"),
+            numericInput(inputId = "threshold", label = "Intensity Threshold", value = 1, min = 1, step = 1),
             actionButton(inputId = "submit", label = "Submit"),
             downloadButton("download", label = "Download Table")
           ),
@@ -65,7 +68,7 @@ ui <- fluidPage(
                sidebarLayout(
                  
                  sidebarPanel(style = "height: 95vh; overflow-y: auto;",
-                              selectInput("country_long_map", "Select Country", choices = sort(dbGetQuery(hdr_db, "SELECT DISTINCT iso3c FROM grid")$iso3c)),
+                              selectInput("country_long_map", "Select Country", choices = country_choices),
                               numericInput("year_long_map", "Year:", min = 1990, max = 2020, value = 1990, step = 1),
                               radioButtons(inputId = "monthly_long_map", label = "Period size", choiceNames = c("Year", "Month"), choiceValues = c(FALSE, TRUE), inline = T),
                               numericInput("month_long_map", "Month(if monthly selected):", min = 1, max = 12, value = 1, step = 1),
@@ -108,7 +111,7 @@ ui <- fluidPage(
       tabPanel("Score Map", fluid = TRUE,
         sidebarLayout(
           sidebarPanel(style = "height: 95vh; overflow-y: auto;",
-            selectInput("country_map", "Select Country", choices = sort(dbGetQuery(hdr_db, "SELECT DISTINCT iso3c FROM grid")$iso3c)),
+            selectInput("country_map", "Select Country", choices = country_choices),
             sliderInput("year_slider_map", "Year Range:", min = 1990, max = 2020, value = c(1990, 2020), sep = ""),
             splitLayout(cellArgs = list(style='white-space: normal;'),
                         numericInput(inputId = "start_map", label = "Start Month", value = 1, min = 1, max = 12, step = 1),
@@ -152,7 +155,7 @@ ui <- fluidPage(
       tabPanel("duration", fluid = TRUE,
                sidebarLayout(
                  sidebarPanel(style = "height: 95vh; overflow-y: auto;",
-                              selectInput("country_dur", "Select Country", choices = sort(dbGetQuery(hdr_db, "SELECT DISTINCT iso3c FROM grid")$iso3c)),
+                              selectInput("country_dur", "Select Country", choices = country_choices),
                               sliderInput("year_slider_dur", "Year Range:", min = 1990, max = 2020, value = c(1990, 2020), sep = ""),
                               splitLayout(cellArgs = list(style='white-space: normal;'),
                                           numericInput(inputId = "start_dur", label = "Start Month", value = 1, min = 1, max = 12, step = 1),
@@ -206,7 +209,7 @@ ui <- fluidPage(
       tabPanel("frequency", fluid = TRUE,
                sidebarLayout(
                  sidebarPanel(style = "height: 95vh; overflow-y: auto;",
-                              selectInput("country_freq", "Select Country", choices = sort(dbGetQuery(hdr_db, "SELECT DISTINCT iso3c FROM grid")$iso3c)),
+                              selectInput("country_freq", "Select Country", choices = country_choices),
                               sliderInput("year_slider_freq", "Year Range:", min = 1990, max = 2020, value = c(1990, 2020), sep = ""),
                               splitLayout(cellArgs = list(style='white-space: normal;'),
                                           numericInput(inputId = "start_freq", label = "Start Month", value = 1, min = 1, max = 12, step = 1),
@@ -250,7 +253,7 @@ ui <- fluidPage(
                sidebarLayout(
                  
                  sidebarPanel(style = "height: 95vh; overflow-y: auto;",
-                              selectInput("region_global", "Select Region", choices = c("World", sort(dbGetQuery(hdr_db, "SELECT DISTINCT region FROM region_key")$region))),
+                              selectInput("region_global", "Select Region", choices = c("World", region_choice)),
                               sliderInput("year_slider_global", "Year Range:", min = 1990, max = 2020, value = c(1990, 2020), sep = ""),
                               radioButtons(inputId = "monthly_global", label = "Period size", choiceNames = c("Year", "Month"), choiceValues = c(FALSE, TRUE), inline = T),
                               splitLayout(cellArgs = list(style='white-space: normal;'),
@@ -285,5 +288,5 @@ ui <- fluidPage(
       
     )
 )
-ui <- secure_app(ui)
-#disconnect_from_hdr_db(hdr_db)
+#ui <- secure_app(ui)
+#disconnect_from_capa_db(capa_db)

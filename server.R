@@ -2,37 +2,38 @@
 
 server <- function(input, output, session) {
   
-  res_auth <- secure_server(
-    check_credentials = check_credentials(credentials)
-  )
+  # res_auth <- secure_server(
+  #   check_credentials = check_credentials(credentials)
+  # )
+  # 
+  # output$auth_output <- renderPrint({
+  #   reactiveValuesToList(res_auth)
+  # })
   
-  output$auth_output <- renderPrint({
-    reactiveValuesToList(res_auth)
-  })
-    
+  weights <- reactive(list(L25 = input$L25_weight, L50 = input$L50_weight, L100 = input$L100_weight, M25 = input$M25_weight, M50 = input$M50_weight, M100 = input$M100_weight,
+                           H25 = input$H25_weight, H50 = input$H50_weight, H100 = input$H100_weight, int25 = input$int25_weight, int50 = input$int50_weight, int100 = input$int100_weight))
+   
   observeEvent(input$submit, {
     input_list <- reactiveValuesToList(input)
     toggle_inputs(input_list,F,T)
     
-    print(
-    system.time({
-    worst_adm_output <- worst_adm(iso = input$country, years = c(input$year_slider[1]:input$year_slider[2]), monthly = input$monthly, adm1 = input$adm, L25_weight = input$L25_weight, L50_weight = input$L50_weight, L100_weight = input$L100_weight,
-                                  M25_weight = input$M25_weight, M50_weight = input$M50_weight, M100_weight = input$M100_weight, H25_weight = input$H25_weight, H50_weight = input$H50_weight,
-                                  H100_weight = input$H100_weight, int25_weight = input$int25_weight, int50_weight = input$int50_weight, int100_weight = input$int100_weight,
+
+
+    std_agg_output <- get_standard_aggregation(iso = input$country, years = c(input$year_slider[1]:input$year_slider[2]), monthly = input$monthly, adm1 = input$adm, weights = weights(),
                                   threshold = input$threshold)
-    })
-    )
-    if(input$adm){
-      worst_adm_output <- worst_adm_output %>% dplyr::select(-geometry, -shape_id)
-    }
+
     
-    output$Table <- renderDataTable(worst_adm_output)
+    # if(input$adm){
+    #   worst_adm_output <- worst_adm_output %>% dplyr::select(-geometry, -shape_id)
+    # }
+    
+    output$Table <- renderDataTable(std_agg_output)
   
   
     output$download <- downloadHandler(
       filename = function(){"hdr_data.xlsx"},
       content = function(fname){
-        write_xlsx(worst_adm_output, fname)
+        write_xlsx(std_agg_output, fname)
       }
     )
     toggle_inputs(input_list,T,T)

@@ -1,5 +1,4 @@
 #next up
-#plot shapes for non-conflict states in multi iso maps
 #explore allowing multi-country input for the cell_score map
 #give more flexibility for when ADM2 is integrated
 
@@ -26,23 +25,23 @@ ison_region <- function(region){
   return(iso3n)
 }
 
-L25_weight <- 1
-L50_weight <- 1
-L100_weight <- 1
-M25_weight <- 1
-M50_weight <- 1
-M100_weight <- 1
-H25_weight <- 1
-H50_weight <- 1
-H100_weight <- 1
-int25_weight <- 0
-int50_weight <- 0
-int100_weight <- 0
-
-#weights <- list(L25_weight, L50_weight, L100_weight, M25_weight, M50_weight, M100_weight, H25_weight, H50_weight, H100_weight, int25_weight, int50_weight, int100_weight)
-
-weights <- list(L25 = L25_weight, L50 = L50_weight, L100 = L100_weight, M25 = M25_weight, M50 = M50_weight, M100 = M100_weight, H25 = H25_weight, H50 = H50_weight, H100 = H100_weight,
-                int25 = int25_weight, int50 = int50_weight, int100 = int100_weight)
+# L25_weight <- 1
+# L50_weight <- 1
+# L100_weight <- 1
+# M25_weight <- 1
+# M50_weight <- 1
+# M100_weight <- 1
+# H25_weight <- 1
+# H50_weight <- 1
+# H100_weight <- 1
+# int25_weight <- 0
+# int50_weight <- 0
+# int100_weight <- 0
+# 
+# weights <- list(L25_weight, L50_weight, L100_weight, M25_weight, M50_weight, M100_weight, H25_weight, H50_weight, H100_weight, int25_weight, int50_weight, int100_weight)
+# 
+# weights <- list(L25 = L25_weight, L50 = L50_weight, L100 = L100_weight, M25 = M25_weight, M50 = M50_weight, M100 = M100_weight, H25 = H25_weight, H50 = H50_weight, H100 = H100_weight,
+#                 int25 = int25_weight, int50 = int50_weight, int100 = int100_weight)
 
 get_standard_aggregation <- function(iso, years, monthly = TRUE, adm1 = TRUE, weights, threshold = 1, cap = NA, score = FALSE){
   
@@ -98,20 +97,20 @@ get_standard_aggregation <- function(iso, years, monthly = TRUE, adm1 = TRUE, we
   
 }
 
-system.time({x <- get_standard_aggregation(c("AFG", "IRQ", "MEX", "CAF"), 1990:2020, monthly = T, adm1 = T, weights)})
-system.time({x <- get_standard_aggregation("AFG", 1990:2020, monthly = T, adm1 = F, weights)})
-system.time({x <- get_standard_aggregation("AFG", 1990:2020, monthly = F, adm1 = T, weights)})
-system.time({x <- get_standard_aggregation(c("AFG", "IRQ", "MEX", "CAF"), 1990:2020, monthly = F, adm1 = F, weights)})
-system.time({x <- get_standard_aggregation("AFG", 1990:2020, monthly = T, adm1 = T, weights, score = T)})
-system.time({x <- get_standard_aggregation("AFG", 1990:2020, monthly = T, adm1 = F, weights, score = T)})
-system.time({x <- get_standard_aggregation("AFG", 1990:2020, monthly = F, adm1 = T, weights, score = T)})
-system.time({x <- get_standard_aggregation(c("AFG", "IRQ"), 1990:2020, monthly = F, adm1 = F, weights, score = T)})
-
-iso3n_wa <- ison_region("Western Asia")
-system.time({x <- get_standard_aggregation(iso3n_wa, 1990:2020, monthly = F, adm1 = F, weights)})
-system.time({x <- get_standard_aggregation(iso3n_wa, 1990:2020, monthly = F, adm1 = T, weights)})
-system.time({x <- get_standard_aggregation(iso3n_wa, 1990:2020, monthly = T, adm1 = F, weights)})
-system.time({x <- get_standard_aggregation(iso3n_wa, 1990:2020, monthly = T, adm1 = T, weights)})
+# system.time({x <- get_standard_aggregation(c("AFG", "IRQ", "MEX", "CAF"), 1990:2020, monthly = T, adm1 = T, weights)})
+# system.time({x <- get_standard_aggregation("AFG", 1990:2020, monthly = T, adm1 = F, weights)})
+# system.time({x <- get_standard_aggregation("AFG", 1990:2020, monthly = F, adm1 = T, weights)})
+# system.time({x <- get_standard_aggregation(c("AFG", "IRQ", "MEX", "CAF"), 1990:2020, monthly = F, adm1 = F, weights)})
+# system.time({x <- get_standard_aggregation("AFG", 1990:2020, monthly = T, adm1 = T, weights, score = T)})
+# system.time({x <- get_standard_aggregation("AFG", 1990:2020, monthly = T, adm1 = F, weights, score = T)})
+# system.time({x <- get_standard_aggregation("AFG", 1990:2020, monthly = F, adm1 = T, weights, score = T)})
+# system.time({x <- get_standard_aggregation(c("AFG", "IRQ"), 1990:2020, monthly = F, adm1 = F, weights, score = T)})
+# 
+# iso3n_wa <- ison_region("Western Asia")
+# system.time({x <- get_standard_aggregation(iso3n_wa, 1990:2020, monthly = F, adm1 = F, weights)})
+# system.time({x <- get_standard_aggregation(iso3n_wa, 1990:2020, monthly = F, adm1 = T, weights)})
+# system.time({x <- get_standard_aggregation(iso3n_wa, 1990:2020, monthly = T, adm1 = F, weights)})
+# system.time({x <- get_standard_aggregation(iso3n_wa, 1990:2020, monthly = T, adm1 = T, weights)})
 
 get_cell_scores <- function(iso, years, start_end = c(1,12), weights, draw_points = TRUE){
   
@@ -145,7 +144,7 @@ get_cell_scores <- function(iso, years, start_end = c(1,12), weights, draw_point
   
 }
 
-system.time({x <- get_cell_scores("AFG", 2011, start_end = c(1,11), weights, draw_points = F)})
+# system.time({x <- get_cell_scores("AFG", 2011, start_end = c(1,11), weights, draw_points = F)})
 
 plot_cell_scores <- function(x, legend_size = 2, font_size = 18){
   #browser()
@@ -161,7 +160,7 @@ plot_cell_scores <- function(x, legend_size = 2, font_size = 18){
   return(out_plot)
 }
 
-plot_cell_scores(x)
+# plot_cell_scores(x)
 
 
 get_temporal <- function(type, iso, years, weights, monthly = FALSE, start_end = c(1,12), adm1 = FALSE, threshold = 1, p_threshold = NA){
@@ -216,23 +215,23 @@ get_temporal <- function(type, iso, years, weights, monthly = FALSE, start_end =
   
 }
 
-system.time({x <- get_temporal("duration", c("SYR", "IRQ"), years = 2014:2015, monthly = F, start_end = c(1,12), adm1 = T, weights, threshold = 50)})
-system.time({y <- get_temporal("duration", c("SYR", "IRQ"), years = 2014:2015, monthly = T, start_end = c(1,12), adm1 = T, weights, threshold = 50)})
-system.time({z <- get_temporal("duration", c("SYR", "IRQ"), years = 2014:2015, monthly = T, start_end = c(1,12), adm1 = F, weights, threshold = 50)})
-system.time({zz <- get_temporal("duration", c("SYR", "IRQ"), years = 2014:2015, monthly = F, start_end = c(1,12), adm1 = T, weights, threshold = 50)})
-
-
-system.time({x <- get_temporal("frequency", c("SYR", "IRQ"), years = 2014:2015, monthly = F, start_end = c(1,12), adm1 = F, weights, threshold = 50)})
-system.time({y <- get_temporal("frequency", c("SYR", "IRQ"), years = 2015, monthly = T, start_end = c(1,12), adm1 = T, weights, threshold = 50)})
-system.time({z <- get_temporal("frequency", c("SYR", "IRQ"), years = 2014:2015, monthly = F, start_end = c(1,12), adm1 = T, weights, threshold = 50)})
-system.time({zz <- get_temporal("frequency", c("SYR", "IRQ"), years = 2015, monthly = T, start_end = c(1,12), adm1 = F, weights, threshold = 50)})
-
-system.time({z <- get_temporal("frequency", c("SYR", "IRQ"), years = 2014:2016, monthly = F, start_end = c(1,12), adm1 = T, weights, threshold = 50, p_threshold = 1)})
-my_plot <- adm_plot(z)
-my_plot
-system.time({z <- get_temporal("frequency", iso3n_a, years = 2014:2015, monthly = T, start_end = c(1,12), adm1 = T, weights, threshold = 10, p_threshold = 2)})
-my_plot <- adm_plot(z)
-my_plot
+# system.time({x <- get_temporal("duration", c("SYR", "IRQ"), years = 2014:2015, monthly = F, start_end = c(1,12), adm1 = T, weights, threshold = 50)})
+# system.time({y <- get_temporal("duration", c("SYR", "IRQ"), years = 2014:2015, monthly = T, start_end = c(1,12), adm1 = T, weights, threshold = 50)})
+# system.time({z <- get_temporal("duration", c("SYR", "IRQ"), years = 2014:2015, monthly = T, start_end = c(1,12), adm1 = F, weights, threshold = 50)})
+# system.time({zz <- get_temporal("duration", c("SYR", "IRQ"), years = 2014:2015, monthly = F, start_end = c(1,12), adm1 = T, weights, threshold = 50)})
+# 
+# 
+# system.time({x <- get_temporal("frequency", c("SYR", "IRQ"), years = 2014:2015, monthly = F, start_end = c(1,12), adm1 = F, weights, threshold = 50)})
+# system.time({y <- get_temporal("frequency", c("SYR", "IRQ"), years = 2015, monthly = T, start_end = c(1,12), adm1 = T, weights, threshold = 50)})
+# system.time({z <- get_temporal("frequency", c("SYR", "IRQ"), years = 2014:2015, monthly = F, start_end = c(1,12), adm1 = T, weights, threshold = 50)})
+# system.time({zz <- get_temporal("frequency", c("SYR", "IRQ"), years = 2015, monthly = T, start_end = c(1,12), adm1 = F, weights, threshold = 50)})
+# 
+# system.time({z <- get_temporal("frequency", c("SYR", "IRQ"), years = 2014:2016, monthly = F, start_end = c(1,12), adm1 = T, weights, threshold = 50, p_threshold = 1)})
+# my_plot <- adm_plot(z)
+# my_plot
+# system.time({z <- get_temporal("frequency", iso3n_a, years = 2014:2015, monthly = T, start_end = c(1,12), adm1 = T, weights, threshold = 10, p_threshold = 2)})
+# my_plot <- adm_plot(z)
+# my_plot
 
 get_region_aggregation <- function(region, years, weights, monthly = TRUE, threshold = 1){
   
@@ -265,14 +264,14 @@ get_region_aggregation <- function(region, years, weights, monthly = TRUE, thres
   return(data) 
 }
 
-system.time({x <- get_region_aggregation("Western Asia", 2014:2015, weights, monthly = F)})
-system.time({x <- get_region_aggregation("Western Asia", 2014:2015, weights, monthly = T)})
-system.time({x <- get_region_aggregation("Western Asia", 1990:2020, weights, monthly = F)})
-system.time({x <- get_region_aggregation("Western Asia", 1990:2020, weights, monthly = T)})
-system.time({x <- get_region_aggregation("World", 2014:2015, weights, monthly = F)})
-system.time({x <- get_region_aggregation("World", 2014:2015, weights, monthly = T)})
-system.time({x <- get_region_aggregation("World", 1990:2020, weights, monthly = F)})
-system.time({x <- get_region_aggregation("World", 1990:2020, weights, monthly = T)})
+# system.time({x <- get_region_aggregation("Western Asia", 2014:2015, weights, monthly = F)})
+# system.time({x <- get_region_aggregation("Western Asia", 2014:2015, weights, monthly = T)})
+# system.time({x <- get_region_aggregation("Western Asia", 1990:2020, weights, monthly = F)})
+# system.time({x <- get_region_aggregation("Western Asia", 1990:2020, weights, monthly = T)})
+# system.time({x <- get_region_aggregation("World", 2014:2015, weights, monthly = F)})
+# system.time({x <- get_region_aggregation("World", 2014:2015, weights, monthly = T)})
+# system.time({x <- get_region_aggregation("World", 1990:2020, weights, monthly = F)})
+# system.time({x <- get_region_aggregation("World", 1990:2020, weights, monthly = T)})
 
 
 adm_plot <- function(x, isos, id_col = "capa_id", legend_size = 2, font_size = 18){
@@ -295,8 +294,22 @@ adm_plot <- function(x, isos, id_col = "capa_id", legend_size = 2, font_size = 1
   
 }
 
-system.time({x <- get_standard_aggregation(iso3n_wa, 2018, monthly = F, adm1 = T, weights)})
-iso3n_a <- ison_region("Africa")
-system.time({x <- get_standard_aggregation(iso3n_a, 2018, monthly = F, adm1 = T, weights)})
-system.time({my_plot <- adm_plot(x, iso3n_wa, "capa_id_adm1")})
-my_plot
+# system.time({x <- get_standard_aggregation(iso3n_wa, 2018, monthly = F, adm1 = T, weights)})
+# iso3n_a <- ison_region("Africa")
+# system.time({x <- get_standard_aggregation(iso3n_a, 2018, monthly = F, adm1 = T, weights)})
+# system.time({my_plot <- adm_plot(x, iso3n_wa, "capa_id_adm1")})
+# my_plot
+
+toggle_inputs <- function(input_list,enable_inputs=T,only_buttons=TRUE){
+  # Subset if only_buttons is TRUE.
+  if(only_buttons){
+    buttons <- which(sapply(input_list,function(x) {any(grepl('Button',attr(x,"class")))}))
+    input_list = input_list[buttons]
+  }
+  
+  # Toggle elements
+  for(x in names(input_list))
+    if(enable_inputs){
+      shinyjs::enable(x)} else {
+        shinyjs::disable(x) }
+}

@@ -4,6 +4,8 @@
 #The capa_id is the iso3n + 100 (to enforce 3 digit length) as a prefix appended to the numbers in the cgaz shapeID after the "B" padded with 0's on the right to end up with an 11 digit ID
 
 drop_path <- "C:/Users/andara/PRIO Dropbox/Andrew Arasmith/R Scripts/HDR/"
+adm0_cgaz <- st_read(paste0(drop_path, "geoBoundariesCGAZ_ADM0.geojson"))
+adm0_cgaz <- adm0_cgaz %>% mutate(iso3n = ifelse(!is.na(ISO_CODE), ison(ISO_CODE), 0))
 adm1_cgaz <- readRDS(paste0(drop_path, "adm1.RDS"))
 adm2_cgaz <- readRDS(paste0(drop_path, "adm2.RDS"))
 
