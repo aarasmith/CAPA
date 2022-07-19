@@ -275,24 +275,28 @@ system.time({x <- get_region_aggregation("World", 1990:2020, weights, monthly = 
 system.time({x <- get_region_aggregation("World", 1990:2020, weights, monthly = T)})
 
 
-adm_plot <- function(x, id_col = "capa_id", legend_size = 2, font_size = 18){
+adm_plot <- function(x, isos, id_col = "capa_id", legend_size = 2, font_size = 18){
   #browser()
   x <- left_join(x, adm1_cgaz %>% dplyr::select(capa_id), by = setNames("capa_id", id_col)) %>% st_as_sf()
-  y <- filter(adm1_cgaz, iso3n %in% x$iso3n)
+  #isos <- isos[isos %!in% x$iso3n]
+  y <- filter(test, iso3n %in% isos)
   my_plot <- ggplot() +
-    geom_sf(data = y) +
-    geom_sf(data = x, aes(fill = risk_pct)) +
+    geom_sf(data = x, aes(fill = risk_pct), col = "grey", size = 0.5) +
+    geom_sf(data = y, col = "black") +
     scale_fill_viridis_c(limits = c(0,1)) +
     theme(legend.key.size = unit(legend_size, 'cm'),
           legend.text = element_text(size = font_size),
-          legend.title = element_text(size = font_size))
+          legend.title = element_text(size = font_size),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.background = element_rect(fill="#FFEBCD"))
   
   return(my_plot)
   
 }
 
 system.time({x <- get_standard_aggregation(iso3n_wa, 2018, monthly = F, adm1 = T, weights)})
-iso3n_a <- ison_region("Asia")
+iso3n_a <- ison_region("Africa")
 system.time({x <- get_standard_aggregation(iso3n_a, 2018, monthly = F, adm1 = T, weights)})
-system.time({my_plot <- adm_plot(x, "capa_id_adm1")})
+system.time({my_plot <- adm_plot(x, iso3n_wa, "capa_id_adm1")})
 my_plot
