@@ -62,3 +62,20 @@ move_comb <- function(hdr_db = hdr_db, capa_db = capa_db){
     left_join(new_cgaz, by = "sid")
   dbWriteTable(capa_db, "cell_stats", new_comb, append = TRUE)
 }
+
+dbExecute(capa_db, "CREATE TABLE region_key (iso3n SMALLINT, region TEXT)")
+#requires ison function
+move_region_key <- function(hdr_db = hdr_db, capa_db = capa_db){
+  new_region_key <- dbGetQuery(hdr_db, "SELECT * FROM region_key") %>%
+    filter(iso3c != "SPR") %>%
+    mutate(iso3c = ison(iso3c)) %>%
+    rename(iso3n = iso3c)
+  dbWriteTable(capa_db, "region_key", new_region_key, append = TRUE)
+}
+
+dbExecute(capa_db, "CREATE TABLE region_pops (region TEXT, year SMALLINT, total_pop BIGINT)")
+move_region_pops <- function(hdr_db = hdr_db, capa_db = capa_db){
+  new_region_pops <- dbGetQuery(hdr_db, "SELECT * FROM region_pops") %>%
+    mutate(total_pop = round(total_pop))
+  dbWriteTable(capa_db, "region_pops", new_region_pops, append = TRUE)
+}
