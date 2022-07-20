@@ -1,10 +1,12 @@
 #next up
+#There's something weird where logical choices from the UI are getting passed as strings - need to fix up and cleanup all the temporary as.logical() calls
 #fixed broken bit in duration, but might need closer investigation to make sure
 #allow ADM0 for adm_map
 #weight presets
 #simplify or split adm0 rds
 #explore allowing multi-country input for the cell_score map
 #give more flexibility for when ADM2 is integrated
+#think about adding total pops for countries alongside regions to allow for a custom region selection
 
 connect_to_capa <- function(){
   #hdr_db <- dbConnect(RSQLite::SQLite(), "C:/Users/andara/Documents/hdr_db_v2(2).sqlite")
@@ -192,7 +194,8 @@ get_temporal <- function(type, iso, years, weights, monthly = FALSE, start_end =
     rename(capa_id = contains("capa_id"))
   
   if(type == "frequency"){
-    data <- query_frequency(iso3n, years, start_end, weights, threshold, gv, capa_db)
+    data <- query_frequency(iso3n, years, start_end, weights, threshold, gv, capa_db) %>%
+      within(n_periods <- as.numeric(n_periods))
   }
   if(type == "duration"){
     data <- query_duration(iso3n, years, start_end, weights, threshold, gv, capa_db)

@@ -34,7 +34,7 @@ ui <- fluidPage(
       
       ####LONG PANEL####
       
-      tabPanel("Exposure", fluid = TRUE,
+      tabPanel("Conflict Exposure", fluid = TRUE,
         sidebarLayout(
                  
           sidebarPanel(style = "height: 95vh; overflow-y: auto;",
@@ -111,10 +111,10 @@ ui <- fluidPage(
       
       ####DURATION PANEL####
       
-      tabPanel("duration", fluid = TRUE,
+      tabPanel("Conflict Duration", fluid = TRUE,
                sidebarLayout(
                  sidebarPanel(style = "height: 95vh; overflow-y: auto;",
-                              selectInput("country_dur", "Select Country", choices = country_choices),
+                              selectInput("country_dur", "Select Country", choices = country_choices, multiple = T),
                               sliderInput("year_slider_dur", "Year Range:", min = 1990, max = 2020, value = c(1990, 2020), sep = ""),
                               splitLayout(cellArgs = list(style='white-space: normal;'),
                                           numericInput(inputId = "start_dur", label = "Start Month", value = 1, min = 1, max = 12, step = 1),
@@ -132,10 +132,10 @@ ui <- fluidPage(
                  ),
                  mainPanel(
                    tabsetPanel(
-                     tabPanel("dur_table", fluid = TRUE,
+                     tabPanel("Duration Table", fluid = TRUE,
                               dataTableOutput("duration")
                      ),
-                     tabPanel("dur_map", fluid = TRUE,
+                     tabPanel("Duration Map", fluid = TRUE,
                               plotOutput("duration_map"))
                    )
                    
@@ -145,43 +145,36 @@ ui <- fluidPage(
       
       ####FREQUENCY PANEL####
       
-      tabPanel("frequency", fluid = TRUE,
+      tabPanel("Conflict Frequency", fluid = TRUE,
                sidebarLayout(
                  sidebarPanel(style = "height: 95vh; overflow-y: auto;",
-                              selectInput("country_freq", "Select Country", choices = country_choices),
+                              selectInput("country_freq", "Select Country", choices = country_choices, multiple = T),
                               sliderInput("year_slider_freq", "Year Range:", min = 1990, max = 2020, value = c(1990, 2020), sep = ""),
                               splitLayout(cellArgs = list(style='white-space: normal;'),
                                           numericInput(inputId = "start_freq", label = "Start Month", value = 1, min = 1, max = 12, step = 1),
                                           numericInput(inputId = "stop_freq", label = "End Month", value = 12, min = 1, max = 12, step = 1)
                               ),
-                              radioButtons(inputId = "period_freq", label = "Period size", choices = c("year", "half", "quarter", "month"), inline = T),
+                              radioButtons(inputId = "monthly_freq", label = "Period size", choiceNames = c("Year", "Month"), choiceValues = c(FALSE, TRUE), inline = T),
                               radioButtons(inputId = "adm_freq", label = "Admin Level", choiceNames = c("ADM0", "ADM1"), choiceValues = c(FALSE, TRUE), inline = T),
-                              splitLayout(cellArgs = list(style='white-space: normal;'),
-                                          numericInput(inputId = "L25_weight_freq", label = "Low 25km Weight", value = 1, min = 0, max = 100, step = 1),
-                                          numericInput(inputId = "L50_weight_freq", label = "Low 50km Weight", value = 1, min = 0, max = 100, step = 1),
-                                          numericInput(inputId = "L100_weight_freq", label = "Low 100km Weight", value = 1, min = 0, max = 100, step = 1)
-                              ),
-                              splitLayout(cellArgs = list(style='white-space: normal;'),
-                                          numericInput(inputId = "M25_weight_freq", label = "Medium 25km Weight", value = 1, min = 0, max = 100, step = 1),
-                                          numericInput(inputId = "M50_weight_freq", label = "Medium 50km Weight", value = 1, min = 0, max = 100, step = 1),
-                                          numericInput(inputId = "M100_weight_freq", label = "Medium 100km Weight", value = 1, min = 0, max = 100, step = 1)
-                              ),
-                              splitLayout(cellArgs = list(style='white-space: normal;'),
-                                          numericInput(inputId = "H25_weight_freq", label = "High 25km Weight", value = 1, min = 0, max = 100, step = 1),
-                                          numericInput(inputId = "H50_weight_freq", label = "High 50km Weight", value = 1, min = 0, max = 100, step = 1),
-                                          numericInput(inputId = "H100_weight_freq", label = "High 100km Weight", value = 1, min = 0, max = 100, step = 1)
-                              ),
-                              splitLayout(cellArgs = list(style='white-space: normal;'),
-                                          numericInput(inputId = "int25_weight_freq", label = "B-deaths 25km Weight", value = 0, min = 0, max = 100, step = 1),
-                                          numericInput(inputId = "int50_weight_freq", label = "B-deaths 50km Weight", value = 0, min = 0, max = 100, step = 1),
-                                          numericInput(inputId = "int100_weight_freq", label = "B-deaths 100km Weight", value = 0, min = 0, max = 100, step = 1)
-                              ),
                               numericInput(inputId = "threshold_freq", label = "Intensity Threshold", value = 1, min = 1, max = 1000000, step = 1),
+                              radioButtons(inputId = "p_thresh_logic", label = "Use a period threshold?", choiceNames = c("Yes", "No"), choiceValues = c(TRUE, FALSE), inline = T),
+                              textOutput("p_thresh_max"),
+                              numericInput(inputId = "period_threshold", label = "Period Threshold", value = 1, min = 1, step = 1),
                               actionButton(inputId = "submit_freq", "submit"),
+                              splitLayout(cellArgs = list(style='white-space: normal;'),
+                                          numericInput(inputId = "font_size_freq", label = "Legend font size", value = 18, min = 1, max = 100, step = 1),
+                                          numericInput(inputId = "legend_size_freq", label = "Legend key size (in CM)", value = 2, min = 0.1, max = 100, step = 0.1)
+                              ),
                               downloadButton("download_freq", label = "Download Table")
                  ),
                  mainPanel(
-                   dataTableOutput("frequency")
+                   tabsetPanel(
+                     tabPanel("Frequency Table", fluid = TRUE,
+                              dataTableOutput("frequency")
+                     ),
+                     tabPanel("Frequency Map", fluid = TRUE,
+                              plotOutput("frequency_map"))
+                   )
                  )
                )
       ),

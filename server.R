@@ -10,9 +10,21 @@ server <- function(input, output, session) {
   #   reactiveValuesToList(res_auth)
   # })
   
+  #determining the maximum periods based on selection under Frequency tab
+  p_thresh_max <- reactive({
+    if(input$monthly_freq){
+      (((max(input$year_slider_freq) - min(input$year_slider_freq)) + 1) * 12) - (input$start_freq - 1) - (12 - input$stop_freq)
+    }else{
+      (max(input$year_slider_freq) - min(input$year_slider_freq)) + 1
+    }
+  })
+  output$p_thresh_max <- renderText(glue("Maximum periods in selection = {p_thresh_max()}"))
+  
+  #Reactive list of weights based on input from the Weights tab
   weights <- reactive(list(L25 = input$L25_weight, L50 = input$L50_weight, L100 = input$L100_weight, M25 = input$M25_weight, M50 = input$M50_weight, M100 = input$M100_weight,
                            H25 = input$H25_weight, H50 = input$H50_weight, H100 = input$H100_weight, int25 = input$int25_weight, int50 = input$int50_weight, int100 = input$int100_weight))
-   
+  
+  #Handler for the Exposure tab 
   observeEvent(input$submit, {
     input_list <- reactiveValuesToList(input)
     toggle_inputs(input_list,F,T)
@@ -39,6 +51,7 @@ server <- function(input, output, session) {
     toggle_inputs(input_list,T,T)
   })
   
+  #Handler for the Exposure Map tab
   observeEvent(input$submit_long_map, {
     input_list <- reactiveValuesToList(input)
     toggle_inputs(input_list,F,T)
@@ -58,6 +71,7 @@ server <- function(input, output, session) {
     toggle_inputs(input_list,T,T)
   })
   
+  #Handler for the Score Map tab
   observeEvent(input$submit_map, {
     input_list <- reactiveValuesToList(input)
     toggle_inputs(input_list,F,T)
@@ -69,6 +83,7 @@ server <- function(input, output, session) {
     toggle_inputs(input_list,T,T)
   })
   
+  #Handler for the Duration tab
   observeEvent(input$submit_dur, {
     input_list <- reactiveValuesToList(input)
     toggle_inputs(input_list,F,T)
@@ -94,24 +109,33 @@ server <- function(input, output, session) {
     toggle_inputs(input_list,T,T)
   })
   
+  #Handler for the Frequency tab
   observeEvent(input$submit_freq, {
+    #browser()
     input_list <- reactiveValuesToList(input)
     toggle_inputs(input_list,F,T)
     
-    long_freq_output <- long_freq(iso = input$country_freq, years = c(input$year_slider_freq[1]:input$year_slider_freq[2]), start_end = c(input$start_freq, input$stop_freq),
-                                  period = input$period_freq, adm1 = input$adm_freq, L25_weight = input$L25_weight_freq, L50_weight = input$L50_weight_freq, L100_weight = input$L100_weight_freq,
-                                  M25_weight = input$M25_weight_freq, M50_weight = input$M50_weight_freq, M100_weight = input$M100_weight_freq, H25_weight = input$H25_weight_freq,
-                                  H50_weight = input$H50_weight_freq, H100_weight = input$H100_weight_freq, int25_weight = input$int25_weight_freq, int50_weight = input$int50_weight_freq,
-                                  int100_weight = input$int100_weight_freq, cap = NA, threshold = input$threshold_freq)
+    if(as.logical(input$p_thresh_logic)){
+      p_thresh <- input$period_threshold
+    }else{
+      p_thresh <- NA
+    }
     
+    frequency_output <- get_temporal(type = "frequency", iso = input$country_freq, years = c(input$year_slider_freq[1]:input$year_slider_freq[2]), start_end = c(input$start_freq, input$stop_freq),
+                                  monthly = as.logical(input$monthly_freq), adm1 = input$adm_freq, weights = weights(), threshold = input$threshold_freq, p_threshold = p_thresh)
     
-    output$frequency <- renderDataTable(long_freq_output %>% dplyr::select(-cell_pop))
+    if(as.logical(input$adm_freq) & as.logical(input$p_thresh_logic)){
+      output$frequency_map <- renderPlot(adm_plot(x = frequency_output, iso = input$country_freq, id_col = "capa_id", input$legend_size_freq, input$font_size_freq),
+                                        height=reactive(ifelse(!is.null(input$innerWidth),input$innerWidth*3/6,0)))
+    }
+    
+    output$frequency <- renderDataTable(frequency_output)
     
     
     output$download_freq <- downloadHandler(
       filename = function(){"hdr_data.xlsx"},
       content = function(fname){
-        write_xlsx(long_freq_output, fname)
+        write_xlsx(frequency_output, fname)
       }
     )
     toggle_inputs(input_list,T,T)
