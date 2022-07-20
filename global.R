@@ -15,7 +15,7 @@ library(writexl)
 library(shinymanager)
 library(dotenv)
 library(countrycode)
-load_dot_env("CAPA/.env")
+load_dot_env()
 
 `%!in%` = Negate(`%in%`)
 
@@ -25,6 +25,16 @@ drop_path <- "C:/Users/andara/PRIO Dropbox/Andrew Arasmith/R Scripts/HDR/"
 #source("credentials.R")
 source("CAPA/query_funcs.R")
 source("CAPA/app_funcs.R")
+
+aws_host <- Sys.getenv("AWS_DB_HOST")
+aws_user <- Sys.getenv("AWS_DB_USER")
+aws_pass <- Sys.getenv("AWS_DB_PASSWORD")
+aws_port <- Sys.getenv("AWS_DB_PORT")
+
+prio_host <- Sys.getenv("PRIO_DB_HOST")
+prio_user <- Sys.getenv("PRIO_DB_USER")
+prio_pass <- Sys.getenv("PRIO_DB_PASSWORD")
+prio_port <- Sys.getenv("PRIO_DB_PORT")
 
 adm1_cgaz <- readRDS("data/adm1_cgaz.RDS")
 adm0_cgaz <- readRDS("data/adm0_cgaz.RDS")
@@ -43,14 +53,6 @@ credentials <- data.frame(
   stringsAsFactors = FALSE
 )
 
-aws_host <- Sys.getenv("AWS_DB_HOST")
-aws_user <- Sys.getenv("AWS_DB_USER")
-aws_pass <- Sys.getenv("AWS_DB_PASSWORD")
-aws_port <- Sys.getenv("AWS_DB_PORT")
 
-prio_host <- Sys.getenv("PRIO_DB_HOST")
-prio_user <- Sys.getenv("PRIO_DB_USER")
-prio_pass <- Sys.getenv("PRIO_DB_PASSWORD")
-prio_port <- Sys.getenv("PRIO_DB_PORT")
 
 disconnect_from_capa(capa_db)
