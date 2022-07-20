@@ -145,20 +145,17 @@ server <- function(input, output, session) {
     input_list <- reactiveValuesToList(input)
     toggle_inputs(input_list,F,T)
     
-    worst_global_output <- worst_global(region = input$region_global, years = c(input$year_slider_global[1]:input$year_slider_global[2]), monthly = input$monthly_global,
-                                     L25_weight = input$L25_weight_global, L50_weight = input$L50_weight_global, L100_weight = input$L100_weight_global, M25_weight = input$M25_weight_global,
-                                     M50_weight = input$M50_weight_global, M100_weight = input$M100_weight_global, H25_weight = input$H25_weight_global, H50_weight = input$H50_weight_global,
-                                     H100_weight = input$H100_weight_global, int25_weight = input$int25_weight_global, int50_weight = input$int50_weight_global,
-                                     int100_weight = input$int100_weight_global, threshold = input$threshold_global)
+    region_agg_output <- get_region_aggregation(region = input$region_global, years = c(input$year_slider_global[1]:input$year_slider_global[2]), monthly = input$monthly_global,
+                                     weights = weights(), threshold = input$threshold_global)
     
     
-    output$global_table <- renderDataTable(worst_global_output)
+    output$global_table <- renderDataTable(region_agg_output)
     
     
     output$download_global <- downloadHandler(
       filename = function(){"hdr_data.xlsx"},
       content = function(fname){
-        write_xlsx(worst_global_output, fname)
+        write_xlsx(region_agg_output, fname)
       }
     )
     toggle_inputs(input_list,T,T)

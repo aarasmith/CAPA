@@ -181,34 +181,14 @@ ui <- fluidPage(
       
       ####LONG PANEL####
       
-      tabPanel("Global Exposure", fluid = TRUE,
+      tabPanel("Regional Aggregations", fluid = TRUE,
                sidebarLayout(
                  
                  sidebarPanel(style = "height: 95vh; overflow-y: auto;",
                               selectInput("region_global", "Select Region", choices = c("World", region_choice)),
                               sliderInput("year_slider_global", "Year Range:", min = 1990, max = 2020, value = c(1990, 2020), sep = ""),
                               radioButtons(inputId = "monthly_global", label = "Period size", choiceNames = c("Year", "Month"), choiceValues = c(FALSE, TRUE), inline = T),
-                              splitLayout(cellArgs = list(style='white-space: normal;'),
-                                          numericInput(inputId = "L25_weight_global", label = "Low 25km Weight", value = 1, min = 0, max = 100, step = 1),
-                                          numericInput(inputId = "L50_weight_global", label = "Low 50km Weight", value = 1, min = 0, max = 100, step = 1),
-                                          numericInput(inputId = "L100_weight_global", label = "Low 100km Weight", value = 1, min = 0, max = 100, step = 1)
-                              ),
-                              splitLayout(cellArgs = list(style='white-space: normal;'),
-                                          numericInput(inputId = "M25_weight_global", label = "Medium 25km Weight", value = 1, min = 0, max = 100, step = 1),
-                                          numericInput(inputId = "M50_weight_global", label = "Medium 50km Weight", value = 1, min = 0, max = 100, step = 1),
-                                          numericInput(inputId = "M100_weight_global", label = "Medium 100km Weight", value = 1, min = 0, max = 100, step = 1)
-                              ),
-                              splitLayout(cellArgs = list(style='white-space: normal;'),
-                                          numericInput(inputId = "H25_weight_global", label = "High 25km Weight", value = 1, min = 0, max = 100, step = 1),
-                                          numericInput(inputId = "H50_weight_global", label = "High 50km Weight", value = 1, min = 0, max = 100, step = 1),
-                                          numericInput(inputId = "H100_weight_global", label = "High 100km Weight", value = 1, min = 0, max = 100, step = 1)
-                              ),
-                              splitLayout(cellArgs = list(style='white-space: normal;'),
-                                          numericInput(inputId = "int25_weight_global", label = "B-deaths 25km Weight", value = 0, min = 0, max = 100, step = 1),
-                                          numericInput(inputId = "int50_weight_global", label = "B-deaths 50km Weight", value = 0, min = 0, max = 100, step = 1),
-                                          numericInput(inputId = "int100_weight_global", label = "B-deaths 100km Weight", value = 0, min = 0, max = 100, step = 1)
-                              ),
-                              textInput(inputId = "threshold_global", label = "Intensity Threshold"),
+                              numericInput(inputId = "threshold_global", label = "Intensity Threshold", min = 1, value = 1, step = 1),
                               actionButton(inputId = "submit_global", label = "Submit"),
                               downloadButton("download_global", label = "Download Table")
                  ),
