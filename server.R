@@ -62,13 +62,10 @@ server <- function(input, output, session) {
     input_list <- reactiveValuesToList(input)
     toggle_inputs(input_list,F,T)
     
-    out_plot <- plot_score_sql(iso = input$country_map, years = c(input$year_slider_map[1]:input$year_slider_map[2]), start_end = c(input$start_map, input$stop_map),
-                               L25_weight = input$L25_weight_map, L50_weight = input$L50_weight_map, L100_weight = input$L100_weight_map, M25_weight = input$M25_weight_map,
-                               M50_weight = input$M50_weight_map, M100_weight = input$M100_weight_map, H25_weight = input$H25_weight_map, H50_weight = input$H50_weight_map,
-                               H100_weight = input$H100_weight_map, int25_weight = input$int25_weight_map, int50_weight = input$int50_weight_map, int100_weight = input$int100_weight_map,
-                               draw_points = input$draw_points_map)
+    out_plot <- get_cell_scores(iso = input$country_map, years = c(input$year_slider_map[1]:input$year_slider_map[2]), start_end = c(input$start_map, input$stop_map),
+                               weights = weights(), draw_points = input$draw_points_map)
     
-    output$map <- renderPlot(plot_score(out_plot, legend_size = input$legend_size_map, font_size = input$font_size_map), height=reactive(ifelse(!is.null(input$innerWidth),input$innerWidth*3/6,0)))
+    output$map <- renderPlot(plot_cell_scores(out_plot, legend_size = input$legend_size_map, font_size = input$font_size_map), height=reactive(ifelse(!is.null(input$innerWidth),input$innerWidth*3/6,0)))
     toggle_inputs(input_list,T,T)
   })
   
@@ -76,25 +73,22 @@ server <- function(input, output, session) {
     input_list <- reactiveValuesToList(input)
     toggle_inputs(input_list,F,T)
     
-    long_dur_output <- long_duration(iso = input$country_dur, years = c(input$year_slider_dur[1]:input$year_slider_dur[2]), start_end = c(input$start_dur, input$stop_dur),
-                                     period = input$period_dur, adm1 = input$adm_dur, L25_weight = input$L25_weight_dur, L50_weight = input$L50_weight_dur, L100_weight = input$L100_weight_dur,
-                                     M25_weight = input$M25_weight_dur, M50_weight = input$M50_weight_dur, M100_weight = input$M100_weight_dur, H25_weight = input$H25_weight_dur,
-                                     H50_weight = input$H50_weight_dur, H100_weight = input$H100_weight_dur, int25_weight = input$int25_weight_dur, int50_weight = input$int50_weight_dur,
-                                     int100_weight = input$int100_weight_dur, cap = NA, threshold = input$threshold_dur)
+    duration_output <- get_temporal(type = "duration", iso = input$country_dur, years = c(input$year_slider_dur[1]:input$year_slider_dur[2]), start_end = c(input$start_dur, input$stop_dur),
+                                     adm1 = input$adm_dur, weights = weights(), monthly = as.logical(input$monthly_dur), threshold = input$threshold_dur)
     
     if(input$adm_dur){
-      long_dur_output <- long_dur_output %>% dplyr::select(-geometry)
-      output$duration_map <- renderPlot(long_plot(long_dur_output, input$legend_size_dur, input$font_size_dur), height=reactive(ifelse(!is.null(input$innerWidth),input$innerWidth*3/6,0)))
-      #long_dur_output <- long_dur_output %>% dplyr::select(-shape_id, -shape_group)
+      #duration_output <- duration_output %>% dplyr::select(-geometry)
+      output$duration_map <- renderPlot(adm_plot(x = duration_output, iso = input$country_dur, id_col = "capa_id", input$legend_size_dur, input$font_size_dur), height=reactive(ifelse(!is.null(input$innerWidth),input$innerWidth*3/6,0)))
+      #duration_output <- duration_output %>% dplyr::select(-shape_id, -shape_group)
     }
     
-    output$duration <- renderDataTable(long_dur_output %>% dplyr::select(-cell_pop))
+    output$duration <- renderDataTable(duration_output)
     
     
     output$download_dur <- downloadHandler(
       filename = function(){"hdr_data.xlsx"},
       content = function(fname){
-        write_xlsx(long_dur_output, fname)
+        write_xlsx(duration_output, fname)
       }
     )
     toggle_inputs(input_list,T,T)

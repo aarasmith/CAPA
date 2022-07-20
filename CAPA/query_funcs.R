@@ -114,7 +114,7 @@ query_standard_aggregation <- function(iso3n, years, weights, threshold, gv, cap
 
 
 ####plot_score_sql####
-query_cell_scores <- function(iso3n, years, start_end, weights){
+query_cell_scores <- function(iso3n, years, start_end, weights, capa_db){
   
   if(start_end[1] == 1 & start_end[2] == 12){
     table <- "cell_stats_yr"
@@ -187,12 +187,14 @@ get_temporal_gv <- function(adm, monthly, start_end, years){
   if(!monthly){
     gv['table'] <- "cell_stats_yr"
     gv['start_end'] <- ""
+    #gv['counter'] <- (max(years) - min(years)) + 1
   }else{
     gv['table'] <- "cell_stats"
     gv['start_end'] <- glue(" AND
         NOT (month < {start_end[1]} AND year = {min(years)}) AND
         NOT (month > {start_end[2]} AND year = {max(years)})
                       ")
+    #gv['counter'] <- ((max(years) - min(years)) + 1) * 12
   }
   
   return(gv)
@@ -231,7 +233,6 @@ query_duration <- function(iso3n, years, start_end, weights, threshold, gv, capa
             year <= {years[length(years)]}
             {gv['start_end']}
           ) agg
-        WHERE score >= {threshold}
         GROUP BY iso3n, sid, capa_id_adm1
       ) min_query
       

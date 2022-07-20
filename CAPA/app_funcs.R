@@ -1,5 +1,8 @@
 #next up
+#fixed broken bit in duration, but might need closer investigation to make sure
 #allow ADM0 for adm_map
+#weight presets
+#simplify or split adm0 rds
 #explore allowing multi-country input for the cell_score map
 #give more flexibility for when ADM2 is integrated
 
@@ -118,7 +121,7 @@ get_standard_aggregation <- function(iso, years, monthly = TRUE, adm1 = TRUE, we
 # system.time({x <- get_standard_aggregation(iso3n_wa, 1990:2020, monthly = T, adm1 = T, weights)})
 
 get_cell_scores <- function(iso, years, start_end = c(1,12), weights, draw_points = TRUE){
-  
+  #browser()
   if(is.numeric(iso)){
     iso3n <- iso
   }else{
@@ -127,7 +130,7 @@ get_cell_scores <- function(iso, years, start_end = c(1,12), weights, draw_point
 
   capa_db <- connect_to_capa()
   
-  data <- query_cell_scores(iso3n, years, start_end, weights)
+  data <- query_cell_scores(iso3n, years, start_end, weights, capa_db)
   
   data$score <- as.numeric(data$score)
   
@@ -170,7 +173,7 @@ plot_cell_scores <- function(x, legend_size = 2, font_size = 18){
 
 get_temporal <- function(type, iso, years, weights, monthly = FALSE, start_end = c(1,12), adm1 = FALSE, threshold = 1, p_threshold = NA){
   #not ready to implement the p_threshold just yet. Will be easier once I've gone through the stage to create place-holder 0 entries for periods not matching the thresh condition
-  
+  #browser()
   if(type %!in% c("duration", "frequency")){
     stop("type must be either 'duration' or 'frequency'")
   }

@@ -96,26 +96,6 @@ ui <- fluidPage(
                         numericInput(inputId = "start_map", label = "Start Month", value = 1, min = 1, max = 12, step = 1),
                         numericInput(inputId = "stop_map", label = "End Month", value = 12, min = 1, max = 12, step = 1)
             ),
-            splitLayout(cellArgs = list(style='white-space: normal;'),
-                        numericInput(inputId = "L25_weight_map", label = "Low 25km Weight", value = 1, min = 0, max = 100, step = 1),
-                        numericInput(inputId = "L50_weight_map", label = "Low 50km Weight", value = 1, min = 0, max = 100, step = 1),
-                        numericInput(inputId = "L100_weight_map", label = "Low 100km Weight", value = 1, min = 0, max = 100, step = 1)
-            ),
-            splitLayout(cellArgs = list(style='white-space: normal;'),
-                        numericInput(inputId = "M25_weight_map", label = "Medium 25km Weight", value = 1, min = 0, max = 100, step = 1),
-                        numericInput(inputId = "M50_weight_map", label = "Medium 50km Weight", value = 1, min = 0, max = 100, step = 1),
-                        numericInput(inputId = "M100_weight_map", label = "Medium 100km Weight", value = 1, min = 0, max = 100, step = 1)
-            ),
-            splitLayout(cellArgs = list(style='white-space: normal;'),
-                        numericInput(inputId = "H25_weight_map", label = "High 25km Weight", value = 1, min = 0, max = 100, step = 1),
-                        numericInput(inputId = "H50_weight_map", label = "High 50km Weight", value = 1, min = 0, max = 100, step = 1),
-                        numericInput(inputId = "H100_weight_map", label = "High 100km Weight", value = 1, min = 0, max = 100, step = 1)
-            ),
-            splitLayout(cellArgs = list(style='white-space: normal;'),
-                        numericInput(inputId = "int25_weight_map", label = "B-deaths 25km Weight", value = 0, min = 0, max = 100, step = 1),
-                        numericInput(inputId = "int50_weight_map", label = "B-deaths 50km Weight", value = 0, min = 0, max = 100, step = 1),
-                        numericInput(inputId = "int100_weight_map", label = "B-deaths 100km Weight", value = 0, min = 0, max = 100, step = 1)
-            ),
             checkboxInput(inputId = "draw_points_map", label = "show conflict events"),
             actionButton(inputId = "submit_map", "generate map"),
             splitLayout(cellArgs = list(style='white-space: normal;'),
@@ -140,29 +120,9 @@ ui <- fluidPage(
                                           numericInput(inputId = "start_dur", label = "Start Month", value = 1, min = 1, max = 12, step = 1),
                                           numericInput(inputId = "stop_dur", label = "End Month", value = 12, min = 1, max = 12, step = 1)
                               ),
-                              radioButtons(inputId = "period_dur", label = "Period size", choices = c("year", "half", "quarter", "month"), inline = T),
+                              radioButtons(inputId = "monthly_dur", label = "Period size", choiceNames = c("Year", "Month"), choiceValues = c(FALSE, TRUE), inline = T),
                               radioButtons(inputId = "adm_dur", label = "Admin Level", choiceNames = c("ADM0", "ADM1"), choiceValues = c(FALSE, TRUE), inline = T),
-                              splitLayout(cellArgs = list(style='white-space: normal;'),
-                                          numericInput(inputId = "L25_weight_dur", label = "Low 25km Weight", value = 1, min = 0, max = 100, step = 1),
-                                          numericInput(inputId = "L50_weight_dur", label = "Low 50km Weight", value = 1, min = 0, max = 100, step = 1),
-                                          numericInput(inputId = "L100_weight_dur", label = "Low 100km Weight", value = 1, min = 0, max = 100, step = 1)
-                              ),
-                              splitLayout(cellArgs = list(style='white-space: normal;'),
-                                          numericInput(inputId = "M25_weight_dur", label = "Medium 25km Weight", value = 1, min = 0, max = 100, step = 1),
-                                          numericInput(inputId = "M50_weight_dur", label = "Medium 50km Weight", value = 1, min = 0, max = 100, step = 1),
-                                          numericInput(inputId = "M100_weight_dur", label = "Medium 100km Weight", value = 1, min = 0, max = 100, step = 1)
-                              ),
-                              splitLayout(cellArgs = list(style='white-space: normal;'),
-                                          numericInput(inputId = "H25_weight_dur", label = "High 25km Weight", value = 1, min = 0, max = 100, step = 1),
-                                          numericInput(inputId = "H50_weight_dur", label = "High 50km Weight", value = 1, min = 0, max = 100, step = 1),
-                                          numericInput(inputId = "H100_weight_dur", label = "High 100km Weight", value = 1, min = 0, max = 100, step = 1)
-                              ),
-                              splitLayout(cellArgs = list(style='white-space: normal;'),
-                                          numericInput(inputId = "int25_weight_dur", label = "B-deaths 25km Weight", value = 0, min = 0, max = 100, step = 1),
-                                          numericInput(inputId = "int50_weight_dur", label = "B-deaths 50km Weight", value = 0, min = 0, max = 100, step = 1),
-                                          numericInput(inputId = "int100_weight_dur", label = "B-deaths 100km Weight", value = 0, min = 0, max = 100, step = 1)
-                              ),
-                              textInput(inputId = "threshold_dur", label = "Intensity Threshold"),
+                              numericInput(inputId = "threshold_dur", label = "Intensity Threshold", value = 1, min = 1, step = 1),
                               actionButton(inputId = "submit_dur", "submit"),
                               splitLayout(cellArgs = list(style='white-space: normal;'),
                                           numericInput(inputId = "font_size_dur", label = "Legend font size", value = 18, min = 1, max = 100, step = 1),
