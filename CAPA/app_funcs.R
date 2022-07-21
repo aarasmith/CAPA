@@ -49,6 +49,10 @@ sanitize_weights <- function(x){
   
 }
 
+sanitize_threshold <- function(x){
+  if(!is.numeric(x)){return(0)}else{return(x)}
+}
+
 # L25_weight <- 1
 # L50_weight <- 1
 # L100_weight <- 1
@@ -74,6 +78,8 @@ get_standard_aggregation <- function(iso, years, monthly = TRUE, adm1 = TRUE, we
   }else{
     iso3n <- ison(iso)
   }
+  
+  threshold <- sanitize_threshold(threshold)
 
   capa_db <- connect_to_capa()
   
@@ -216,6 +222,8 @@ get_temporal <- function(type, iso, years, weights, monthly = FALSE, start_end =
     iso3n <- ison(iso)
   }
   
+  threshold <- sanitize_threshold(threshold)
+  
   capa_db <- connect_to_capa()
   
   gv <- get_temporal_gv(adm1, monthly, start_end, years)
@@ -276,6 +284,8 @@ get_temporal <- function(type, iso, years, weights, monthly = FALSE, start_end =
 # my_plot
 
 get_region_aggregation <- function(region, years, weights, monthly = TRUE, threshold = 1){
+  
+  threshold <- sanitize_threshold(threshold)
   
   capa_db <- connect_to_capa()
   
