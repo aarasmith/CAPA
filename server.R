@@ -21,8 +21,11 @@ server <- function(input, output, session) {
   output$p_thresh_max <- renderText(glue("Maximum periods in selection = {p_thresh_max()}"))
   
   #Reactive list of weights based on input from the Weights tab
-  weights <- reactive(list(L25 = input$L25_weight, L50 = input$L50_weight, L100 = input$L100_weight, M25 = input$M25_weight, M50 = input$M50_weight, M100 = input$M100_weight,
-                           H25 = input$H25_weight, H50 = input$H50_weight, H100 = input$H100_weight, int25 = input$int25_weight, int50 = input$int50_weight, int100 = input$int100_weight))
+  weights <- reactive(sanitize_weights(
+    list(L25 = input$L25_weight, L50 = input$L50_weight, L100 = input$L100_weight, M25 = input$M25_weight, M50 = input$M50_weight, M100 = input$M100_weight,
+        H25 = input$H25_weight, H50 = input$H50_weight, H100 = input$H100_weight, int25 = input$int25_weight, int50 = input$int50_weight, int100 = input$int100_weight)
+    )
+  )
   
   #Handler for the Exposure tab 
   observeEvent(input$submit, {

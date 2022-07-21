@@ -42,6 +42,13 @@ ison_region <- function(region){
   return(iso3n)
 }
 
+sanitize_weights <- function(x){
+  
+  weight_list <- lapply(x, function(x){if(!is.numeric(x)){return(0)}else{return(x)}})
+  return(weight_list)
+  
+}
+
 # L25_weight <- 1
 # L50_weight <- 1
 # L100_weight <- 1
