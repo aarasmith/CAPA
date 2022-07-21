@@ -29,6 +29,10 @@ server <- function(input, output, session) {
   
   #Handler for the Exposure tab 
   observeEvent(input$submit, {
+    if(is.null(input$country)){
+      output$info <- renderText("Please choose at least one country/region")
+      return()
+    }
     input_list <- reactiveValuesToList(input)
     toggle_inputs(input_list,F,T)
     
@@ -56,6 +60,10 @@ server <- function(input, output, session) {
   
   #Handler for the Exposure Map tab
   observeEvent(input$submit_long_map, {
+    if(is.null(input$country_long_map)){
+      output$info_long_map <- renderText("Please choose at least one country/region")
+      return()
+    }
     input_list <- reactiveValuesToList(input)
     toggle_inputs(input_list,F,T)
     
@@ -76,6 +84,10 @@ server <- function(input, output, session) {
   
   #Handler for the Score Map tab
   observeEvent(input$submit_map, {
+    if(is.null(input$country_map)){
+      output$info_map <- renderText("Please choose at least one country/region")
+      return()
+    }
     input_list <- reactiveValuesToList(input)
     toggle_inputs(input_list,F,T)
     
@@ -89,6 +101,10 @@ server <- function(input, output, session) {
   
   #Handler for the Duration tab
   observeEvent(input$submit_dur, {
+    if(is.null(input$country_dur)){
+      output$info_dur <- renderText("Please choose at least one country/region")
+      return()
+    }
     input_list <- reactiveValuesToList(input)
     toggle_inputs(input_list,F,T)
     
@@ -115,6 +131,10 @@ server <- function(input, output, session) {
   
   #Handler for the Frequency tab
   observeEvent(input$submit_freq, {
+    if(is.null(input$country_freq)){
+      output$info_freq <- renderText("Please choose at least one country/region")
+      return()
+    }
     #browser()
     input_list <- reactiveValuesToList(input)
     toggle_inputs(input_list,F,T)
@@ -146,6 +166,10 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$submit_global, {
+    if(is.null(input$country_global)){
+      output$info_global <- renderText("Please choose at least one region")
+      return()
+    }
     input_list <- reactiveValuesToList(input)
     toggle_inputs(input_list,F,T)
     

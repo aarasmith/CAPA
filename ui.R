@@ -68,6 +68,7 @@ ui <- fluidPage(
                sidebarLayout(
                  
                  sidebarPanel(style = "height: 95vh; overflow-y: auto;",
+                              textOutput("info_long_map"),
                               selectInput("country_long_map", "Select Country", choices = c(country_choices, "World", region_choices), multiple = T),
                               numericInput("year_long_map", "Year:", min = 1990, max = 2020, value = 1990, step = 1),
                               radioButtons(inputId = "monthly_long_map", label = "Period size", choiceNames = c("Year", "Month"), choiceValues = c(FALSE, TRUE), inline = T),
@@ -90,6 +91,7 @@ ui <- fluidPage(
       tabPanel("Score Map", fluid = TRUE,
         sidebarLayout(
           sidebarPanel(style = "height: 95vh; overflow-y: auto;",
+                       textOutput("info_map"),
             selectInput("country_map", "Select Country", choices = c(country_choices, "World", region_choices), multiple = T),
             sliderInput("year_slider_map", "Year Range:", min = 1990, max = 2020, value = c(1990, 2020), sep = ""),
             splitLayout(cellArgs = list(style='white-space: normal;'),
@@ -115,6 +117,7 @@ ui <- fluidPage(
       tabPanel("Conflict Duration", fluid = TRUE,
                sidebarLayout(
                  sidebarPanel(style = "height: 95vh; overflow-y: auto;",
+                              textOutput("info_dur"),
                               selectInput("country_dur", "Select Country", choices = c(country_choices, "World", region_choices), multiple = T),
                               sliderInput("year_slider_dur", "Year Range:", min = 1990, max = 2020, value = c(1990, 2020), sep = ""),
                               splitLayout(cellArgs = list(style='white-space: normal;'),
@@ -149,6 +152,7 @@ ui <- fluidPage(
       tabPanel("Conflict Frequency", fluid = TRUE,
                sidebarLayout(
                  sidebarPanel(style = "height: 95vh; overflow-y: auto;",
+                              textOutput("info_freq"),
                               selectInput("country_freq", "Select Country", choices = c(country_choices, "World", region_choices), multiple = T),
                               sliderInput("year_slider_freq", "Year Range:", min = 1990, max = 2020, value = c(1990, 2020), sep = ""),
                               splitLayout(cellArgs = list(style='white-space: normal;'),
@@ -186,6 +190,7 @@ ui <- fluidPage(
                sidebarLayout(
                  
                  sidebarPanel(style = "height: 95vh; overflow-y: auto;",
+                              textOutput("info_global"),
                               selectInput("region_global", "Select Region", choices = c("World", region_choices)),
                               sliderInput("year_slider_global", "Year Range:", min = 1990, max = 2020, value = c(1990, 2020), sep = ""),
                               radioButtons(inputId = "monthly_global", label = "Period size", choiceNames = c("Year", "Month"), choiceValues = c(FALSE, TRUE), inline = T),
