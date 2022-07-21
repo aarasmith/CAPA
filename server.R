@@ -77,9 +77,10 @@ server <- function(input, output, session) {
     toggle_inputs(input_list,F,T)
     
     out_plot <- get_cell_scores(iso = input$country_map, years = c(input$year_slider_map[1]:input$year_slider_map[2]), start_end = c(input$start_map, input$stop_map),
-                               weights = weights(), draw_points = input$draw_points_map)
+                               weights = weights(), draw_adm1 = input$draw_adm1_map, draw_points = input$draw_points_map)
     
-    output$map <- renderPlot(plot_cell_scores(out_plot, legend_size = input$legend_size_map, font_size = input$font_size_map), height=reactive(ifelse(!is.null(input$innerWidth),input$innerWidth*3/6,0)))
+    output$map <- renderPlot(plot_cell_scores(x = out_plot, isos = input$country_map, legend_size = input$legend_size_map, font_size = input$font_size_map),
+                             height=reactive(ifelse(!is.null(input$innerWidth),input$innerWidth*3/6,0)))
     toggle_inputs(input_list,T,T)
   })
   

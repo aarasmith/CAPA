@@ -1,4 +1,5 @@
 #next up
+#probably best to force period threshold
 #There's something weird where logical choices from the UI are getting passed as strings - need to fix up and cleanup all the temporary as.logical() calls
 #fixed broken bit in duration, but might need closer investigation to make sure
 #allow ADM0 for adm_map
@@ -19,14 +20,24 @@ disconnect_from_capa <- function(x){
 }
 
 ison <- function(iso3c){
-  iso3n <- countrycode(iso3c, origin = "iso3c", destination = "iso3n")
+  individual_isos <- iso3c[str_length(iso3c) == 3]
+  iso3n <- countrycode(individual_isos, origin = "iso3c", destination = "iso3n")
   iso3n <- ifelse(is.na(iso3n), 899, iso3n)
-  return(iso3n)
+  
+  regions <- iso3c[str_length(iso3c) > 3]
+  for(region in regions){
+    iso3n <- append(iso3n, ison_region(region))
+  }
+  return(unique(iso3n))
 }
 
 ison_region <- function(region){
   capa_db <- connect_to_capa()
-  iso3n <- dbGetQuery(capa_db, glue("SELECT * FROM region_key WHERE region = '{region}'"))$iso3n
+  if(region == "World"){
+    iso3n <- unique(dbGetQuery(capa_db, glue("SELECT * FROM region_key"))$iso3n)
+  }else{
+    iso3n <- dbGetQuery(capa_db, glue("SELECT * FROM region_key WHERE region = '{region}'"))$iso3n
+  }
   disconnect_from_capa(capa_db)
   return(iso3n)
 }
@@ -122,7 +133,7 @@ get_standard_aggregation <- function(iso, years, monthly = TRUE, adm1 = TRUE, we
 # system.time({x <- get_standard_aggregation(iso3n_wa, 1990:2020, monthly = T, adm1 = F, weights)})
 # system.time({x <- get_standard_aggregation(iso3n_wa, 1990:2020, monthly = T, adm1 = T, weights)})
 
-get_cell_scores <- function(iso, years, start_end = c(1,12), weights, draw_points = TRUE){
+get_cell_scores <- function(iso, years, start_end = c(1,12), weights, draw_adm1 = TRUE, draw_points = TRUE){
   #browser()
   if(is.numeric(iso)){
     iso3n <- iso
@@ -146,7 +157,13 @@ get_cell_scores <- function(iso, years, start_end = c(1,12), weights, draw_point
     conflict_events <- head(conflict_events, n = 0)
   }
   
-  out_list <- list(cells = data, adm = filter(adm1_cgaz, shape_group == iso), events = conflict_events)
+  #to avoid confusion in the filter call
+  iso3n_vector <- iso3n
+  out_list <- list(cells = data, adm = filter(adm1_cgaz, iso3n %in% iso3n_vector), events = conflict_events)
+  
+  if(draw_adm1 == FALSE){
+    out_list['adm'] <- NULL
+  }
   
   disconnect_from_capa(capa_db)
   
@@ -156,16 +173,22 @@ get_cell_scores <- function(iso, years, start_end = c(1,12), weights, draw_point
 
 # system.time({x <- get_cell_scores("AFG", 2011, start_end = c(1,11), weights, draw_points = F)})
 
-plot_cell_scores <- function(x, legend_size = 2, font_size = 18){
+plot_cell_scores <- function(x, isos, legend_size = 2, font_size = 18){
   #browser()
-  out_plot <- ggplot(x[['adm']]) +
+  isos <- ison(isos)
+  adm0 <- filter(adm0_cgaz, iso3n %in% isos)
+  out_plot <- ggplot() +
     geom_sf(data = x[['cells']], aes(fill = score), color = NA) +
     geom_sf(data = x[['events']], aes(col = int_cat)) +
-    geom_sf(fill = NA) +
+    geom_sf(data = x[['adm']], col = "grey", size = 0.5, fill = NA) +
+    geom_sf(data = adm0) +
     scale_fill_viridis_c() +
     theme(legend.key.size = unit(legend_size, 'cm'),
           legend.text = element_text(size = font_size),
-          legend.title = element_text(size = font_size))
+          legend.title = element_text(size = font_size),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.background = element_rect(fill="#FFEBCD"))
   
   return(out_plot)
 }
@@ -198,7 +221,8 @@ get_temporal <- function(type, iso, years, weights, monthly = FALSE, start_end =
       within(n_periods <- as.numeric(n_periods))
   }
   if(type == "duration"){
-    data <- query_duration(iso3n, years, start_end, weights, threshold, gv, capa_db)
+    data <- query_duration(iso3n, years, start_end, weights, threshold, gv, capa_db) %>%
+      within(risk_pop <- as.numeric(risk_pop))
   }
   
   out_frame <- data %>%

@@ -115,7 +115,7 @@ query_standard_aggregation <- function(iso3n, years, weights, threshold, gv, cap
 
 ####plot_score_sql####
 query_cell_scores <- function(iso3n, years, start_end, weights, capa_db){
-  
+  #browser()
   if(start_end[1] == 1 & start_end[2] == 12){
     table <- "cell_stats_yr"
     start_end <- ""
@@ -127,13 +127,17 @@ query_cell_scores <- function(iso3n, years, start_end, weights, capa_db){
                       ")
   }
   
+  iso3n <- paste(iso3n, collapse = ", ")
+  
   sql_query <- glue(
     "SELECT
+      iso3n,
       score,
       geometry
     FROM
       (
       SELECT
+        iso3n,
         sid,
         SUM((lo_25 * {weights['L25']}) +
           ((lo_50 - lo_25) * {weights['L50']}) +
@@ -148,11 +152,11 @@ query_cell_scores <- function(iso3n, years, start_end, weights, capa_db){
           ((int_50 - int_25) * {weights['int50']}) +
           ((int_100 - int_50) * {weights['int100']})) AS score
       FROM {table}
-      WHERE iso3n = {iso3n} AND
+      WHERE iso3n IN ({iso3n}) AND
         year >= {years[1]} AND
         year <= {years[length(years)]}
         {start_end}
-      GROUP BY sid
+      GROUP BY iso3n, sid
       ) stats_sub
       
       LEFT JOIN
@@ -160,7 +164,7 @@ query_cell_scores <- function(iso3n, years, start_end, weights, capa_db){
       (
       SELECT sid, geometry
       FROM cell_geos
-      WHERE iso3n = {iso3n}
+      WHERE iso3n IN ({iso3n})
       ) cells_sub
       
       ON stats_sub.sid = cells_sub.sid"
