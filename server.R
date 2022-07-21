@@ -166,7 +166,7 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$submit_global, {
-    if(is.null(input$country_global)){
+    if(is.null(input$region_global)){
       output$info_global <- renderText("Please choose at least one region")
       return()
     }
