@@ -53,6 +53,22 @@ credentials <- data.frame(
   stringsAsFactors = FALSE
 )
 
+weight_presets_list <- list()
+weight_presets_list[['events_100km_unweighted']] <- c(rep(1, 3), rep(0, 3), rep(1, 6))
+weight_presets_list[['events_50km_unweighted']] <- c(0, 1, 1, rep(0, 4), 1, 1, 0, 1, 1)
+weight_presets_list[['events_25km_unweighted']] <- c(0, 1, rep(0, 5), 1, 0, 0, 1, 0)
+weight_presets_list[['events_100km_dist_weighted']] <- c(1, 4, 2, 0, 0, 0, 1, 4, 2, 1, 4, 2)
+weight_presets_list[['events_50km_dist_weighted']] <- c(0, 2, 1, 0, 0, 0, 0, 2, 1, 0, 2, 1)
+weight_presets_list[['events_100km_int_weighted']] <- c(4, 4, 4, 0, 0, 0, 1, 1, 1, 2, 2, 2)
+weight_presets_list[['events_50km_int_weighted']] <- c(0, 4, 4, 0, 0, 0, 0, 1, 1, 0, 2, 2)
+weight_presets_list[['events_25km_int_weighted']] <- c(0, 4, 0, 0, 0, 0, 0, 1, 0, 0, 2, 0)
+weight_presets_list[['events_100km_both_weighted']] <- c(4, 16, 8, 0, 0, 0, 1, 4, 2, 2, 8, 4)
+weight_presets_list[['events_50km_both_weighted']] <- c(0, 8, 4, 0, 0, 0, 0, 2, 1, 0, 4, 2)
+weight_presets_list[['int_100km_weighted']] <- c(rep(0, 3), 1, 4, 2, rep(0, 6))
+weight_presets_list[['int_50km_weighted']] <- c(rep(0, 3), 0, 2, 1, rep(0, 6))
+weight_presets_list[['int_100km_unweighted']] <- c(rep(0, 3), 1, 1, 1, rep(0, 6))
+weight_presets_list[['int_50km_unweighted']] <- c(rep(0, 3), 0, 1, 1, rep(0, 6))
+weight_presets_list[['int_25km_unweighted']] <- c(rep(0, 3), 0, 1, 0, rep(0, 6))
 
 
 disconnect_from_capa(capa_db)

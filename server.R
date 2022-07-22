@@ -27,6 +27,12 @@ server <- function(input, output, session) {
     )
   )
   
+  observeEvent(input$apply_preset, {
+    input_list <- reactiveValuesToList(input)
+    weight_list <- input_list[grepl('weight',names(input_list))]
+    weight_presets(session, weight_list, input$preset)
+  })
+  
   #Handler for the Exposure tab 
   observeEvent(input$submit, {
     if(is.null(input$country)){
@@ -34,6 +40,9 @@ server <- function(input, output, session) {
       return()
     }
     input_list <- reactiveValuesToList(input)
+    #weight_list <- input_list[grepl('weight',names(input_list))]
+    #print(weight_list)
+    #browser()
     toggle_inputs(input_list,F,T)
     
 

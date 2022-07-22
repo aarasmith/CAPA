@@ -10,6 +10,8 @@ ui <- fluidPage(
     tabsetPanel(
       
       tabPanel("Weights", fluid = TRUE,
+               selectInput("preset", "Select preset weights", choices = names(weight_presets_list)),
+               actionButton("apply_preset", "Apply preset weights"),
                splitLayout(cellArgs = list(style='white-space: normal;'),
                            numericInput(inputId = "L25_weight", label = "Low 25km Weight", value = 1, min = 0, max = 100, step = 1),
                            numericInput(inputId = "L50_weight", label = "Low 50km Weight", value = 1, min = 0, max = 100, step = 1),

@@ -1,4 +1,5 @@
 #next up
+#weight presets
 #probably best to force period threshold
 #There's something weird where logical choices from the UI are getting passed as strings - need to fix up and cleanup all the temporary as.logical() calls
 #fixed broken bit in duration, but might need closer investigation to make sure
@@ -9,6 +10,8 @@
 #give more flexibility for when ADM2 is integrated
 #think about adding total pops for countries alongside regions to allow for a custom region selection
 
+
+####Utilities####
 connect_to_capa <- function(){
   #hdr_db <- dbConnect(RSQLite::SQLite(), "C:/Users/andara/Documents/hdr_db_v2(2).sqlite")
   #hdr_db <- dbConnect(drv = RPostgres::Postgres(), host = post_host, dbname = "HDR", user = post_user, password = post_pass, port = post_port)
@@ -71,6 +74,7 @@ sanitize_threshold <- function(x){
 # weights <- list(L25 = L25_weight, L50 = L50_weight, L100 = L100_weight, M25 = M25_weight, M50 = M50_weight, M100 = M100_weight, H25 = H25_weight, H50 = H50_weight, H100 = H100_weight,
 #                 int25 = int25_weight, int50 = int50_weight, int100 = int100_weight)
 
+####Work Horses####
 get_standard_aggregation <- function(iso, years, monthly = TRUE, adm1 = TRUE, weights, threshold = 1, cap = NA, score = FALSE, selected_month = NA){
   #browser()
   if(is.numeric(iso)){
@@ -208,6 +212,26 @@ plot_cell_scores <- function(x, isos, legend_size = 2, font_size = 18){
 
 # plot_cell_scores(x)
 
+adm_plot <- function(x, isos, id_col = "capa_id", legend_size = 2, font_size = 18){
+  #browser()
+  isos <- ison(isos)
+  x <- left_join(x, adm1_cgaz %>% dplyr::select(capa_id), by = setNames("capa_id", id_col)) %>% st_as_sf()
+  #isos <- isos[isos %!in% x$iso3n]
+  y <- filter(adm0_cgaz, iso3n %in% isos)
+  my_plot <- ggplot() +
+    geom_sf(data = x, aes(fill = risk_pct), col = "grey", size = 0.5) +
+    geom_sf(data = y, col = "black") +
+    scale_fill_viridis_c(limits = c(0,1)) +
+    theme(legend.key.size = unit(legend_size, 'cm'),
+          legend.text = element_text(size = font_size),
+          legend.title = element_text(size = font_size),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.background = element_rect(fill="#FFEBCD"))
+  
+  return(my_plot)
+  
+}
 
 get_temporal <- function(type, iso, years, weights, monthly = FALSE, start_end = c(1,12), adm1 = FALSE, threshold = 1, p_threshold = NA){
   #not ready to implement the p_threshold just yet. Will be easier once I've gone through the stage to create place-holder 0 entries for periods not matching the thresh condition
@@ -326,26 +350,7 @@ get_region_aggregation <- function(region, years, weights, monthly = TRUE, thres
 # system.time({x <- get_region_aggregation("World", 1990:2020, weights, monthly = T)})
 
 
-adm_plot <- function(x, isos, id_col = "capa_id", legend_size = 2, font_size = 18){
-  #browser()
-  isos <- ison(isos)
-  x <- left_join(x, adm1_cgaz %>% dplyr::select(capa_id), by = setNames("capa_id", id_col)) %>% st_as_sf()
-  #isos <- isos[isos %!in% x$iso3n]
-  y <- filter(adm0_cgaz, iso3n %in% isos)
-  my_plot <- ggplot() +
-    geom_sf(data = x, aes(fill = risk_pct), col = "grey", size = 0.5) +
-    geom_sf(data = y, col = "black") +
-    scale_fill_viridis_c(limits = c(0,1)) +
-    theme(legend.key.size = unit(legend_size, 'cm'),
-          legend.text = element_text(size = font_size),
-          legend.title = element_text(size = font_size),
-          panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank(),
-          panel.background = element_rect(fill="#FFEBCD"))
-  
-  return(my_plot)
-  
-}
+
 
 # system.time({x <- get_standard_aggregation(iso3n_wa, 2018, monthly = F, adm1 = T, weights)})
 # iso3n_a <- ison_region("Africa")
@@ -353,6 +358,7 @@ adm_plot <- function(x, isos, id_col = "capa_id", legend_size = 2, font_size = 1
 # system.time({my_plot <- adm_plot(x, iso3n_wa, "capa_id_adm1")})
 # my_plot
 
+####Dashboard utilities####
 toggle_inputs <- function(input_list,enable_inputs=T,only_buttons=TRUE){
   # Subset if only_buttons is TRUE.
   if(only_buttons){
@@ -365,4 +371,11 @@ toggle_inputs <- function(input_list,enable_inputs=T,only_buttons=TRUE){
     if(enable_inputs){
       shinyjs::enable(x)} else {
         shinyjs::disable(x) }
+}
+
+weight_presets <- function(session, weight_list, preset){
+  weight_list <- weight_list[order(names(weight_list))]
+  for(i in seq(weight_list)){
+    updateNumericInput(session, names(weight_list)[i], value = weight_presets_list[[preset]][i])
+  }
 }
