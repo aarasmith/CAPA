@@ -27,6 +27,7 @@ server <- function(input, output, session) {
     )
   )
   
+  #Handler for weight presets
   observeEvent(input$apply_preset, {
     input_list <- reactiveValuesToList(input)
     weight_list <- input_list[grepl('weight',names(input_list))]

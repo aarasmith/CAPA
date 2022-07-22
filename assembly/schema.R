@@ -78,3 +78,9 @@ md_100 SMALLINT,
 hi_100 SMALLINT,
 int_100 INT
 )"
+
+country_pops_schema <- "CREATE TABLE country_pops (
+iso3n SMALLINT,
+year SMALLINT,
+total_pop BIGINT
+)"
