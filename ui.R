@@ -80,7 +80,8 @@ ui <- fluidPage(
                               splitLayout(cellArgs = list(style='white-space: normal;'),
                                           numericInput(inputId = "font_size_long_map", label = "Legend font size", value = 18, min = 1, max = 100, step = 1),
                                           numericInput(inputId = "legend_size_long_map", label = "Legend key size (in CM)", value = 2, min = 0.1, max = 100, step = 0.1)
-                              )
+                              ),
+                              downloadButton("download_exposure_map", label = "Download Plot")
                  ),
                  mainPanel(
                    plotOutput("long_map")
@@ -106,7 +107,8 @@ ui <- fluidPage(
             splitLayout(cellArgs = list(style='white-space: normal;'),
                         numericInput(inputId = "font_size_map", label = "Legend font size", value = 18, min = 1, max = 100, step = 1),
                         numericInput(inputId = "legend_size_map", label = "Legend key size (in CM)", value = 2, min = 0.1, max = 100, step = 0.1)
-            )
+            ),
+            downloadButton("download_score_map", label = "Download Plot")
           ),
           mainPanel(
             plotOutput("map")
@@ -134,7 +136,8 @@ ui <- fluidPage(
                                           numericInput(inputId = "font_size_dur", label = "Legend font size", value = 18, min = 1, max = 100, step = 1),
                                           numericInput(inputId = "legend_size_dur", label = "Legend key size (in CM)", value = 2, min = 0.1, max = 100, step = 0.1)
                               ),
-                              downloadButton("download_dur", label = "Download Table")
+                              downloadButton("download_dur", label = "Download Table"),
+                              downloadButton("download_duration_map", label = "Download Plot")
                  ),
                  mainPanel(
                    tabsetPanel(
@@ -172,7 +175,8 @@ ui <- fluidPage(
                                           numericInput(inputId = "font_size_freq", label = "Legend font size", value = 18, min = 1, max = 100, step = 1),
                                           numericInput(inputId = "legend_size_freq", label = "Legend key size (in CM)", value = 2, min = 0.1, max = 100, step = 0.1)
                               ),
-                              downloadButton("download_freq", label = "Download Table")
+                              downloadButton("download_freq", label = "Download Table"),
+                              downloadButton("download_frequency_map", label = "Download Plot")
                  ),
                  mainPanel(
                    tabsetPanel(

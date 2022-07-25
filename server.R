@@ -90,9 +90,16 @@ server <- function(input, output, session) {
                                                  threshold = input$threshold_long_map)
     }
     
+    exposure_map <- adm_plot(x = std_agg_output, isos = input$country_long_map, id_col = "capa_id_adm1", input$legend_size_long_map, input$font_size_long_map)
     
-    output$long_map <- renderPlot(adm_plot(x = std_agg_output, isos = input$country_long_map, id_col = "capa_id_adm1", input$legend_size_long_map, input$font_size_long_map),
-                                  height=reactive(ifelse(!is.null(input$innerWidth),input$innerWidth*3/6,0)))
+    output$long_map <- renderPlot(exposure_map, height=reactive(ifelse(!is.null(input$innerWidth),input$innerWidth*3/6,0)))
+    
+    output$download_exposure_map <- downloadHandler(
+      filename = function(){"hdr_exposure_map.pdf"},
+      content = function(fname){
+        ggsave(fname, plot = exposure_map, device = "pdf")
+      }
+    )
     
     toggle_inputs(input_list,T,T)
   })
@@ -109,8 +116,17 @@ server <- function(input, output, session) {
     out_plot <- get_cell_scores(iso = input$country_map, years = c(input$year_slider_map[1]:input$year_slider_map[2]), start_end = c(input$start_map, input$stop_map),
                                weights = weights(), draw_adm1 = input$draw_adm1_map, draw_points = input$draw_points_map)
     
-    output$map <- renderPlot(plot_cell_scores(x = out_plot, isos = input$country_map, legend_size = input$legend_size_map, font_size = input$font_size_map),
-                             height=reactive(ifelse(!is.null(input$innerWidth),input$innerWidth*3/6,0)))
+    score_map <- plot_cell_scores(x = out_plot, isos = input$country_map, legend_size = input$legend_size_map, font_size = input$font_size_map)
+    
+    output$map <- renderPlot(score_map, height=reactive(ifelse(!is.null(input$innerWidth),input$innerWidth*3/6,0)))
+    
+    output$download_score_map <- downloadHandler(
+      filename = function(){"hdr_score_map.pdf"},
+      content = function(fname){
+        ggsave(fname, plot = score_map, device = "pdf")
+      }
+    )
+    
     toggle_inputs(input_list,T,T)
   })
   
@@ -128,7 +144,8 @@ server <- function(input, output, session) {
     
     if(input$adm_dur){
       #duration_output <- duration_output %>% dplyr::select(-geometry)
-      output$duration_map <- renderPlot(adm_plot(x = duration_output, iso = input$country_dur, id_col = "capa_id", input$legend_size_dur, input$font_size_dur), height=reactive(ifelse(!is.null(input$innerWidth),input$innerWidth*3/6,0)))
+      duration_map <- adm_plot(x = duration_output, iso = input$country_dur, id_col = "capa_id", input$legend_size_dur, input$font_size_dur)
+      output$duration_map <- renderPlot(duration_map, height=reactive(ifelse(!is.null(input$innerWidth),input$innerWidth*3/6,0)))
       #duration_output <- duration_output %>% dplyr::select(-shape_id, -shape_group)
     }
     
@@ -141,6 +158,14 @@ server <- function(input, output, session) {
         write_xlsx(duration_output, fname)
       }
     )
+    
+    output$download_duration_map <- downloadHandler(
+      filename = function(){"hdr_duration_map.pdf"},
+      content = function(fname){
+        ggsave(fname, plot = duration_map, device = "pdf")
+      }
+    )
+    
     toggle_inputs(input_list,T,T)
   })
   
@@ -164,8 +189,8 @@ server <- function(input, output, session) {
                                   monthly = as.logical(input$monthly_freq), adm1 = input$adm_freq, weights = weights(), threshold = input$threshold_freq, p_threshold = p_thresh)
     
     if(as.logical(input$adm_freq) & as.logical(input$p_thresh_logic)){
-      output$frequency_map <- renderPlot(adm_plot(x = frequency_output, iso = input$country_freq, id_col = "capa_id", input$legend_size_freq, input$font_size_freq),
-                                        height=reactive(ifelse(!is.null(input$innerWidth),input$innerWidth*3/6,0)))
+      frequency_map <- adm_plot(x = frequency_output, iso = input$country_freq, id_col = "capa_id", input$legend_size_freq, input$font_size_freq)
+      output$frequency_map <- renderPlot(frequency_map, height=reactive(ifelse(!is.null(input$innerWidth),input$innerWidth*3/6,0)))
     }
     
     output$frequency <- renderDataTable(frequency_output)
@@ -177,6 +202,14 @@ server <- function(input, output, session) {
         write_xlsx(frequency_output, fname)
       }
     )
+    
+    output$download_frequency_map <- downloadHandler(
+      filename = function(){"hdr_frequency_map.pdf"},
+      content = function(fname){
+        ggsave(fname, plot = frequency_map, device = "pdf")
+      }
+    )
+    
     toggle_inputs(input_list,T,T)
   })
   
