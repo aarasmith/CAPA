@@ -34,6 +34,11 @@ server <- function(input, output, session) {
     weight_presets(session, weight_list, input$preset)
   })
   
+  #Handler for custom region
+  custom_region <- reactive({
+    c(isoc(ison(input$region_custom)), input$region_add)[c(isoc(ison(input$region_custom)), input$region_add) %!in% input$region_subtract]
+  })
+  
   #Handler for the Exposure tab 
   observeEvent(input$submit, {
     if(is.null(input$country)){
@@ -175,16 +180,25 @@ server <- function(input, output, session) {
     toggle_inputs(input_list,T,T)
   })
   
+  #Handler for regional aggregations
   observeEvent(input$submit_global, {
     if(is.null(input$region_global)){
-      output$info_global <- renderText("Please choose at least one region")
+      output$info_global <- renderText("Please choose a region")
       return()
     }
     input_list <- reactiveValuesToList(input)
     toggle_inputs(input_list,F,T)
     
-    region_agg_output <- get_region_aggregation(region = input$region_global, years = c(input$year_slider_global[1]:input$year_slider_global[2]), monthly = input$monthly_global,
-                                     weights = weights(), threshold = input$threshold_global)
+    
+    if(input$region_global == "Custom Region"){
+      region_agg_output <- get_custom_region_aggregation(isos = ison(custom_region()), years = c(input$year_slider_global[1]:input$year_slider_global[2]), monthly = input$monthly_global,
+                                                  weights = weights(), threshold = input$threshold_global)
+    }else{
+      region_agg_output <- get_region_aggregation(region = input$region_global, years = c(input$year_slider_global[1]:input$year_slider_global[2]), monthly = input$monthly_global,
+                                                  weights = weights(), threshold = input$threshold_global) 
+    }
+    
+    
     
     
     output$global_table <- renderDataTable(region_agg_output)
@@ -197,6 +211,11 @@ server <- function(input, output, session) {
       }
     )
     toggle_inputs(input_list,T,T)
+  })
+  
+  #Handler for displaying custom region
+  observeEvent(input$submit_custom, {
+    output$info_custom <- renderText(custom_region())
   })
   
   

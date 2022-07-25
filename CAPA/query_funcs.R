@@ -391,3 +391,24 @@ query_region_aggregation <- function(iso3n, years, weights, threshold, gv, capa_
   data <- dbGetQuery(capa_db, sql_query)
   return(data)
 }
+
+query_custom_region_pop <- function(isos, years, capa_db){
+  
+  iso3n <- paste(isos, collapse = ", ")
+  
+  region_query <- glue(
+    "SELECT
+    	year,
+    	sum(total_pop) AS total_pop
+    FROM
+    	country_pops
+    WHERE
+      iso3n IN ({iso3n}) AND
+      year >= {years[1]} AND
+      year <= {years[length(years)]}
+    GROUP BY year"
+  )
+  
+  region_pop <- dbGetQuery(capa_db, region_query)
+  return(region_pop)
+}

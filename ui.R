@@ -186,25 +186,40 @@ ui <- fluidPage(
                )
       ),
       
-      ####LONG PANEL####
+      ####REGIONAL PANEL####
       
       tabPanel("Regional Aggregations", fluid = TRUE,
                sidebarLayout(
                  
-                 sidebarPanel(style = "height: 95vh; overflow-y: auto;",
+                 sidebarPanel(tabsetPanel(
+                   tabPanel("Parameters", fluid = TRUE, style = "height: 95vh; overflow-y: auto;",
                               textOutput("info_global"),
-                              selectInput("region_global", "Select Region", choices = c("World", region_choices)),
+                              selectInput("region_global", "Select Region", choices = c("World", region_choices, "Custom Region")),
                               sliderInput("year_slider_global", "Year Range:", min = 1990, max = 2020, value = c(1990, 2020), sep = ""),
                               radioButtons(inputId = "monthly_global", label = "Period size", choiceNames = c("Year", "Month"), choiceValues = c(FALSE, TRUE), inline = T),
                               numericInput(inputId = "threshold_global", label = "Intensity Threshold", min = 1, value = 1, step = 1),
                               actionButton(inputId = "submit_global", label = "Submit"),
                               downloadButton("download_global", label = "Download Table")
                  ),
+                 tabPanel("Custom Region", fluid = TRUE,
+                          style = "height: 95vh; overflow-y: auto;",
+                          textOutput("info_custom"),
+                          selectInput("region_custom", "Select Region", choices = c("World", region_choices)),
+                          selectInput("region_add", "Countries to add", choices = all_country_choices, multiple = T),
+                          selectInput("region_subtract", "Countries to remove", choices = all_country_choices, multiple = T),
+                          actionButton(inputId = "submit_custom", label = "Display custom region")
+                          
+                 )
+                 )),
                  mainPanel(
                    dataTableOutput("global_table")
                  )
                )
-      )
+      ),
+      
+      ####CUSTOM REGION PANEL####
+      
+      
       
     )
 )

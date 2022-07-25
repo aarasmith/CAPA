@@ -45,6 +45,12 @@ ison_region <- function(region){
   return(iso3n)
 }
 
+isoc <- function(iso3n){
+  iso3c <- countrycode(iso3n, origin = "iso3n", destination = "iso3c")
+  iso3c <- ifelse(is.na(iso3c), "KOS", iso3c)
+  return(iso3c)
+}
+
 sanitize_weights <- function(x){
   
   weight_list <- lapply(x, function(x){if(!is.numeric(x)){return(0)}else{return(x)}})
@@ -338,6 +344,28 @@ get_region_aggregation <- function(region, years, weights, monthly = TRUE, thres
     mutate(risk_pct = risk_pop/total_pop)
   
   return(data) 
+}
+
+get_custom_region_aggregation <- function(isos, years, weights, monthly = TRUE, threshold = 1){
+  threshold <- sanitize_threshold(threshold)
+  
+  capa_db <- connect_to_capa()
+  
+  gv <- list()
+  gv['region'] <- "Custom"
+  if(monthly){
+    gv['table'] <- "cell_stats"
+    gv['grouping_vars'] <- "year, month"
+  }else{
+    gv['table'] <- "cell_stats_yr"
+    gv['grouping_vars'] <- "year"
+  }
+  
+  total_pop <- query_custom_region_pop(isos, years, capa_db)
+  
+  data <- query_region_aggregation(isos, years, weights, threshold, gv, capa_db) %>%
+    left_join(total_pop, by = "year") %>%
+    mutate(risk_pct = risk_pop/total_pop)
 }
 
 # system.time({x <- get_region_aggregation("Western Asia", 2014:2015, weights, monthly = F)})
