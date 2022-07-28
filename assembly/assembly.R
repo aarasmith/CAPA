@@ -1,4 +1,4 @@
-source("data_generation.R")
+source("assembly/data_generation.R")
 source("adm_assembly.R")
 
 
@@ -68,10 +68,10 @@ generate_full <- function(iso, year_range = 1990:2020, nid_grid, poprast_list, g
 update_from_pops <- function(iso, year_range = c(2021), nid_grid, poprast_list, ged25, ged50, ged100, source_db = capa_db, write_db = NULL){
   
   #read
-  cell_geos <- st_read(source_db, query = glue("SELECT * FROM cell_geos WHERE iso3n = '{iso3n}'")) %>%
+  cell_geos <- st_read(source_db, query = glue("SELECT * FROM cell_geos WHERE iso3n = {iso3n}")) %>%
     mutate(sid = as.numeric(sid))
-  grid_geos <- st_read(source_db, query = glue("SELECT * FROM grid_geos WHERE iso3n = '{iso3n}'"))
-  adm_join <- dbGetQuery(source_db, glue("SELECT sid, capa_id_adm1 FROM cell_geos WHERE iso3n = '{iso3n}'"))
+  grid_geos <- st_read(source_db, query = glue("SELECT * FROM grid_geos WHERE iso3n = {iso3n}"))
+  adm_join <- dbGetQuery(source_db, glue("SELECT sid, capa_id_adm1 FROM cell_pops WHERE iso3n = {iso3n}")) %>% distinct() %>% within(sid <- as.numeric(sid))
   
   #create
   poprast_list_c <- subset_rasters(iso, nid_grid, poprast_list)
@@ -92,33 +92,45 @@ update_from_pops <- function(iso, year_range = c(2021), nid_grid, poprast_list, 
 
 update_from_stats <- function(iso, year_range = c(2021), nid_grid, ged25, ged50, ged100, source_db = capa_db, write_db = NULL){
   
+  iso3n <- ison(iso)
+  source_db <- connect_to_capa()
+  
   #read
-  cell_geos <- st_read(source_db, query = glue("SELECT * FROM cell_geos WHERE iso3n = '{iso3n}'")) %>%
+  cell_geos <- st_read(source_db, query = glue("SELECT * FROM cell_geos WHERE iso3n = {iso3n}")) %>%
     mutate(sid = as.numeric(sid))
-  grid_geos <- st_read(source_db, query = glue("SELECT * FROM grid_geos WHERE iso3n = '{iso3n}'"))
-  cell_pops <- dbGetQuery(source_db, glue("SELECT * FROM cell_pops WHERE iso3n = '{iso3n}' AND year > {year_range[1] - 1} AND year < {year_range[length(year_range)] + 1}")) %>%
+  grid_geos <- st_read(source_db, query = glue("SELECT * FROM grid_geos WHERE iso3n = {iso3n}"))
+  cell_pops <- dbGetQuery(source_db, glue("SELECT * FROM cell_pops WHERE iso3n = {iso3n} AND year > {year_range[1] - 1} AND year < {year_range[length(year_range)] + 1}")) %>%
     mutate(sid = as.numeric(sid))
-  adm_join <- dbGetQuery(source_db, glue("SELECT sid, capa_id_adm1 FROM cell_geos WHERE iso3n = '{iso3n}'"))
+  adm_join <- dbGetQuery(source_db, glue("SELECT sid, capa_id_adm1 FROM cell_pops WHERE iso3n = {iso3n}")) %>% distinct() %>% within(sid <- as.numeric(sid))
+  
+  disconnect_from_capa(source_db)
   
   #create
-  cell_stats <- generate_stats(iso, year_range, ged25, ged50, ged100, grid_geos, cell_geos, cell_pops) %>%
-    left_join(adm_join, by = "sid")
+  cell_stats <- generate_stats(iso, year_range, ged25, ged50, ged100, grid_geos, cell_geos, cell_pops) #%>%
+    #left_join(adm_join, by = "sid")
   
   #write
   if(!is.null(write_db)){
     dbWriteTable(write_db, "cell_stats", cell_stats, append = T)
+    return(iso)
   }else{
     return(cell_stats)
   }
 }
 
+#20 minutes with future_lapply on 1 year
+#can't pass connection into future_lapply multisessions, therefore must connect within function
 update_pops <- function(iso, year_range = c(2021), nid_grid, poprast_list, source_db = capa_db, write_db = NULL){
   
+  iso3n <- ison(iso)
+  source_db <- connect_to_capa()
   #read
-  cell_geos <- st_read(source_db, query = glue("SELECT * FROM cell_geos WHERE iso3n = '{iso3n}'")) %>%
+  cell_geos <- st_read(source_db, query = glue("SELECT * FROM cell_geos WHERE iso3n = {iso3n}")) %>%
     mutate(sid = as.numeric(sid))
-  grid_geos <- st_read(source_db, query = glue("SELECT * FROM grid_geos WHERE iso3n = '{iso3n}'"))
-  adm_join <- dbGetQuery(source_db, glue("SELECT sid, capa_id_adm1 FROM cell_geos WHERE iso3n = '{iso3n}'"))
+  grid_geos <- st_read(source_db, query = glue("SELECT * FROM grid_geos WHERE iso3n = {iso3n}"))
+  adm_join <- dbGetQuery(source_db, glue("SELECT sid, capa_id_adm1 FROM cell_pops WHERE iso3n = {iso3n}")) %>% distinct() %>% within(sid <- as.numeric(sid))
+  
+  disconnect_from_capa(source_db)
   
   #create
   poprast_list_c <- subset_rasters(iso, nid_grid, poprast_list)

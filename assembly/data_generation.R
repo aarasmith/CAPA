@@ -9,17 +9,17 @@ library(purrr)
 library(future)
 library(future.apply)
 library(bit64)
-ged25 <- readRDS(paste0(drop_path, "ged25.RDS"))
-ged50 <- readRDS(paste0(drop_path, "ged50.RDS"))
-ged100 <- readRDS(paste0(drop_path, "ged100.RDS"))
-ged25 <- readRDS(paste0(drop_path, "ged25_22.RDS"))
-ged50 <- readRDS(paste0(drop_path, "ged50_22.RDS"))
-ged100 <- readRDS(paste0(drop_path, "ged100_22.RDS"))
-
-raster_files <- list.files("C:/Users/andara/PRIO Dropbox/Andrew Arasmith/R Scripts/HDR/new_rasters/ipolated", pattern = "tif", full.names = TRUE)
-poprast_list <- lapply(raster_files, raster)
-
-new_poprast_list <- list(raster("C:/Users/andara/PRIO Dropbox/Andrew Arasmith/R Scripts/HDR/new_rasters1/ipolated/ipop_2021.tif"))
+# ged25 <- readRDS(paste0(drop_path, "ged25.RDS"))
+# ged50 <- readRDS(paste0(drop_path, "ged50.RDS"))
+# ged100 <- readRDS(paste0(drop_path, "ged100.RDS"))
+# ged25 <- readRDS(paste0(drop_path, "ged25_22.RDS"))
+# ged50 <- readRDS(paste0(drop_path, "ged50_22.RDS"))
+# ged100 <- readRDS(paste0(drop_path, "ged100_22.RDS"))
+# 
+# raster_files <- list.files("C:/Users/andara/PRIO Dropbox/Andrew Arasmith/R Scripts/HDR/new_rasters/ipolated", pattern = "tif", full.names = TRUE)
+# poprast_list <- lapply(raster_files, raster)
+# 
+# new_poprast_list <- list(raster("C:/Users/andara/PRIO Dropbox/Andrew Arasmith/R Scripts/HDR/new_rasters1/ipolated/ipop_2021.tif"))
 
 ####STEP 1####
 #Crop and mask global rasters to specified country
@@ -103,7 +103,7 @@ generate_pops <- function(cell_geos, poprast_list_c, year_range){
   var_list <- paste0("ipop", year_range)
   
   cell_pops <- list(cell_geos) %>%
-    append(future_lapply(1:length(poprast_list_c), extract_pops, cell_geos = cell_geos, var_list = var_list, poprast_list_c = poprast_list_c)) %>%
+    append(lapply(1:length(poprast_list_c), extract_pops, cell_geos = cell_geos, var_list = var_list, poprast_list_c = poprast_list_c)) %>%
     reduce(left_join, by = "sid")
 
   cell_pops <- reshape2::melt(st_drop_geometry(cell_pops), id.vars = c(1:3), variable.name = "year", value.name = "cell_pop") %>%
@@ -173,7 +173,7 @@ generate_stats <- function(iso, year_range, ged25, ged50, ged100, grid_geos, cel
     return()
   }
   
-  #DO NOT PASS A FUNCTION DEFINED WITHIN THIS FUNCTION HOLY SHIT JUST DECLARE IT OUTSIDE OR YOU WILL HAVE A BAD TIME
+  #DO NOT PASS A FUNCTION DEFINED WITHIN THIS FUNCTION TO FUTURE_LAPPLY HOLY SHIT JUST DECLARE IT OUTSIDE OR YOU WILL HAVE A BAD TIME
   comb25 <- future_lapply(grid_sub, ged_intersect, ged_grid = grid25, cell_geos = cell_geos) %>%
     generate_comb(ged_dist = "25")
   comb50 <- future_lapply(grid_sub, ged_intersect, ged_grid = grid50, cell_geos = cell_geos) %>%
@@ -183,7 +183,10 @@ generate_stats <- function(iso, year_range, ged25, ged50, ged100, grid_geos, cel
   
   #create the monthly framework for each grid-cell. Grid-cells in non-conflict meta-grids are excluded to save space/time
   months <- 1:12
+  #browser()
+  cell_pops <- as.data.table(cell_pops)
   cell_stats <- cell_pops[cell_pops$sid %in% st_drop_geometry(cell_geos)[cell_geos$gid %in% grid_sub, "sid"]] %>%
+    #as.data.table() %>%
     .[rep(1:.N, 12)] %>%
     .[ , month := months, by = list(sid, year)] %>%
     setorder(sid, year, month) %>%

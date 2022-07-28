@@ -41,7 +41,7 @@ hdr_db <- dbConnect(RSQLite::SQLite(), "C:/Users/andara/Documents/hdr_db_v2(1).s
 hdr_db_2 <- dbConnect(RSQLite::SQLite(), "C:/Users/andara/Documents/hdr_db_v2(2).sqlite")
 hdr_db_3 <- dbConnect(RSQLite::SQLite(), paste0(drop_path, "hdr_db_new.sqlite"))
 capa_db <- dbConnect(drv = RPostgres::Postgres(), host = prio_host, dbname = "capa", user = prio_user, password = prio_pass, port = prio_port)
-
+staging_db <- dbConnect(RSQLite::SQLite(), paste0(drop_path, "staging_db.sqlite"))
 ############################
 #     YEARLY ESTIMATES     #
 ############################
