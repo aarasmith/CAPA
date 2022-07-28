@@ -1,14 +1,12 @@
 #next up
-#weight presets
+#flesh out weight presets
+#allow ADM0 for adm_map
 #probably best to force period threshold
 #There's something weird where logical choices from the UI are getting passed as strings - need to fix up and cleanup all the temporary as.logical() calls
 #fixed broken bit in duration, but might need closer investigation to make sure
-#allow ADM0 for adm_map
-#weight presets
 #simplify or split adm0 rds
-#explore allowing multi-country input for the cell_score map
+#restrict allowing multi-country input for the cell_score map
 #give more flexibility for when ADM2 is integrated
-#think about adding total pops for countries alongside regions to allow for a custom region selection
 
 
 ####Utilities####
