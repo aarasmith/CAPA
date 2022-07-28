@@ -170,7 +170,7 @@ get_cell_scores <- function(iso, years, start_end = c(1,12), weights, draw_adm1 
   
   data$score <- as.numeric(data$score)
   
-  conflict_events <- filter(ged, iso3c == iso & year %in% years) %>%
+  conflict_events <- filter(ged, iso3c %in% iso & year %in% years) %>%
     filter(!(year == min(years) & month < start_end[1])) %>%
     filter(!(year == max(years) & month > start_end[2]))
   
