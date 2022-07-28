@@ -70,8 +70,8 @@ generate_ged <- function(drop_path, buffer_size = 50000, thresh = 1){
   
   ged <- filter(ged, best >= thresh)
   ged <- ged %>% mutate(iso3c = ifelse(country_id == 678, "YEM", iso3c))
-  ged <- ged %>% mutate(int_cat = case_when(best <= 10 ~ 1,
-                                            (best > 10) & (best < 25) ~ 2,
+  ged <- ged %>% mutate(int_cat = case_when(best <= 9 ~ 1,
+                                            (best >= 10) & (best <= 24) ~ 2,
                                             best >= 25 ~ 3))
   return(ged)
 }

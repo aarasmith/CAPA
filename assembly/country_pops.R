@@ -24,9 +24,10 @@ generate_country_pops <- function(iso3c, nid_grid, poprast_list, years = 1990:20
 }
 
 iso_list <- nid_grid$ISOCODE[nid_grid$ISOCODE != "SPR"]
-future::plan(multisession)
-country_pops <- lapply(iso_list, generate_country_pops, nid_grid = nid_grid, poprast_list = poprast_list) %>%
-  rbindlist()
+#future::plan(multisession)
+#3 minutes for 2021
+system.time({country_pops <- lapply(iso_list, generate_country_pops, nid_grid = nid_grid, poprast_list = new_poprast_list, years = c(2021))}) #%>%
+  #rbindlist()
 
 saveRDS(country_pops, "data/country_pops.RDS")
 country_pops$total_pop <- round(country_pops$total_pop)
