@@ -1,10 +1,13 @@
 #next up
-#flesh out weight presets
+#implement starting and ending period for frequency
+#some risk_pct needs rounding (global, but i believe elsewhere too)
+#clean up gv for global agg
+#add children at risk
+#create tool-tip for weight presets
 #allow ADM0 for adm_map
 #month_abs either needs removing or fixing for when updating stats
 #probably best to force period threshold
 #There's something weird where logical choices from the UI are getting passed as strings - need to fix up and cleanup all the temporary as.logical() calls
-#fixed broken bit in duration, but might need closer investigation to make sure
 #simplify or split adm0 rds
 #restrict allowing multi-country input for the cell_score map
 #give more flexibility for when ADM2 is integrated
@@ -80,7 +83,7 @@ sanitize_threshold <- function(x){
 #                 int25 = int25_weight, int50 = int50_weight, int100 = int100_weight)
 
 ####Work Horses####
-get_standard_aggregation <- function(iso, years, monthly = TRUE, adm1 = TRUE, weights, threshold = 1, cap = NA, score = FALSE, selected_month = NA){
+get_standard_aggregation <- function(iso, years, period = "monthly", adm1 = TRUE, weights, threshold = 1, cap = NA, score = FALSE, selected_period = NA){
   #browser()
   if(is.numeric(iso)){
     iso3n <- iso
@@ -92,7 +95,7 @@ get_standard_aggregation <- function(iso, years, monthly = TRUE, adm1 = TRUE, we
 
   capa_db <- connect_to_capa()
   
-  gv <- get_standard_gv(adm1, monthly)
+  gv <- get_standard_gv(adm1, period)
   
   total_pop <- query_total_pop(iso3n, years, gv, capa_db)
   
@@ -131,8 +134,14 @@ get_standard_aggregation <- function(iso, years, monthly = TRUE, adm1 = TRUE, we
                            by = c("capa_id_adm1" = "capa_id"))
   }
   
-  if(as.logical(monthly) & !is.na(selected_month)){
-    out_frame <- out_frame %>% filter(month == selected_month)
+  if(period == "monthly" & !is.na(selected_period)){
+    out_frame <- out_frame %>% filter(month == selected_period)
+  }
+  if(period == "biannually" & !is.na(selected_period)){
+    out_frame <- out_frame %>% filter(half == selected_period)
+  }
+  if(period == "quarterly" & !is.na(selected_period)){
+    out_frame <- out_frame %>% filter(quarter == selected_period)
   }
   
   disconnect_from_capa(capa_db)
@@ -238,7 +247,7 @@ adm_plot <- function(x, isos, id_col = "capa_id", legend_size = 2, font_size = 1
   
 }
 
-get_temporal <- function(type, iso, years, weights, monthly = FALSE, start_end = c(1,12), adm1 = FALSE, threshold = 1, p_threshold = NA){
+get_temporal <- function(type, iso, years, weights, period = "yearly", start_end = c(1,12), adm1 = FALSE, threshold = 1, p_threshold = NA){
   #not ready to implement the p_threshold just yet. Will be easier once I've gone through the stage to create place-holder 0 entries for periods not matching the thresh condition
   #browser()
   if(type %!in% c("duration", "frequency")){
@@ -255,7 +264,7 @@ get_temporal <- function(type, iso, years, weights, monthly = FALSE, start_end =
   
   capa_db <- connect_to_capa()
   
-  gv <- get_temporal_gv(adm1, monthly, start_end, years)
+  gv <- get_temporal_gv(adm1, period, start_end, years)
   
   total_pop <- query_total_pop(iso3n, years[length(years)], gv, capa_db) %>%
     rename(capa_id = contains("capa_id"))
@@ -312,7 +321,7 @@ get_temporal <- function(type, iso, years, weights, monthly = FALSE, start_end =
 # my_plot <- adm_plot(z)
 # my_plot
 
-get_region_aggregation <- function(region, years, weights, monthly = TRUE, threshold = 1){
+get_region_aggregation <- function(region, years, weights, period = "monthly", threshold = 1){
   
   threshold <- sanitize_threshold(threshold)
   
@@ -320,9 +329,15 @@ get_region_aggregation <- function(region, years, weights, monthly = TRUE, thres
   
   gv <- list()
   gv['region'] <- region
-  if(monthly){
+  if(period == "monthly"){
     gv['table'] <- "cell_stats"
     gv['grouping_vars'] <- "year, month"
+  }else if(period == "quarterly"){
+    gv['table'] <- "cell_stats_qu"
+    gv['grouping_vars'] <- "year, quarter"
+  }else if(period == "biannually"){
+    gv['table'] <- "cell_stats_bi"
+    gv['grouping_vars'] <- "year, half"
   }else{
     gv['table'] <- "cell_stats_yr"
     gv['grouping_vars'] <- "year"
@@ -345,16 +360,22 @@ get_region_aggregation <- function(region, years, weights, monthly = TRUE, thres
   return(data) 
 }
 
-get_custom_region_aggregation <- function(isos, years, weights, monthly = TRUE, threshold = 1){
+get_custom_region_aggregation <- function(isos, years, weights, period = "monthly", threshold = 1){
   threshold <- sanitize_threshold(threshold)
   
   capa_db <- connect_to_capa()
   
   gv <- list()
   gv['region'] <- "Custom"
-  if(monthly){
+  if(period == "monthly"){
     gv['table'] <- "cell_stats"
     gv['grouping_vars'] <- "year, month"
+  }else if(period == "quarterly"){
+    gv['table'] <- "cell_stats_qu"
+    gv['grouping_vars'] <- "year, quarter"
+  }else if(period == "biannually"){
+    gv['table'] <- "cell_stats_bi"
+    gv['grouping_vars'] <- "year, half"
   }else{
     gv['table'] <- "cell_stats_yr"
     gv['grouping_vars'] <- "year"

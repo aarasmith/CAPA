@@ -32,8 +32,12 @@ server <- function(input, output, session) {
   
   #determining the maximum periods based on selection under Frequency tab
   p_thresh_max <- reactive({
-    if(input$monthly_freq){
+    if(input$period_freq == "monthly"){
       (((max(input$year_slider_freq) - min(input$year_slider_freq)) + 1) * 12) - (input$start_freq - 1) - (12 - input$stop_freq)
+    }else if(input$period_freq == "quarterly"){
+      (((max(input$year_slider_freq) - min(input$year_slider_freq)) + 1) * 4)# - (input$start_freq - 1) - (4 - input$stop_freq)
+    }else if(input$period_freq == "biannually"){
+      (((max(input$year_slider_freq) - min(input$year_slider_freq)) + 1) * 2)# - (input$start_freq - 1) - (2 - input$stop_freq)
     }else{
       (max(input$year_slider_freq) - min(input$year_slider_freq)) + 1
     }
@@ -73,7 +77,7 @@ server <- function(input, output, session) {
     
 
 
-    std_agg_output <- get_standard_aggregation(iso = input$country, years = c(input$year_slider[1]:input$year_slider[2]), monthly = input$monthly, adm1 = input$adm, weights = weights(),
+    std_agg_output <- get_standard_aggregation(iso = input$country, years = c(input$year_slider[1]:input$year_slider[2]), period = input$period, adm1 = input$adm, weights = weights(),
                                   threshold = input$threshold)
 
     
@@ -103,11 +107,11 @@ server <- function(input, output, session) {
     input_list <- reactiveValuesToList(input)
     toggle_inputs(input_list,F,T)
     
-    if(input$monthly_long_map){
-      std_agg_output <- get_standard_aggregation(iso = input$country_long_map, years = input$year_long_map, monthly = input$monthly_long_map, adm1 = T, weights = weights(),
-                                                 threshold = input$threshold_long_map, selected_month = input$month_long_map)
+    if(input$period_long_map != "yearly"){
+      std_agg_output <- get_standard_aggregation(iso = input$country_long_map, years = input$year_long_map, period = input$period_long_map, adm1 = T, weights = weights(),
+                                                 threshold = input$threshold_long_map, selected_period = input$selected_period_long_map)
     }else{
-      std_agg_output <- get_standard_aggregation(iso = input$country_long_map, years = input$year_long_map, monthly = input$monthly_long_map, adm1 = T, weights = weights(),
+      std_agg_output <- get_standard_aggregation(iso = input$country_long_map, years = input$year_long_map, period = input$period_long_map, adm1 = T, weights = weights(),
                                                  threshold = input$threshold_long_map)
     }
     
@@ -165,7 +169,7 @@ server <- function(input, output, session) {
     toggle_inputs(input_list,F,T)
     
     duration_output <- get_temporal(type = "duration", iso = input$country_dur, years = c(input$year_slider_dur[1]:input$year_slider_dur[2]), start_end = c(input$start_dur, input$stop_dur),
-                                     adm1 = input$adm_dur, weights = weights(), monthly = as.logical(input$monthly_dur), threshold = input$threshold_dur)
+                                     adm1 = input$adm_dur, weights = weights(), period = input$period_dur, threshold = input$threshold_dur)
     
     # if(input$adm_dur){
     #   #duration_output <- duration_output %>% dplyr::select(-geometry)
@@ -219,7 +223,7 @@ server <- function(input, output, session) {
     }
     
     frequency_output <- get_temporal(type = "frequency", iso = input$country_freq, years = c(input$year_slider_freq[1]:input$year_slider_freq[2]), start_end = c(input$start_freq, input$stop_freq),
-                                  monthly = as.logical(input$monthly_freq), adm1 = input$adm_freq, weights = weights(), threshold = input$threshold_freq, p_threshold = p_thresh)
+                                  period = input$period_freq, adm1 = input$adm_freq, weights = weights(), threshold = input$threshold_freq, p_threshold = p_thresh)
     
     # if(as.logical(input$adm_freq) & as.logical(input$p_thresh_logic)){
     #   frequency_map <- adm_plot(x = frequency_output, iso = input$country_freq, id_col = "capa_id", input$legend_size_freq, input$font_size_freq)
@@ -265,10 +269,10 @@ server <- function(input, output, session) {
     
     
     if(input$region_global == "Custom Region"){
-      region_agg_output <- get_custom_region_aggregation(isos = ison(custom_region()), years = c(input$year_slider_global[1]:input$year_slider_global[2]), monthly = input$monthly_global,
+      region_agg_output <- get_custom_region_aggregation(isos = ison(custom_region()), years = c(input$year_slider_global[1]:input$year_slider_global[2]), period = input$period_global,
                                                   weights = weights(), threshold = input$threshold_global)
     }else{
-      region_agg_output <- get_region_aggregation(region = input$region_global, years = c(input$year_slider_global[1]:input$year_slider_global[2]), monthly = input$monthly_global,
+      region_agg_output <- get_region_aggregation(region = input$region_global, years = c(input$year_slider_global[1]:input$year_slider_global[2]), period = input$period_global,
                                                   weights = weights(), threshold = input$threshold_global) 
     }
     

@@ -1,16 +1,26 @@
 
 
 
-get_standard_gv <- function(adm1, monthly){
+get_standard_gv <- function(adm1, period){
   if(adm1){
     tot_group_vars <- "iso3n, year, capa_id_adm1"
     tot_join_vars <- c("iso3n", "year", "capa_id_adm1")
-    if(monthly){
+    if(period == "monthly"){
       table <- "cell_stats"
       grouping_vars <- "iso3n, year, month, capa_id_adm1"
       grouping_vars2 <- "sid, year, month"
       dplyr_group_vars <- c("iso3n", "year", "month", "capa_id_adm1")
-    }else{
+    }else if(period == "quarterly"){
+      table <- "cell_stats_qu"
+      grouping_vars <- "iso3n, year, quarter, capa_id_adm1"
+      grouping_vars2 <- "sid, year, quarter"
+      dplyr_group_vars <- c("iso3n", "year", "quarter", "capa_id_adm1")
+    }else if(period == "biannually"){
+      table <- "cell_stats_bi"
+      grouping_vars <- "iso3n, year, half, capa_id_adm1"
+      grouping_vars2 <- "sid, year, half"
+      dplyr_group_vars <- c("iso3n", "year", "half", "capa_id_adm1")
+    }else if(period == "yearly"){
       table <- "cell_stats_yr"
       grouping_vars <- "iso3n, year, capa_id_adm1"
       grouping_vars2 <- "sid, year"
@@ -19,12 +29,22 @@ get_standard_gv <- function(adm1, monthly){
   }else{
     tot_group_vars <- "iso3n, year"
     tot_join_vars <- c("iso3n", "year")
-    if(monthly){
+    if(period == "monthly"){
       table <- "cell_stats"
       grouping_vars <- "iso3n, year, month"
       grouping_vars2 <- "sid, year, month"
       dplyr_group_vars <- c("iso3n", "year", "month")
-    }else{
+    }else if(period == "quarterly"){
+      table <- "cell_stats_qu"
+      grouping_vars <- "iso3n, year, quarter"
+      grouping_vars2 <- "sid, year, quarter"
+      dplyr_group_vars <- c("iso3n", "year", "quarter")
+    }else if(period == "biannually"){
+      table <- "cell_stats_bi"
+      grouping_vars <- "iso3n, year, half"
+      grouping_vars2 <- "sid, year, half"
+      dplyr_group_vars <- c("iso3n", "year", "half")
+    }else if(period == "yearly"){
       table <- "cell_stats_yr"
       grouping_vars <- "iso3n, year"
       grouping_vars2 <- "sid, year"
@@ -176,7 +196,7 @@ query_cell_scores <- function(iso3n, years, start_end, weights, capa_db){
 }
 
 
-get_temporal_gv <- function(adm, monthly, start_end, years){
+get_temporal_gv <- function(adm, period, start_end, years){
   #creates grouping variables for the SQL query based on whether the query is adm0/adm1 and yearly/monthly. gv['start_end'] is a partial SQL statement added to the middle of sql_query
   
   gv <- list()
@@ -189,17 +209,22 @@ get_temporal_gv <- function(adm, monthly, start_end, years){
     gv['tot_group_vars'] <- "iso3n"
     gv[['tot_join_vars']] <- c("iso3n")
   }
-  if(!monthly){
-    gv['table'] <- "cell_stats_yr"
+  if(period != "monthly"){
     gv['start_end'] <- ""
-    #gv['counter'] <- (max(years) - min(years)) + 1
   }else{
-    gv['table'] <- "cell_stats"
     gv['start_end'] <- glue(" AND
         NOT (month < {start_end[1]} AND year = {min(years)}) AND
         NOT (month > {start_end[2]} AND year = {max(years)})
                       ")
-    #gv['counter'] <- ((max(years) - min(years)) + 1) * 12
+  }
+  if(period == "monthly"){
+    gv['table'] <- "cell_stats"
+  }else if(period == "quarterly"){
+    gv['table'] <- "cell_stats_qu"
+  }else if(period == "biannually"){
+    gv['table'] <- "cell_stats_bi"
+  }else if(period == "yearly"){
+    gv['table'] <- "cell_stats_yr"
   }
   
   return(gv)
