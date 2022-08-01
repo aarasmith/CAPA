@@ -195,7 +195,7 @@ cell_stats_yr_view <- "CREATE MATERIALIZED VIEW cell_stats_yr AS
 
 region_pops_view <- "CREATE MATERIALIZED VIEW region_pops AS
   SELECT
-      region, year, sum(total_pop)
+      region, year, sum(total_pop) AS total_pop
   FROM
     country_pops
   LEFT JOIN

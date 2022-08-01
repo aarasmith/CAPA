@@ -1,6 +1,7 @@
 #next up
 #flesh out weight presets
 #allow ADM0 for adm_map
+#month_abs either needs removing or fixing for when updating stats
 #probably best to force period threshold
 #There's something weird where logical choices from the UI are getting passed as strings - need to fix up and cleanup all the temporary as.logical() calls
 #fixed broken bit in duration, but might need closer investigation to make sure

@@ -108,7 +108,8 @@ query_standard_aggregation <- function(iso3n, years, weights, threshold, gv, cap
     sql_query <- sql_query_score
   }
   
-  data <- dbGetQuery(capa_db, sql_query)
+  data <- dbGetQuery(capa_db, sql_query) %>%
+    within(risk_pop <- as.numeric(risk_pop))
   return(data)
 }
 
@@ -257,7 +258,8 @@ query_duration <- function(iso3n, years, start_end, weights, threshold, gv, capa
     GROUP BY {gv['grouping_vars']}"
   )
   
-  data <- dbGetQuery(capa_db, sql_query)
+  data <- dbGetQuery(capa_db, sql_query) %>%
+    within(risk_pop <- as.numeric(risk_pop))
   return(data)
   
 }
@@ -324,7 +326,8 @@ query_frequency <- function(iso3n, years, start_end, weights, threshold, gv, cap
       ) pre_cumsum"
   )
   
-  data <- dbGetQuery(capa_db, sql_query)
+  data <- dbGetQuery(capa_db, sql_query) %>%
+    within(risk_pop <- as.numeric(risk_pop))
   return(data)
 }
 
@@ -388,7 +391,8 @@ query_region_aggregation <- function(iso3n, years, weights, threshold, gv, capa_
       GROUP BY {gv['grouping_vars']}"
   )
   
-  data <- dbGetQuery(capa_db, sql_query)
+  data <- dbGetQuery(capa_db, sql_query) %>%
+    within(risk_pop <- as.numeric(risk_pop))
   return(data)
 }
 
@@ -409,6 +413,7 @@ query_custom_region_pop <- function(isos, years, capa_db){
     GROUP BY year"
   )
   
-  region_pop <- dbGetQuery(capa_db, region_query)
+  region_pop <- dbGetQuery(capa_db, region_query) %>%
+    within(total_pop <- as.numeric(total_pop))
   return(region_pop)
 }
