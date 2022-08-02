@@ -1,6 +1,7 @@
 
 
-
+#this generates variables for the sql queries and some of the data processing in dplyr. the logic is more or less duplicated for adm1 = T and adm1 = F
+##it could also be cleaned up further by taking advantage of sql_glue() '*' to unpack vectors into appropriate form e.g. sql_glue({c("iso3n", "year", "month")*}) -> ('iso3n', 'year', 'month')
 get_standard_gv <- function(adm1, period){
   if(adm1){
     tot_group_vars <- "iso3n, year, capa_id_adm1"
@@ -67,8 +68,7 @@ query_total_pop <- function(iso3n, years, gv, capa_db){
     GROUP BY {gv['tot_group_vars']}"
   )
   
-  total_pop <- dbGetQuery(capa_db, total_query) %>%
-    within(total_pop <- as.numeric(total_pop))
+  total_pop <- dbGetQuery(capa_db, total_query) %>% sapply(as.numeric) %>% as.data.frame()
   return(total_pop)
 }
 
@@ -128,8 +128,7 @@ query_standard_aggregation <- function(iso3n, years, weights, threshold, gv, cap
     sql_query <- sql_query_score
   }
   
-  data <- dbGetQuery(capa_db, sql_query) %>%
-    within(risk_pop <- as.numeric(risk_pop))
+  data <- dbGetQuery(capa_db, sql_query) %>% sapply(as.numeric) %>% as.data.frame()
   return(data)
 }
 

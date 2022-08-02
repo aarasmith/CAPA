@@ -1,8 +1,10 @@
 #next up
-#implement starting and ending period for frequency
+#implement starting and ending period for frequency/duration
+#use period threshold for table output in frequency
 #some risk_pct needs rounding (global, but i believe elsewhere too)
 #clean up gv for global agg
 #add children at risk
+#implement placeholders for non-conflict periods
 #create tool-tip for weight presets
 #allow ADM0 for adm_map
 #month_abs either needs removing or fixing for when updating stats
@@ -64,32 +66,81 @@ sanitize_threshold <- function(x){
   if(!is.numeric(x)){return(0)}else{return(x)}
 }
 
-# L25_weight <- 1
-# L50_weight <- 1
-# L100_weight <- 1
-# M25_weight <- 1
-# M50_weight <- 1
-# M100_weight <- 1
-# H25_weight <- 1
-# H50_weight <- 1
-# H100_weight <- 1
-# int25_weight <- 0
-# int50_weight <- 0
-# int100_weight <- 0
-# 
-# weights <- list(L25_weight, L50_weight, L100_weight, M25_weight, M50_weight, M100_weight, H25_weight, H50_weight, H100_weight, int25_weight, int50_weight, int100_weight)
-# 
-# weights <- list(L25 = L25_weight, L50 = L50_weight, L100 = L100_weight, M25 = M25_weight, M50 = M50_weight, M100 = M100_weight, H25 = H25_weight, H50 = H50_weight, H100 = H100_weight,
-#                 int25 = int25_weight, int50 = int50_weight, int100 = int100_weight)
-
-####Work Horses####
-get_standard_aggregation <- function(iso, years, period = "monthly", adm1 = TRUE, weights, threshold = 1, cap = NA, score = FALSE, selected_period = NA){
-  #browser()
+sanitize_iso <- function(iso){
   if(is.numeric(iso)){
     iso3n <- iso
   }else{
     iso3n <- ison(iso)
   }
+  
+  return(iso3n)
+}
+
+#create a placeholder dataframe to join with returned conflict data so that observations that did not have any conflict are retained in the data structure
+create_placeholder <- function(iso, years, period, adm1){
+
+  if(period == "yearly"){
+    placeholder <- data.table(iso3n = iso) %>%
+      .[rep(1:.N, length(years))] %>%
+      .[ , year := years, by = list(iso3n)] %>%
+      setorder(iso3n, year)
+  }else{
+    if(period == "monthly"){
+      p_num <- 12
+      p_name <- "month"
+    }else if(period == "quarterly"){
+      p_num <- 4
+      p_name <- "quarter"
+    }else if(period == "biannually"){
+      p_num <- 2
+      p_name <- "half"
+    }
+    
+    placeholder <- data.table(iso3n = iso) %>%
+      .[rep(1:.N, length(years))] %>%
+      .[ , year := years, by = list(iso3n)] %>%
+      .[rep(1:.N, p_num)] %>%
+      .[ , period := c(1:p_num), by = list(iso3n, year)] %>%
+      setorder(iso3n, year, period)
+    names(placeholder)[3] <- p_name
+    
+  }
+  
+  if(adm1){
+    placeholder <- placeholder %>%
+      left_join(dplyr::select(adm1_cgaz, iso3n, capa_id, shape_name) %>% st_drop_geometry(), by = "iso3n") %>%
+      rename(capa_id_adm1 = capa_id)
+  }
+  
+  return(placeholder)
+  
+}
+
+#func for generating the "by" arg in the placeholder join to the data
+placeholder_join <- function(period, adm1){
+  if(period == "yearly"){
+    ph_join_vars <- c("iso3n", "year")
+  }else if(period == "biannually"){
+    ph_join_vars <- c("iso3n", "year", "half")
+  }else if(period == "quarterly"){
+    ph_join_vars <- c("iso3n", "year", "quarter")
+  }else if(period == "monthly"){
+    ph_join_vars <- c("iso3n", "year", "month")
+  }
+  
+  if(adm1){
+    ph_join_vars <- c(ph_join_vars, "capa_id_adm1")
+  }
+  
+  return(ph_join_vars)
+  
+}
+
+
+####Work Horses####
+get_standard_aggregation <- function(iso, years, period = "monthly", adm1 = TRUE, weights, threshold = 1, cap = NA, score = FALSE, selected_period = NA){
+  #browser()
+  iso3n <- sanitize_iso(iso)
   
   threshold <- sanitize_threshold(threshold)
 
@@ -99,10 +150,15 @@ get_standard_aggregation <- function(iso, years, period = "monthly", adm1 = TRUE
   
   total_pop <- query_total_pop(iso3n, years, gv, capa_db)
   
-  data <- query_standard_aggregation(iso3n, years, weights, threshold, gv, capa_db) %>%
+  data <- query_standard_aggregation(iso3n, years, weights, threshold, gv, capa_db)
+  ph <- create_placeholder(iso = iso3n, years = years, period = period, adm1 = adm1)
+  
+  data <- ph %>% left_join(data, by = placeholder_join(period, adm1)) %>%
+    mutate(risk_pop = ifelse(is.na(risk_pop), 0, risk_pop)) %>%
     left_join(total_pop, by = gv[['tot_join_vars']]) %>%
     mutate(risk_pct = risk_pop/total_pop)
   
+  #not sure if this section works with the placeholder stuff
   if(score){
     data <- data %>%
       mutate(score = as.numeric(score))
@@ -128,12 +184,13 @@ get_standard_aggregation <- function(iso, years, period = "monthly", adm1 = TRUE
     out_frame <- data
   }
  
-  if(adm1){
-    out_frame <- left_join(out_frame %>% within(capa_id_adm1 <- as.numeric(capa_id_adm1)),
-                           dplyr::select(adm1_cgaz, capa_id, shape_name) %>% st_drop_geometry(),
-                           by = c("capa_id_adm1" = "capa_id"))
-  }
+  # if(adm1){
+  #   out_frame <- left_join(out_frame %>% within(capa_id_adm1 <- as.numeric(capa_id_adm1)),
+  #                          dplyr::select(adm1_cgaz, capa_id, shape_name) %>% st_drop_geometry(),
+  #                          by = c("capa_id_adm1" = "capa_id"))
+  # }
   
+  #This section is dependent on a supplied value to "selected_period" and is for filtering the df before plotting
   if(period == "monthly" & !is.na(selected_period)){
     out_frame <- out_frame %>% filter(month == selected_period)
   }
@@ -144,14 +201,16 @@ get_standard_aggregation <- function(iso, years, period = "monthly", adm1 = TRUE
     out_frame <- out_frame %>% filter(quarter == selected_period)
   }
   
+  out_frame <- out_frame %>% within(risk_pct <- round(risk_pct, 4))
+  
   disconnect_from_capa(capa_db)
-  return(out_frame %>% within(risk_pct <- round(risk_pct, 4)))
+  return(out_frame)
   
 }
 
 # system.time({x <- get_standard_aggregation(c("AFG", "IRQ", "MEX", "CAF"), 1990:2020, monthly = T, adm1 = T, weights)})
 # system.time({x <- get_standard_aggregation("AFG", 1990:2020, monthly = T, adm1 = F, weights)})
-# system.time({x <- get_standard_aggregation("AFG", 1990:2020, monthly = F, adm1 = T, weights)})
+# system.time({x <- get_standard_aggregation("AFG", 1990:2020, period = "yearly", adm1 = T, weights)})
 # system.time({x <- get_standard_aggregation(c("AFG", "IRQ", "MEX", "CAF"), 1990:2020, monthly = F, adm1 = F, weights)})
 # system.time({x <- get_standard_aggregation("AFG", 1990:2020, monthly = T, adm1 = T, weights, score = T)})
 # system.time({x <- get_standard_aggregation("AFG", 1990:2020, monthly = T, adm1 = F, weights, score = T)})

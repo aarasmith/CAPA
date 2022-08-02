@@ -434,9 +434,14 @@ M100_weight <- 1
 H25_weight <- 1
 H50_weight <- 1
 H100_weight <- 1
-int25_weight <- 1
-int50_weight <- 1
-int100_weight <- 1
+int25_weight <- 0
+int50_weight <- 0
+int100_weight <- 0
+
+weights <- list(L25_weight, L50_weight, L100_weight, M25_weight, M50_weight, M100_weight, H25_weight, H50_weight, H100_weight, int25_weight, int50_weight, int100_weight)
+
+weights <- list(L25 = L25_weight, L50 = L50_weight, L100 = L100_weight, M25 = M25_weight, M50 = M50_weight, M100 = M100_weight, H25 = H25_weight, H50 = H50_weight, H100 = H100_weight,
+                int25 = int25_weight, int50 = int50_weight, int100 = int100_weight)
 
 
 system.time({risk_25_month <- dbGetQuery(hdr_db_2, glue("
