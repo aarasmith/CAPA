@@ -425,17 +425,17 @@ system.time({x <- dbGetQuery(hdr_db_2, glue("SELECT * FROM comb WHERE iso3n = 76
 dbSendStatement(hdr_db_2, "ANALYZE comb")
 
 
-L25_weight <- 1
-L50_weight <- 1
-L100_weight <- 1
-M25_weight <- 1
-M50_weight <- 1
-M100_weight <- 1
-H25_weight <- 1
-H50_weight <- 1
-H100_weight <- 1
-int25_weight <- 0
-int50_weight <- 0
+L25_weight <- 0
+L50_weight <- 0
+L100_weight <- 0
+M25_weight <- 0
+M50_weight <- 0
+M100_weight <- 0
+H25_weight <- 0
+H50_weight <- 0
+H100_weight <- 0
+int25_weight <- 1
+int50_weight <- 1
 int100_weight <- 0
 
 weights <- list(L25_weight, L50_weight, L100_weight, M25_weight, M50_weight, M100_weight, H25_weight, H50_weight, H100_weight, int25_weight, int50_weight, int100_weight)

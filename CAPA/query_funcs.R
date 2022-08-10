@@ -68,7 +68,7 @@ query_total_pop <- function(iso3n, years, gv, capa_db){
     GROUP BY {gv['tot_group_vars']}"
   )
   
-  total_pop <- dbGetQuery(capa_db, total_query) %>% sapply(as.numeric) %>% as.data.frame()
+  total_pop <- dbGetQuery(capa_db, total_query) %>% mutate(across(, ~as.numeric(.)))
   return(total_pop)
 }
 

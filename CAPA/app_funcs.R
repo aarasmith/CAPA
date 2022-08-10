@@ -4,7 +4,7 @@
 #some risk_pct needs rounding (global, but i believe elsewhere too)
 #clean up gv for global agg
 #add children at risk
-#implement placeholders for non-conflict periods
+#implement placeholders for non-conflict periods - total pop for countries that aren't in the cell_pops table
 #create tool-tip for weight presets
 #allow ADM0 for adm_map
 #month_abs either needs removing or fixing for when updating stats
