@@ -63,6 +63,7 @@ server <- function(input, output, session) {
     c(isoc(ison(input$region_custom)), input$region_add)[c(isoc(ison(input$region_custom)), input$region_add) %!in% input$region_subtract]
   })
   
+  #Handler for markdwon homepage
   observeEvent(input$guide, {
     output$body_plot <- renderUI({HTML(markdown::markdownToHTML('home_page.md', fragment.only = T))})
   })
@@ -70,15 +71,12 @@ server <- function(input, output, session) {
     output$body_plot <- renderUI({HTML(markdown::markdownToHTML('data_citations.md', fragment.only = T))})
   })
   
-  #Handler for markdwon homepage
+  
   # observeEvent(input$sidebarItemExpanded, {
   #   print(input$sidebarItemExpanded)
   #   if(input$sidebarItemExpanded == "Homepage"){
   #     output$body_plot <- renderUI({HTML(markdown::markdownToHTML('home_page.md', fragment.only = T))})
   #   }
-  # })
-  # observeEvent(input$sidebarItemExpanded, {
-  #   input$tab_selection <- "no"
   # })
   
   #Handler for the Exposure tab 
@@ -315,5 +313,29 @@ server <- function(input, output, session) {
     output$info_custom <- renderText(sort(custom_region()))
   })
   
+  #Handler for children at risk
+  observeEvent(input$car, {
+    
+    input_list <- reactiveValuesToList(input)
+    weight_list <- input_list[grepl('weight',names(input_list))]
+    weight_presets(session, weight_list, 'int_50km_unweighted')
+    
+    toggle_inputs(input_list,F,T)
+    
+    CAR_output <- children_in_conflict("World", 1990:2021, "yearly", FALSE, weights = weights(),
+                                       score_selection = c(1, 10, 100, 1000), cat_names = c("low", "medium", "high", "extreme"))
+    
+    output$car_table <- renderDataTable(CAR_output, options = list(scrollX = TRUE))
+    output$body_plot <- renderUI({dataTableOutput("car_table")})
+    
+    output$download_car <- downloadHandler(
+      filename = function(){"CAR_data.xlsx"},
+      content = function(fname){
+        write_xlsx(CAR_output, fname)
+      }
+    )
+    
+    toggle_inputs(input_list,T,T)
+  })
   
 }

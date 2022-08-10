@@ -25,7 +25,7 @@ demos_proj <- demos_proj %>% mutate(ages_15_18 = ages_15_19 * (4/5)) %>%
   mutate(child_pct = child_pop/un_total) %>%
   filter(year != 2020)
 
-demos <- bind_rows(demos_est, demos_proj) %>%
+un_demos <- bind_rows(demos_est, demos_proj) %>%
   dplyr::select(iso3n, year, un_total, child_pct)
 
 
@@ -61,7 +61,7 @@ children_in_conflict <- function(iso3c, years, period, adm1, weights, threshold 
   
   #add demographic data and calculate the children stuff
   conf <- conf_wide %>%
-    left_join(demos, by = c("iso3n", "year")) %>%
+    left_join(un_demos, by = c("iso3n", "year")) %>%
     mutate(total_children = round(total_pop * child_pct)) %>%
     mutate(risk_children_low = round(risk_pop_low * child_pct),
            risk_children_medium = round(risk_pop_medium * child_pct),
@@ -99,6 +99,6 @@ children_in_conflict <- function(iso3c, years, period, adm1, weights, threshold 
 }
 
 
-x <- children_in_conflict("World", 2019:2021, "yearly", FALSE, weights, score_selection = c(1, 10, 25, 100, 1000), cat_names = c("low", "low_mid", "medium", "high", "extreme"))
+x <- children_in_conflict("World", 1990:2021, "yearly", FALSE, weights, score_selection = c(1, 10, 25, 100, 1000), cat_names = c("low", "low_mid", "medium", "high", "extreme"))
 
 

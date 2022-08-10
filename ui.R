@@ -135,7 +135,10 @@ sidebar <- dashboardSidebar(width = 400, tags$style(type='text/css', '#info_cust
                         
                )
              )
-    )
+    ),
+    menuItem("Children at Risk", tabName = "children_at_risk",
+             actionButton(inputId = "car", label = "Submit"),
+             downloadButton("download_car", label = "Download Table"))
   )
 )
 

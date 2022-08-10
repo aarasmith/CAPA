@@ -599,3 +599,21 @@ GROUP BY iso3n, year, month, shape_id"))})
     GROUP BY iso3n, capa_id_adm1, year, sid
     ) agg
   GROUP BY iso3n, capa_id_adm1, year, sid"
+
+
+
+
+# system.time({x <- get_standard_aggregation(c("AFG", "IRQ", "MEX", "CAF"), 1990:2020, monthly = T, adm1 = T, weights)})
+# system.time({x <- get_standard_aggregation("AFG", 1990:2020, monthly = T, adm1 = F, weights)})
+# system.time({x <- get_standard_aggregation("AFG", 1990:2020, period = "yearly", adm1 = T, weights)})
+# system.time({x <- get_standard_aggregation(c("AFG", "IRQ", "MEX", "CAF"), 1990:2020, monthly = F, adm1 = F, weights)})
+# system.time({x <- get_standard_aggregation("AFG", 1990:2020, monthly = T, adm1 = T, weights, score = T)})
+# system.time({x <- get_standard_aggregation("AFG", 1990:2020, monthly = T, adm1 = F, weights, score = T)})
+# system.time({x <- get_standard_aggregation("AFG", 1990:2020, monthly = F, adm1 = T, weights, score = T)})
+# system.time({x <- get_standard_aggregation(c("AFG", "IRQ"), 1990:2020, monthly = F, adm1 = F, weights, score = T)})
+# 
+# iso3n_wa <- ison_region("Western Asia")
+# system.time({x <- get_standard_aggregation(iso3n_wa, 1990:2020, monthly = F, adm1 = F, weights)})
+# system.time({x <- get_standard_aggregation(iso3n_wa, 1990:2020, monthly = F, adm1 = T, weights)})
+# system.time({x <- get_standard_aggregation(iso3n_wa, 1990:2020, monthly = T, adm1 = F, weights)})
+# system.time({x <- get_standard_aggregation(iso3n_wa, 1990:2020, monthly = T, adm1 = T, weights)})

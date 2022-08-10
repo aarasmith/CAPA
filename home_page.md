@@ -52,3 +52,13 @@ This tab uses similar parameters to the *Conflict Exposure* and *Score Map* tabs
 
 Similar to duration, conflict frequency is how many periods over a time-range a population was affected by conflict - irrespective to whether it was consecutive exposure. 
 
+The table output will show how many people were at risk of conflict (score > threshold) for at least n number of periods (years/halves/quarters/months) over the specified time range. There is a tool-tip over the "period threshold" input that will tell you the maximum number of periods based on your time range selection. In order to enable the map output, you must select ADM1 **and** use a period threshold. The resulting map will show you the percent of people in each ADM1 that experienced conflict at "scores" over the intensity threshold and for at least as many periods over the time range as specified by the "period threshold"
+
+### Regional Aggregation
+
+This is the same as *Conflict Exposure* but instead of including all individuals countries within a selected region, it will aggregate them on the region-level and supply a risk percentage for the entire region as a whole. You can use the *Custom Region* tab to build your own region if the preset UN-regions are not exactly what you want. You can either add or remove regions from the presets and view the resulting region (in the form of a list of ISO3C's) by pressing "Display Custom Region". This custom region can then be selected for the regional aggregation and is the final entry in the list as "Custom Region".
+
+### Children at Risk
+
+Press submit to run the numbers for children at risk of conflict on a global country-year level for 1990 to 2021. You can then download the table as a .xlsx. Pressing submit will automatically reset the weights to use un-weighted 50km battle-death counts, so readjust your weights afterwards if you wish to continue with one of the previous analyses using a different framework.
+
