@@ -3,7 +3,11 @@ library(shiny)
 header <- dashboardHeader(title = "Conflict Affected Populations App (CAPA)", titleWidth = 400)
 
 sidebar <- dashboardSidebar(width = 400, tags$style(type='text/css', '#info_custom {white-space: pre-wrap;}'),
-  sidebarMenu(
+  sidebarMenu(id = "tab_selection", 
+    menuItem("Homepage", tabName = "homepage",
+             actionButton(inputId = "guide", label = "Guide"),
+             actionButton(inputId = "codebook", label = "Codebook"),
+             actionButton(inputId = "citations", label = "Citations")),
     menuItem("Weights", tabName = "weights", icon = icon("weight-hanging"),
              selectInput("preset", "Select preset weights", choices = names(weight_presets_list)),
              actionButton("apply_preset", "Apply preset weights"),

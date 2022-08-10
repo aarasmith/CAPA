@@ -9,7 +9,7 @@ server <- function(input, output, session) {
   # output$auth_output <- renderPrint({
   #   reactiveValuesToList(res_auth)
   # })
-  
+  output$body_plot <- renderUI({HTML(markdown::markdownToHTML('home_page.md', fragment.only = T))})
   #handler for dur_plot
   observe({
     if(input$adm_dur == FALSE){
@@ -62,6 +62,24 @@ server <- function(input, output, session) {
   custom_region <- reactive({
     c(isoc(ison(input$region_custom)), input$region_add)[c(isoc(ison(input$region_custom)), input$region_add) %!in% input$region_subtract]
   })
+  
+  observeEvent(input$guide, {
+    output$body_plot <- renderUI({HTML(markdown::markdownToHTML('home_page.md', fragment.only = T))})
+  })
+  observeEvent(input$citations, {
+    output$body_plot <- renderUI({HTML(markdown::markdownToHTML('data_citations.md', fragment.only = T))})
+  })
+  
+  #Handler for markdwon homepage
+  # observeEvent(input$sidebarItemExpanded, {
+  #   print(input$sidebarItemExpanded)
+  #   if(input$sidebarItemExpanded == "Homepage"){
+  #     output$body_plot <- renderUI({HTML(markdown::markdownToHTML('home_page.md', fragment.only = T))})
+  #   }
+  # })
+  # observeEvent(input$sidebarItemExpanded, {
+  #   input$tab_selection <- "no"
+  # })
   
   #Handler for the Exposure tab 
   observeEvent(input$submit, {
