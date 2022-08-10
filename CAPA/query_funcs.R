@@ -55,20 +55,25 @@ get_standard_gv <- function(adm1, period){
   return(list(tot_group_vars = tot_group_vars, tot_join_vars = tot_join_vars, grouping_vars = grouping_vars, table = table, dplyr_group_vars = dplyr_group_vars))
 }
 
-query_total_pop <- function(iso3n, years, gv, capa_db){
+query_total_pop <- function(iso3n, adm1, years, gv, capa_db){
   
   iso3n <- paste(iso3n, collapse = ", ")
   
+  if(adm1){
+    table <- "adm1_pops"
+  }else{
+    table <- "country_pops"
+  }
+  
   total_query <- glue(
-    "SELECT {gv['tot_group_vars']}, SUM(cell_pop) AS total_pop
-    FROM cell_pops
+    "SELECT *
+    FROM {table}
     WHERE iso3n IN ({iso3n}) AND
       year >= {years[1]} AND
-      year <= {years[length(years)]}
-    GROUP BY {gv['tot_group_vars']}"
+      year <= {years[length(years)]}"
   )
   
-  total_pop <- dbGetQuery(capa_db, total_query) %>% mutate(across(, ~as.numeric(.)))
+  total_pop <- dbGetQuery(capa_db, total_query) %>% sapply(as.numeric) %>% as.data.frame()
   return(total_pop)
 }
 

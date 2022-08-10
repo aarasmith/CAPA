@@ -138,7 +138,7 @@ placeholder_join <- function(period, adm1){
 
 
 ####Work Horses####
-get_standard_aggregation <- function(iso, years, period = "monthly", adm1 = TRUE, weights, threshold = 1, cap = NA, score = FALSE, selected_period = NA){
+get_standard_aggregation <- function(iso, years, period = "monthly", adm1 = TRUE, weights, threshold = 1, selected_period = NA){
   #browser()
   iso3n <- sanitize_iso(iso)
   
@@ -148,47 +148,15 @@ get_standard_aggregation <- function(iso, years, period = "monthly", adm1 = TRUE
   
   gv <- get_standard_gv(adm1, period)
   
-  total_pop <- query_total_pop(iso3n, years, gv, capa_db)
+  total_pop <- query_total_pop(iso3n, adm1, years, gv, capa_db)
   
-  data <- query_standard_aggregation(iso3n, years, weights, threshold, gv, capa_db)
+  data <- query_standard_aggregation(iso3n, years, weights, threshold, gv, capa_db, score)
   ph <- create_placeholder(iso = iso3n, years = years, period = period, adm1 = adm1)
   
-  data <- ph %>% left_join(data, by = placeholder_join(period, adm1)) %>%
+  out_frame <- ph %>% left_join(data, by = placeholder_join(period, adm1)) %>%
     mutate(risk_pop = ifelse(is.na(risk_pop), 0, risk_pop)) %>%
     left_join(total_pop, by = gv[['tot_join_vars']]) %>%
     mutate(risk_pct = risk_pop/total_pop)
-  
-  #not sure if this section works with the placeholder stuff
-  if(score){
-    data <- data %>%
-      mutate(score = as.numeric(score))
-    
-    max_scores <- data %>% group_by_at(gv[['dplyr_group_vars']]) %>% summarize(max = max(score)) %>% filter(max != 0)
-    
-    out_frame <- max_scores[rep(seq_len(dim(max_scores)[1]), max_scores$max), ] %>%
-      group_by_at(gv[['dplyr_group_vars']]) %>%
-      mutate(score = dplyr::row_number()) %>%
-      ungroup() %>%
-      left_join(data, by = c("score", names(max_scores)[-ncol(max_scores)])) %>%
-      fill(iso3n, risk_pop, risk_pct, total_pop, .direction = "up") %>%
-      dplyr::select(-max)
-    
-    if(!is.na(cap)){
-      out_frame <- out_frame %>% filter(score <= cap)
-    }
-    if(threshold != ""){
-      #threshold <- as.numeric(strsplit(threshold, split = ",")[[1]])
-      out_frame <- out_frame %>% filter(score %in% threshold)
-    }
-  }else{
-    out_frame <- data
-  }
- 
-  # if(adm1){
-  #   out_frame <- left_join(out_frame %>% within(capa_id_adm1 <- as.numeric(capa_id_adm1)),
-  #                          dplyr::select(adm1_cgaz, capa_id, shape_name) %>% st_drop_geometry(),
-  #                          by = c("capa_id_adm1" = "capa_id"))
-  # }
   
   #This section is dependent on a supplied value to "selected_period" and is for filtering the df before plotting
   if(period == "monthly" & !is.na(selected_period)){
@@ -208,28 +176,51 @@ get_standard_aggregation <- function(iso, years, period = "monthly", adm1 = TRUE
   
 }
 
-# system.time({x <- get_standard_aggregation(c("AFG", "IRQ", "MEX", "CAF"), 1990:2020, monthly = T, adm1 = T, weights)})
-# system.time({x <- get_standard_aggregation("AFG", 1990:2020, monthly = T, adm1 = F, weights)})
-# system.time({x <- get_standard_aggregation("AFG", 1990:2020, period = "yearly", adm1 = T, weights)})
-# system.time({x <- get_standard_aggregation(c("AFG", "IRQ", "MEX", "CAF"), 1990:2020, monthly = F, adm1 = F, weights)})
-# system.time({x <- get_standard_aggregation("AFG", 1990:2020, monthly = T, adm1 = T, weights, score = T)})
-# system.time({x <- get_standard_aggregation("AFG", 1990:2020, monthly = T, adm1 = F, weights, score = T)})
-# system.time({x <- get_standard_aggregation("AFG", 1990:2020, monthly = F, adm1 = T, weights, score = T)})
-# system.time({x <- get_standard_aggregation(c("AFG", "IRQ"), 1990:2020, monthly = F, adm1 = F, weights, score = T)})
-# 
-# iso3n_wa <- ison_region("Western Asia")
-# system.time({x <- get_standard_aggregation(iso3n_wa, 1990:2020, monthly = F, adm1 = F, weights)})
-# system.time({x <- get_standard_aggregation(iso3n_wa, 1990:2020, monthly = F, adm1 = T, weights)})
-# system.time({x <- get_standard_aggregation(iso3n_wa, 1990:2020, monthly = T, adm1 = F, weights)})
-# system.time({x <- get_standard_aggregation(iso3n_wa, 1990:2020, monthly = T, adm1 = T, weights)})
+get_score_aggregation <- function(iso, years, period = "monthly", adm1 = TRUE, weights, threshold = 1, cap = NA, score_selection = NULL){
+  iso3n <- sanitize_iso(iso)
+  
+  threshold <- sanitize_threshold(threshold)
+  
+  capa_db <- connect_to_capa()
+  
+  gv <- get_standard_gv(adm1, period)
+  
+  total_pop <- query_total_pop(iso3n, adm1, years, gv, capa_db)
+  
+  data <- query_standard_aggregation(iso3n, years, weights, threshold, gv, capa_db, score = TRUE)
+  
+  data <- data %>%
+    mutate(score = as.numeric(score)) %>%
+    left_join(total_pop, by = gv[['tot_join_vars']]) %>%
+    mutate(risk_pct = risk_pop/total_pop)
+  
+  max_scores <- data %>% group_by_at(gv[['dplyr_group_vars']]) %>% summarize(max = max(score)) %>% filter(max != 0)
+  
+  out_frame <- max_scores[rep(seq_len(dim(max_scores)[1]), max_scores$max), ] %>%
+    group_by_at(gv[['dplyr_group_vars']]) %>%
+    mutate(score = dplyr::row_number()) %>%
+    ungroup() %>%
+    left_join(data, by = c("score", names(max_scores)[-ncol(max_scores)])) %>%
+    fill(iso3n, risk_pop, risk_pct, total_pop, .direction = "up") %>%
+    dplyr::select(-max)
+  
+  if(!is.na(cap)){
+    out_frame <- out_frame %>% filter(score <= cap)
+  }
+  if(!is.null(score_selection)){
+    out_frame <- out_frame %>% filter(score %in% score_selection)
+  }
+  
+  out_frame <- out_frame %>% within(risk_pct <- round(risk_pct, 4))
+  
+  disconnect_from_capa(capa_db)
+  return(out_frame)
+  
+}
 
 get_cell_scores <- function(iso, years, start_end = c(1,12), weights, draw_adm1 = TRUE, draw_points = TRUE){
   #browser()
-  if(is.numeric(iso)){
-    iso3n <- iso
-  }else{
-    iso3n <- ison(iso)
-  }
+  iso3n <- sanitize_iso(iso)
 
   capa_db <- connect_to_capa()
   
