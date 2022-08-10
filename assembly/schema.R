@@ -204,3 +204,11 @@ region_pops_view <- "CREATE MATERIALIZED VIEW region_pops AS
     country_pops.iso3n = region_key.iso3n
   GROUP BY region, year
   ORDER BY region, year"
+
+adm1_pops_view <- "CREATE MATERIALIZED VIEW adm1_pops AS
+  SELECT
+    iso3n, capa_id_adm1, year, sum(cell_pop) AS total_pop
+  FROM
+      cell_pops
+  GROUP BY
+      iso3n, capa_id_adm1, year"
