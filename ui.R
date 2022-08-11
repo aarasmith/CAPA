@@ -4,7 +4,7 @@ header <- dashboardHeader(title = "Conflict Affected Populations App (CAPA)", ti
 
 sidebar <- dashboardSidebar(width = 400, tags$style(type='text/css', '#info_custom {white-space: pre-wrap;}'),
   sidebarMenu(id = "tab_selection", 
-    menuItem("Homepage", tabName = "homepage",
+    menuItem("Info", tabName = "homepage", icon = icon("home"),
              actionButton(inputId = "guide", label = "Guide"),
              actionButton(inputId = "codebook", label = "Codebook"),
              actionButton(inputId = "citations", label = "Citations")),
@@ -136,7 +136,7 @@ sidebar <- dashboardSidebar(width = 400, tags$style(type='text/css', '#info_cust
                )
              )
     ),
-    menuItem("Children at Risk", tabName = "children_at_risk",
+    menuItem("Children at Risk", tabName = "children_at_risk", icon = icon("child"),
              actionButton(inputId = "submit_car_default", label = "Submit Default"),
              selectInput("country_car", "Select Country/Region", choices = c(country_choices, "World", region_choices), multiple = T),
              sliderInput("year_slider_car", "Year Range:", min = 1990, max = 2021, value = c(1990, 2021), sep = ""),
