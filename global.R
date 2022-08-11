@@ -39,7 +39,7 @@ prio_port <- Sys.getenv("PRIO_DB_PORT")
 
 adm1_cgaz <- readRDS("data/adm1_cgaz.RDS")
 adm0_cgaz <- readRDS("data/adm0_cgaz.RDS")
-country_choices <- sort(unique(adm1_cgaz$shape_group))
+country_choices <- sort(c(unique(adm1_cgaz$shape_group), "PSE"))
 nid_grid <- readRDS("data/nid_grid.RDS")
 all_country_choices <- sort(unique(nid_grid$ISOCODE))
 capa_db <- connect_to_capa()
