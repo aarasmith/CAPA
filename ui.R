@@ -137,7 +137,13 @@ sidebar <- dashboardSidebar(width = 400, tags$style(type='text/css', '#info_cust
              )
     ),
     menuItem("Children at Risk", tabName = "children_at_risk",
-             actionButton(inputId = "car", label = "Submit"),
+             actionButton(inputId = "submit_car_default", label = "Submit Default"),
+             selectInput("country_car", "Select Country/Region", choices = c(country_choices, "World", region_choices), multiple = T),
+             sliderInput("year_slider_car", "Year Range:", min = 1990, max = 2021, value = c(1990, 2021), sep = ""),
+             selectizeInput("categories_car", "Select Category Labels", choices = c("low", "medium", "high"), selected = c("low", "medium", "high"), multiple = TRUE, options = list(create = TRUE)),
+             selectizeInput("scores_car", "Select Category Lower-Bounds", choices = c(1, 25, 1000), selected = c(1, 25, 1000), multiple = TRUE, options = list(create = TRUE)),
+             radioButtons(inputId = "exclusive_car", label = "Category Types", choiceNames = c("Inclusive", "Exclusive"), choiceValues = c(FALSE, TRUE), inline = T),
+             actionButton(inputId = "submit_car_custom", label = "Submit Custom"),
              downloadButton("download_car", label = "Download Table"))
   )
 )

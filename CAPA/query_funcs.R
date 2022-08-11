@@ -73,7 +73,7 @@ query_total_pop <- function(iso3n, adm1, years, gv, capa_db){
       year <= {years[length(years)]}"
   )
   
-  total_pop <- dbGetQuery(capa_db, total_query) %>% sapply(as.numeric) %>% as.data.frame()
+  total_pop <- dbGetQuery(capa_db, total_query) %>% mutate(across( , ~as.numeric(.)))
   return(total_pop)
 }
 
@@ -133,7 +133,7 @@ query_standard_aggregation <- function(iso3n, years, weights, threshold, gv, cap
     sql_query <- sql_query_score
   }
   
-  data <- dbGetQuery(capa_db, sql_query) %>% sapply(as.numeric) %>% as.data.frame()
+  data <- dbGetQuery(capa_db, sql_query) %>% mutate(across( , ~as.numeric(.)))
   return(data)
 }
 
@@ -288,7 +288,7 @@ query_duration <- function(iso3n, years, start_end, weights, threshold, gv, capa
   )
   
   data <- dbGetQuery(capa_db, sql_query) %>%
-    within(risk_pop <- as.numeric(risk_pop))
+    within(risk_pop <- as.numeric(risk_pop)) %>% mutate(across( , ~as.numeric(.)))
   return(data)
   
 }
@@ -356,7 +356,7 @@ query_frequency <- function(iso3n, years, start_end, weights, threshold, gv, cap
   )
   
   data <- dbGetQuery(capa_db, sql_query) %>%
-    within(risk_pop <- as.numeric(risk_pop))
+    within(risk_pop <- as.numeric(risk_pop)) %>% mutate(across( , ~as.numeric(.)))
   return(data)
 }
 

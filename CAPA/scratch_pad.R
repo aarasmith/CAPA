@@ -617,3 +617,19 @@ GROUP BY iso3n, year, month, shape_id"))})
 # system.time({x <- get_standard_aggregation(iso3n_wa, 1990:2020, monthly = F, adm1 = T, weights)})
 # system.time({x <- get_standard_aggregation(iso3n_wa, 1990:2020, monthly = T, adm1 = F, weights)})
 # system.time({x <- get_standard_aggregation(iso3n_wa, 1990:2020, monthly = T, adm1 = T, weights)})
+
+
+x <- data.frame(x1 = 40:49, x2 = 30:39, x3 = 20:29, x4 = 10:19, x5 = 0:9)
+my_names <- names(x)
+
+for(name in names(x)){
+  x <- x %>% mutate(!!sym(name) := !!sym(name) - 1)
+}
+
+for(i in 1:length(my_names)){
+  x <- x %>% mutate(!!sym(my_names[i]) := !!sym(my_names[i]) - 1)
+}
+
+for(i in 1:(length(my_names)-1)){
+  x <- x %>% mutate(!!sym(my_names[i]) := !!sym(my_names[i]) - !!sym(my_names[(i+1)]))
+}

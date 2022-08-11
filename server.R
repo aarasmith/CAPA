@@ -313,8 +313,8 @@ server <- function(input, output, session) {
     output$info_custom <- renderText(sort(custom_region()))
   })
   
-  #Handler for children at risk
-  observeEvent(input$car, {
+  #Handler for children at risk default
+  observeEvent(input$submit_car_default, {
     
     input_list <- reactiveValuesToList(input)
     weight_list <- input_list[grepl('weight',names(input_list))]
@@ -323,7 +323,29 @@ server <- function(input, output, session) {
     toggle_inputs(input_list,F,T)
     
     CAR_output <- children_in_conflict("World", 1990:2021, "yearly", FALSE, weights = weights(),
-                                       score_selection = c(1, 10, 100, 1000), cat_names = c("low", "medium", "high", "extreme"))
+                                       score_selection = c(1, 10, 100, 1000), cat_names = c("low", "medium", "high", "extreme"), exclusive = T)
+    
+    output$car_table <- renderDataTable(CAR_output, options = list(scrollX = TRUE))
+    output$body_plot <- renderUI({dataTableOutput("car_table")})
+    
+    output$download_car <- downloadHandler(
+      filename = function(){"CAR_data.xlsx"},
+      content = function(fname){
+        write_xlsx(CAR_output, fname)
+      }
+    )
+    
+    toggle_inputs(input_list,T,T)
+  })
+  
+  #Handler for children at risk custom
+  observeEvent(input$submit_car_custom, {
+    
+    input_list <- reactiveValuesToList(input)
+    toggle_inputs(input_list,F,T)
+    
+    CAR_output <- children_in_conflict(iso3c = input$country_car, years = c(input$year_slider_car[1]:input$year_slider_car[2]), period = "yearly", adm1 = FALSE, weights = weights(),
+                                       score_selection = as.numeric(input$scores_car), cat_names = input$categories_car, exclusive = input$exclusive_car)
     
     output$car_table <- renderDataTable(CAR_output, options = list(scrollX = TRUE))
     output$body_plot <- renderUI({dataTableOutput("car_table")})

@@ -1,4 +1,5 @@
 #next up
+#region_pops doesn't include World
 #implement starting and ending period for frequency/duration
 #use period threshold for table output in frequency
 #some risk_pct needs rounding (global, but i believe elsewhere too)
@@ -150,7 +151,7 @@ get_standard_aggregation <- function(iso, years, period = "monthly", adm1 = TRUE
   
   total_pop <- query_total_pop(iso3n, adm1, years, gv, capa_db)
   
-  data <- query_standard_aggregation(iso3n, years, weights, threshold, gv, capa_db, score)
+  data <- query_standard_aggregation(iso3n, years, weights, threshold, gv, capa_db, score = FALSE)
   ph <- create_placeholder(iso = iso3n, years = years, period = period, adm1 = adm1)
   
   out_frame <- ph %>% left_join(data, by = placeholder_join(period, adm1)) %>%
@@ -316,7 +317,7 @@ get_temporal <- function(type, iso, years, weights, period = "yearly", start_end
   
   gv <- get_temporal_gv(adm1, period, start_end, years)
   
-  total_pop <- query_total_pop(iso3n, years[length(years)], gv, capa_db) %>%
+  total_pop <- query_total_pop(iso3n, adm1, years[length(years)], gv, capa_db) %>%
     rename(capa_id = contains("capa_id"))
   
   if(type == "frequency"){
@@ -407,6 +408,8 @@ get_region_aggregation <- function(region, years, weights, period = "monthly", t
     left_join(total_pop, by = "year") %>%
     mutate(risk_pct = risk_pop/total_pop)
   
+  disconnect_from_capa(capa_db)
+  
   return(data) 
 }
 
@@ -436,6 +439,10 @@ get_custom_region_aggregation <- function(isos, years, weights, period = "monthl
   data <- query_region_aggregation(isos, years, weights, threshold, gv, capa_db) %>%
     left_join(total_pop, by = "year") %>%
     mutate(risk_pct = risk_pop/total_pop)
+  
+  disconnect_from_capa(capa_db)
+  
+  return(data)
 }
 
 # system.time({x <- get_region_aggregation("Western Asia", 2014:2015, weights, monthly = F)})
@@ -456,7 +463,7 @@ get_custom_region_aggregation <- function(isos, years, weights, period = "monthl
 # system.time({my_plot <- adm_plot(x, iso3n_wa, "capa_id_adm1")})
 # my_plot
 
-children_in_conflict <- function(iso3c, years, period, adm1, weights, threshold = 1, score_selection = c(1, 25, 100, 1000), cat_names = c("low", "medium", "high", "extreme")){
+children_in_conflict <- function(iso3c, years, period, adm1, weights, threshold = 1, score_selection = c(1, 25, 100, 1000), cat_names = c("low", "medium", "high", "extreme"), exclusive = F){
   #browser()
   capa_db <- connect_to_capa()
   
@@ -464,6 +471,14 @@ children_in_conflict <- function(iso3c, years, period, adm1, weights, threshold 
   country_tots <- dbGetQuery(capa_db, "SELECT * FROM country_pops")
   
   conf_long <- get_score_aggregation(iso = iso3c, years = years, period = period, adm1 = adm1, weights = weights, threshold = threshold, score_selection = score_selection)
+  
+  if(exclusive){
+    conf_long <- conf_long %>%
+      group_by(iso3n, year) %>%
+      mutate(risk_pop = risk_pop - lead(risk_pop, default = 0),
+             risk_pct = round(risk_pop/total_pop, 4)) %>%
+      ungroup()
+  }
   
   #generate a placeholder that includes all categories for all countries for all years
   category_join <- data.table(iso3n = ison(iso3c)) %>%
@@ -484,22 +499,27 @@ children_in_conflict <- function(iso3c, years, period, adm1, weights, threshold 
   #add demographic data and calculate the children stuff
   conf <- conf_wide %>%
     left_join(un_demos, by = c("iso3n", "year")) %>%
-    mutate(total_children = round(total_pop * child_pct)) %>%
-    mutate(risk_children_low = round(risk_pop_low * child_pct),
-           risk_children_medium = round(risk_pop_medium * child_pct),
-           risk_children_high = round(risk_pop_high * child_pct),
-           risk_children_extreme = round(risk_pop_extreme * child_pct)) %>%
-    mutate(risk_children_low_pct = round(risk_children_low / total_children, 4),
-           risk_children_medium_pct = round(risk_children_medium / total_children, 4),
-           risk_children_high_pct = round(risk_children_high / total_children, 4),
-           risk_children_extreme_pct = round(risk_children_extreme / total_children, 4)) %>%
+    mutate(total_children = round(total_pop * child_pct))
+  
+  child_names <- paste("risk_children", cat_names, sep = "_")
+  pop_names <- paste("risk_pop", cat_names, sep = "_")
+  for(i in 1:length(cat_names)){
+    conf <- conf %>% mutate(!!sym(child_names[i]) := round(!!sym(pop_names[i]) * child_pct))
+  }
+  
+  child_pct_names <- paste("risk_children", cat_names, "pct", sep = "_")
+  
+  for(i in 1:length(cat_names)){
+    conf <- conf %>% mutate(!!sym(child_pct_names[i]) := round(!!sym(child_names[i]) / total_children, 4))
+  }
+  
+  conf <- conf %>%
     mutate(iso3c = isoc(iso3n)) %>%
     arrange(iso3c, year) %>%
     dplyr::select(iso3c, iso3n, year, total_pop, un_total, child_pct, total_children, everything())
   
-  
   #attach region names
-  region_key <- dbGetQuery(capa_db, "SELECT * FROM region_key")
+  region_key <- dbGetQuery(capa_db, "SELECT * FROM region_key WHERE region != 'World'")
   region1 <- region_key[!duplicated(region_key$iso3n), ]
   
   region2 <- region_key[region_key$region %!in% region1$region, ]
