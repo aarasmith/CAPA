@@ -16,6 +16,7 @@ library(shinymanager)
 library(dotenv)
 library(countrycode)
 library(shinydashboard)
+library(markdown)
 load_dot_env()
 
 `%!in%` = Negate(`%in%`)
@@ -73,6 +74,9 @@ weight_presets_list[['int_50km_weighted']] <- c(rep(0, 3), 0, 2, 1, rep(0, 6))
 weight_presets_list[['int_100km_unweighted']] <- c(rep(0, 3), 1, 1, 1, rep(0, 6))
 weight_presets_list[['int_50km_unweighted']] <- c(rep(0, 3), 0, 1, 1, rep(0, 6))
 weight_presets_list[['int_25km_unweighted']] <- c(rep(0, 3), 0, 1, 0, rep(0, 6))
+
+default_car_weights <- list(L25 = 0, L50 = 0, L100 = 0, M25 = 0, M50 = 0, M100 = 0, H25 = 0, H50 = 0, H100 = 0,
+                int25 = 1, int50 = 1, int100 = 0)
 
 
 disconnect_from_capa(capa_db)

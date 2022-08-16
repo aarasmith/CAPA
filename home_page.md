@@ -60,7 +60,7 @@ This is the same as *Conflict Exposure* but instead of including all individuals
 
 ### Children at Risk
 
-Press "Submit Default" to run the numbers for children at risk of conflict on a global country-year level for 1990 to 2021 with exclusive 1-24 (low), 25-99 (medium), 100-999 (high), and 1000+ (extreme) categories. You can then download the table as a .xlsx. Pressing submit will automatically reset the weights to use un-weighted 50km battle-death counts, so readjust your weights afterwards if you wish to continue with one of the previous analyses using a different framework.
+Press "Submit Default" to run the numbers for children at risk of conflict on a global country-year level for 1990 to 2021 with exclusive 1-24 (low), 25-99 (medium), 100-999 (high), and 1000+ (extreme) categories. You can then download the table as a .xlsx. Pressing "Submit Default" will automatically use un-weighted 50km battle-death counts.
 
 If you wish to run the children at risk numbers with different parameters, you can set the parameters and then click "Submit Custom". This will use whatever weights you have selected in the *weights* tab, so make sure you adjust the weights to the appropriate framework before running (int_50k_unweighted is the typical framework for this analysis). You can input your own category labels and category lower-bounds, but these must be equal in length and be arranged in the same order. If you choose the "Inclusive" option, all categories will only use a lower-bound (e.g. 1+, 25+, 100+, 1000+). Choosing the "Exclusive" option will use the following category's lower-bound as its upper-bound with the exception of the final category which will remain uncapped (e.g. 1-24, 25-99, 100-999, 1000+)
 

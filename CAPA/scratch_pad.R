@@ -622,14 +622,55 @@ GROUP BY iso3n, year, month, shape_id"))})
 x <- data.frame(x1 = 40:49, x2 = 30:39, x3 = 20:29, x4 = 10:19, x5 = 0:9)
 my_names <- names(x)
 
-for(name in names(x)){
-  x <- x %>% mutate(!!sym(name) := !!sym(name) - 1)
-}
-
-for(i in 1:length(my_names)){
-  x <- x %>% mutate(!!sym(my_names[i]) := !!sym(my_names[i]) - 1)
-}
-
 for(i in 1:(length(my_names)-1)){
   x <- x %>% mutate(!!sym(my_names[i]) := !!sym(my_names[i]) - !!sym(my_names[(i+1)]))
 }
+
+
+
+testUI <- function(id, label = "test"){
+  ns <- NS(id)
+  
+  menuItem("Info", tabName = "homepage", icon = icon("home"),
+    actionButton(ns("guide"), label = "Guide"),
+    actionButton(ns("codebook"), label = "Codebook"),
+    actionButton(ns("citations"), label = "Citations")
+  )
+}
+
+testuiServer <- function(id){
+  moduleServer(
+    id,
+    
+    function(input, output, session){
+      observeEvent(input$guide, {
+        body_plot <- HTML(markdown::markdownToHTML('home_page.md', fragment.only = T))
+      })
+      observeEvent(input$citations, {
+        body_plot <- HTML(markdown::markdownToHTML('data_citations.md', fragment.only = T))
+      })
+      return(body_plot)
+    }
+  )
+}
+
+mainpanelUI <- function(id, label = "panel"){
+  ns <- NS(id)
+  
+  dashboardBody(uiOutput(ns("body_plot")))
+}
+
+
+
+
+observeEvent(input$guide, {
+  output$body_plot <- renderUI({HTML(markdown::markdownToHTML('home_page.md', fragment.only = T))})
+})
+observeEvent(input$citations, {
+  output$body_plot <- renderUI({HTML(markdown::markdownToHTML('data_citations.md', fragment.only = T))})
+})
+
+
+
+
+

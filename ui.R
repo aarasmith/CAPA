@@ -5,9 +5,10 @@ header <- dashboardHeader(title = "Conflict Affected Populations App (CAPA)", ti
 sidebar <- dashboardSidebar(width = 400, tags$style(type='text/css', '#info_custom {white-space: pre-wrap;}'),
   sidebarMenu(id = "tab_selection", 
     menuItem("Info", tabName = "homepage", icon = icon("home"),
-             actionButton(inputId = "guide", label = "Guide"),
-             actionButton(inputId = "codebook", label = "Codebook"),
-             actionButton(inputId = "citations", label = "Citations")),
+             actionButton("guide", label = "Guide"),
+             actionButton("codebook", label = "Codebook"),
+             actionButton("citations", label = "Citations")
+    ),
     menuItem("Weights", tabName = "weights", icon = icon("weight-hanging"),
              selectInput("preset", "Select preset weights", choices = names(weight_presets_list)),
              actionButton("apply_preset", "Apply preset weights"),

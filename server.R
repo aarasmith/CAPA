@@ -10,6 +10,7 @@ server <- function(input, output, session) {
   #   reactiveValuesToList(res_auth)
   # })
   output$body_plot <- renderUI({HTML(markdown::markdownToHTML('home_page.md', fragment.only = T))})
+  #output$body_plot <- renderUI({testuiServer("test1")})
   #handler for dur_plot
   observe({
     if(input$adm_dur == FALSE){
@@ -317,13 +318,13 @@ server <- function(input, output, session) {
   observeEvent(input$submit_car_default, {
     
     input_list <- reactiveValuesToList(input)
-    weight_list <- input_list[grepl('weight',names(input_list))]
-    weight_presets(session, weight_list, 'int_50km_unweighted')
+    # weight_list <- input_list[grepl('weight',names(input_list))]
+    # weight_presets(session, weight_list, 'int_50km_unweighted')
     
     toggle_inputs(input_list,F,T)
     
-    CAR_output <- children_in_conflict("World", 1990:2021, "yearly", FALSE, weights = weights(),
-                                       score_selection = c(1, 10, 100, 1000), cat_names = c("low", "medium", "high", "extreme"), exclusive = T)
+    CAR_output <- children_in_conflict("World", 1990:2021, "yearly", FALSE, weights = default_car_weights,
+                                       score_selection = c(1, 25, 100, 1000), cat_names = c("low", "medium", "high", "extreme"), exclusive = T)
     
     output$car_table <- renderDataTable(CAR_output, options = list(scrollX = TRUE))
     output$body_plot <- renderUI({dataTableOutput("car_table")})
