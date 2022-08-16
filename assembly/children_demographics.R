@@ -112,6 +112,77 @@ children_in_conflict <- function(iso3c, years, period, adm1, weights, threshold 
 }
 
 
-x <- children_in_conflict(iso3c = "PSE", years = 1990:2021, period = "yearly", adm1 = FALSE, weights = weights, score_selection = c(1, 10, 25, 100, 1000), cat_names = c("low", "low_mid", "medium", "high", "extreme"), exclusive = T)
+x <- children_in_conflict(iso3c = "World", years = 1990:2021, period = "yearly", adm1 = FALSE, weights = weights, score_selection = c(1, 25, 100, 1000), cat_names = c("low", "medium", "high", "extreme"), exclusive = T)
 x1 <- children_in_conflict("AFG", 1990:2021, "yearly", FALSE, weights, score_selection = c(1, 10, 25, 100, 1000), cat_names = c("low", "low_mid", "medium", "high", "extreme"))
 
+library(readxl)
+x1 <- read_xlsx("C:\\Users\\andara\\Downloads\\CAR_data_siri2.xlsx")
+x1 <- x %>% group_by(year) %>%
+  summarize(total_pop = sum(total_pop, na.rm = T),
+            un_total = sum(un_total, na.rm = T),
+            total_children = sum(total_children, na.rm = T),
+            tot_risk_kids = sum(risk_children_low + risk_children_medium + risk_children_high + risk_children_extreme, na.rm = T)) %>%
+  mutate(risk_kids_pct = tot_risk_kids/total_children)
+
+ged25 <- readRDS(paste0(drop_path, "ged25_22.RDS"))
+x <- ged25 %>% st_drop_geometry() %>% group_by(iso3c, year) %>% summarize(battle_deaths = sum(best, na.rm = T))
+
+x <- read_xlsx(paste0(drop_path, "car_data_2022_08_10.xlsx"))
+x$country <- countrycode(x$iso3c, origin = "iso3c", destination = "country.name")
+x$country[is.na(x$country)] <- "Kosovo"
+x <- x %>% dplyr::select(country, everything())
+
+
+world_car <- x %>%
+  group_by(year) %>%
+  summarize(total_pop = sum(total_pop, na.rm = T),
+            un_total = sum(un_total, na.rm = T),
+            total_children = sum(total_children, na.rm = T),
+            risk_children_low = sum(risk_children_low, na.rm = T),
+            risk_children_medium = sum(risk_children_medium, na.rm = T),
+            risk_children_high = sum(risk_children_high, na.rm = T),
+            risk_children_extreme = sum(risk_children_extreme, na.rm = T),
+            risk_pop_low = sum(risk_pop_low, na.rm = T),
+            risk_pop_medium = sum(risk_pop_medium, na.rm = T),
+            risk_pop_high = sum(risk_pop_high, na.rm = T),
+            risk_pop_extreme = sum(risk_pop_extreme, na.rm = T),
+            battle_deaths = sum(battle_deaths, na.rm = T)) %>%
+  mutate(risk_children_low_pct = risk_children_low/total_children,
+         risk_children_medium_pct = risk_children_medium/total_children,
+         risk_children_high_pct = risk_children_high/total_children,
+         risk_children_extreme_pct = risk_children_extreme/total_children,
+         risk_pop_low_pct = risk_pop_low/total_pop,
+         risk_pop_medium_pct = risk_pop_medium/total_pop,
+         risk_pop_high_pct = risk_pop_high/total_pop,
+         risk_pop_extreme_pct = risk_pop_extreme/total_pop)
+
+region1_car <- x %>% dplyr::select(-region2, -region3) %>% rename(region = region1) %>% filter(!is.na(region))
+region2_car <- x %>% dplyr::select(-region1, -region3) %>% rename(region = region2) %>% filter(!is.na(region))
+region3_car <- x %>% dplyr::select(-region1, -region2) %>% rename(region = region3) %>% filter(!is.na(region))
+region_car <- bind_rows(region1_car, region2_car, region3_car)
+
+region_car <- region_car %>%
+  group_by(region, year) %>%
+  summarize(total_pop = sum(total_pop, na.rm = T),
+            un_total = sum(un_total, na.rm = T),
+            total_children = sum(total_children, na.rm = T),
+            risk_children_low = sum(risk_children_low, na.rm = T),
+            risk_children_medium = sum(risk_children_medium, na.rm = T),
+            risk_children_high = sum(risk_children_high, na.rm = T),
+            risk_children_extreme = sum(risk_children_extreme, na.rm = T),
+            risk_pop_low = sum(risk_pop_low, na.rm = T),
+            risk_pop_medium = sum(risk_pop_medium, na.rm = T),
+            risk_pop_high = sum(risk_pop_high, na.rm = T),
+            risk_pop_extreme = sum(risk_pop_extreme, na.rm = T),
+            battle_deaths = sum(battle_deaths, na.rm = T)) %>%
+  mutate(risk_children_low_pct = risk_children_low/total_children,
+         risk_children_medium_pct = risk_children_medium/total_children,
+         risk_children_high_pct = risk_children_high/total_children,
+         risk_children_extreme_pct = risk_children_extreme/total_children,
+         risk_pop_low_pct = risk_pop_low/total_pop,
+         risk_pop_medium_pct = risk_pop_medium/total_pop,
+         risk_pop_high_pct = risk_pop_high/total_pop,
+         risk_pop_extreme_pct = risk_pop_extreme/total_pop)
+
+car_data <- list(Country = x, Region = region_car, World = world_car)
+write_xlsx(car_data, path = paste0(drop_path, "CAR_data_2022_08_15.xlsx"))
