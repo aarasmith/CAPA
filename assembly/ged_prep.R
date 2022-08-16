@@ -54,9 +54,23 @@ non_conflict <- function(ged){
   return(ged_nc)
 }
 
+ged_path <- paste0(drop_path, "GEDEvent_v22_1.csv")
 
-generate_ged <- function(drop_path, buffer_size = 50000, thresh = 1){
-  ged <- fread(paste0(drop_path, "GEDEvent_v22_1.csv"))
+generate_ged <- function(ged_path, buffer_size = 50000, thresh = 1){
+  #' Generate the GED file
+  #' 
+  #' @description Reads UCDP GED csv, converts to sf, buffers events, adds month and iso3c column, filters non-fatal events, fixes Yemen, and creates event-intensity categories 
+  #' 
+  #' @param ged_path character: path to ged csv
+  #' @param buffer_size numeric: number of meters to buffer the event points by
+  #' @param thresh numeric: minimum number of battle-related deaths in the 'best' column required (default = 1)
+  #' 
+  #' @details This function reads in a csv file of UCDP GED, converts it to an sf object, converts that to an sp object with meters as units, buffers by `buffer_size` using rgeos::gBuffer, and
+  #' converts back to sf. It then creates a `month` column by taking a substring of the `date_start` column. Then it uses countrycode::countrycode to create an `iso3c` column before filtering
+  #' out entries that have fatalities (`best` column) less than the `thresh` input and fixing the Yemen/North Yemen issue. Finally, it creates an `int_cat` column based on the number of fatalities
+  #' per event.
+  
+  ged <- fread(ged_path)
   ged <- st_as_sf(ged, coords = c("longitude", "latitude"), crs = "+proj=longlat +datum=WGS84")
   ged <- as_Spatial(ged)
   ged <- sp::spTransform(ged, CRSobj = "+proj=eck6 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs")
