@@ -72,12 +72,14 @@ generate_ged <- function(ged_path, buffer_size = 50000, thresh = 1){
   
   ged <- fread(ged_path)
   ged <- st_as_sf(ged, coords = c("longitude", "latitude"), crs = "+proj=longlat +datum=WGS84")
-  ged <- as_Spatial(ged)
-  ged <- sp::spTransform(ged, CRSobj = "+proj=eck6 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs")
-  ged <- rgeos::gBuffer(spgeom = ged, byid = TRUE, width = buffer_size)
-  #ged <- sp::spTransform(ged,CRSobj = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
-  ged <- st_as_sf(ged)
-  ged <- st_transform(ged,crs = "WGS84")
+  if(buffer_size > 0){
+    ged <- as_Spatial(ged)
+    ged <- sp::spTransform(ged, CRSobj = "+proj=eck6 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs")
+    ged <- rgeos::gBuffer(spgeom = ged, byid = TRUE, width = buffer_size)
+    #ged <- sp::spTransform(ged,CRSobj = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+    ged <- st_as_sf(ged)
+    ged <- st_transform(ged,crs = "WGS84")
+  }
   
   ged$month <- as.numeric(substr(ged$date_start, 6, 7))
   ged$iso3c <- countrycode(ged$country_id, origin = "gwn", destination = "iso3c")
