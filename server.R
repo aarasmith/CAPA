@@ -10,6 +10,7 @@ server <- function(input, output, session) {
   #   reactiveValuesToList(res_auth)
   # })
   output$body_plot <- renderUI({HTML(markdown::markdownToHTML('home_page.md', fragment.only = T))})
+  output$weight_system <- renderText(paste("Current Weight System:", "events_100km_unweighted"))
   #output$body_plot <- renderUI({testuiServer("test1")})
   #handler for dur_plot
   observe({
@@ -21,7 +22,13 @@ server <- function(input, output, session) {
     }
   })
   
-  #handler for freq_plot
+  #handler for un geoschme
+  observeEvent(input$un_geoscheme, {
+    output$un_geoscheme <- renderDataTable(un_geoscheme)
+    output$body_plot <- renderUI({dataTableOutput("un_geoscheme")})
+  })
+  
+  #handler for freq_plot output type
   observe({
     if(as.logical(input$adm_freq) & as.logical(input$p_thresh_logic)){
       shinyjs::enable("output_type_freq")
@@ -57,6 +64,8 @@ server <- function(input, output, session) {
     input_list <- reactiveValuesToList(input)
     weight_list <- input_list[grepl('weight',names(input_list))]
     weight_presets(session, weight_list, input$preset)
+    curent_weight_system <- input$preset
+    output$weight_system <- renderText(paste("Current Weight System:", curent_weight_system))
   })
   
   #Handler for custom region
@@ -64,7 +73,7 @@ server <- function(input, output, session) {
     c(isoc(ison(input$region_custom)), input$region_add)[c(isoc(ison(input$region_custom)), input$region_add) %!in% input$region_subtract]
   })
   
-  #Handler for markdwon homepage
+  #Handler for markdown homepage
   observeEvent(input$guide, {
     output$body_plot <- renderUI({HTML(markdown::markdownToHTML('home_page.md', fragment.only = T))})
   })
@@ -346,7 +355,7 @@ server <- function(input, output, session) {
     toggle_inputs(input_list,F,T)
     
     CAR_output <- children_in_conflict(iso3c = input$country_car, years = c(input$year_slider_car[1]:input$year_slider_car[2]), period = "yearly", adm1 = FALSE, weights = weights(),
-                                       score_selection = as.numeric(input$scores_car), cat_names = input$categories_car, exclusive = input$exclusive_car)
+                                       score_selection = as.numeric(input$scores_car), cat_names = input$categories_car, exclusive = input$exclusive_car, level = input$level_car)
     
     output$car_table <- renderDataTable(CAR_output, options = list(scrollX = TRUE))
     output$body_plot <- renderUI({dataTableOutput("car_table")})

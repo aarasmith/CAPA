@@ -45,8 +45,9 @@ nid_grid <- readRDS("data/nid_grid.RDS")
 all_country_choices <- sort(unique(nid_grid$ISOCODE))
 capa_db <- connect_to_capa()
 region_choices <- sort(dbGetQuery(capa_db, "SELECT DISTINCT region FROM region_key")$region)
-ged <- readRDS("data/ged.RDS")
+ged <- readRDS("data/ged22.RDS")
 un_demos <- readRDS("data/un_demos.RDS")
+un_geoscheme <- readRDS("data/un_geoscheme.RDS")
 
 
 credentials <- data.frame(

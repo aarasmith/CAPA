@@ -7,7 +7,8 @@ sidebar <- dashboardSidebar(width = 400, tags$style(type='text/css', '#info_cust
     menuItem("Info", tabName = "homepage", icon = icon("home"),
              actionButton("guide", label = "Guide"),
              actionButton("codebook", label = "Codebook"),
-             actionButton("citations", label = "Citations")
+             actionButton("citations", label = "Citations"),
+             actionButton("un_geoscheme", label = "UN Geoscheme Key")
     ),
     menuItem("Weights", tabName = "weights", icon = icon("weight-hanging"),
              selectInput("preset", "Select preset weights", choices = names(weight_presets_list)),
@@ -139,16 +140,19 @@ sidebar <- dashboardSidebar(width = 400, tags$style(type='text/css', '#info_cust
     ),
     menuItem("Children at Risk", tabName = "children_at_risk", icon = icon("child"),
              actionButton(inputId = "submit_car_default", label = "Submit Default"),
-             selectInput("country_car", "Select Country/Region", choices = c(country_choices, "World", region_choices), multiple = T),
+             selectInput("country_car", "Select Country/Region", choices = c(country_choices, "World", region_choices), multiple = T, selected = "World"),
              sliderInput("year_slider_car", "Year Range:", min = 1990, max = 2021, value = c(1990, 2021), sep = ""),
-             selectizeInput("categories_car", "Select Category Labels", choices = c("low", "medium", "high"), selected = c("low", "medium", "high"), multiple = TRUE, options = list(create = TRUE)),
-             selectizeInput("scores_car", "Select Category Lower-Bounds", choices = c(1, 25, 1000), selected = c(1, 25, 1000), multiple = TRUE, options = list(create = TRUE)),
-             radioButtons(inputId = "exclusive_car", label = "Category Types", choiceNames = c("Inclusive", "Exclusive"), choiceValues = c(FALSE, TRUE), inline = T),
+             selectizeInput("categories_car", "Select Category Labels", choices = c("low", "medium", "high", "extreme"), selected = c("low", "medium", "high", "extreme"),
+                            multiple = TRUE, options = list(create = TRUE)),
+             selectizeInput("scores_car", "Select Category Lower-Bounds", choices = c(1, 25, 100, 1000), selected = c(1, 25, 100, 1000), multiple = TRUE, options = list(create = TRUE)),
+             radioButtons(inputId = "exclusive_car", label = "Category Types", choiceNames = c("Inclusive", "Exclusive"), choiceValues = c(FALSE, TRUE), selected = TRUE, inline = T),
+             radioButtons(inputId = "level_car", label = "Aggregation Level", choices = c("Country", "Region", "Global"), selected = "Country", inline = T),
              actionButton(inputId = "submit_car_custom", label = "Submit Custom"),
              downloadButton("download_car", label = "Download Table"))
   )
 )
 
-body <- dashboardBody(uiOutput("body_plot"))
+body <- dashboardBody(verbatimTextOutput("weight_system"),
+                      uiOutput("body_plot"))
 
 ui <- dashboardPage(header, sidebar, body, useShinyjs())

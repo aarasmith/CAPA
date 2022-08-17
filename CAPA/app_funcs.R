@@ -1,11 +1,9 @@
 #next up
-#region_pops doesn't include World
 #implement starting and ending period for frequency/duration
 #use period threshold for table output in frequency
 #some risk_pct needs rounding (global, but i believe elsewhere too)
 #clean up gv for global agg
 #add children at risk
-#implement placeholders for non-conflict periods - total pop for countries that aren't in the cell_pops table
 #create tool-tip for weight presets
 #allow ADM0 for adm_map
 #month_abs either needs removing or fixing for when updating stats
@@ -463,7 +461,8 @@ get_custom_region_aggregation <- function(isos, years, weights, period = "monthl
 # system.time({my_plot <- adm_plot(x, iso3n_wa, "capa_id_adm1")})
 # my_plot
 
-children_in_conflict <- function(iso3c, years, period, adm1, weights, threshold = 1, score_selection = c(1, 25, 100, 1000), cat_names = c("low", "medium", "high", "extreme"), exclusive = F){
+children_in_conflict <- function(iso3c, years, period, adm1, weights, threshold = 1,
+                                 score_selection = c(1, 25, 100, 1000), cat_names = c("low", "medium", "high", "extreme"), exclusive = F, level = "Country"){
   #browser()
   capa_db <- connect_to_capa()
   
@@ -507,7 +506,7 @@ children_in_conflict <- function(iso3c, years, period, adm1, weights, threshold 
     conf <- conf %>% mutate(!!sym(child_names[i]) := round(!!sym(pop_names[i]) * child_pct))
   }
   
-  child_pct_names <- paste("risk_children", cat_names, "pct", sep = "_")
+  child_pct_names <- paste("risk_children", cat_names, "share", sep = "_")
   
   for(i in 1:length(cat_names)){
     conf <- conf %>% mutate(!!sym(child_pct_names[i]) := round(!!sym(child_names[i]) / total_children, 4))
@@ -534,11 +533,48 @@ children_in_conflict <- function(iso3c, years, period, adm1, weights, threshold 
   
   conf_out <- conf %>% left_join(region1, by = "iso3n") %>% left_join(region2, by = "iso3n") %>% left_join(region3, by = "iso3n")
   
+  #attach b_deaths
+  b_deaths <- ged %>% st_drop_geometry() %>% group_by(iso3c, year) %>% summarize(battle_deaths = sum(best, na.rm = T))
+  conf_out <- conf_out %>% left_join(b_deaths, by = c("iso3c", "year"))
+  
   disconnect_from_capa(capa_db)
+  
+  conf_out$country <- countrycode(conf_out$iso3c, origin = "iso3c", destination = "country.name")
+  conf_out$country[is.na(conf_out$country)] <- "Kosovo"
+  conf_out <- conf_out %>% dplyr::select(country, everything())
+  
+  if(level != "Country"){
+    conf_out <- agg_car(conf_out, level = level)
+  }
+  
+  conf_out <- conf_out %>% dplyr::select(-matches("region\\d"), -contains("risk_pop"), -contains("risk_pct")) %>% arrange(country)
+  
   
   return(conf_out)
   
 }
+
+agg_car <- function(car_data, level){
+  
+  if(level == "Region"){
+    gv <- c("region", "year")
+    region1_car <- car_data %>% dplyr::select(-region2, -region3) %>% rename(region = region1) %>% filter(!is.na(region))
+    region2_car <- car_data %>% dplyr::select(-region1, -region3) %>% rename(region = region2) %>% filter(!is.na(region))
+    region3_car <- car_data %>% dplyr::select(-region1, -region2) %>% rename(region = region3) %>% filter(!is.na(region))
+    car_data <- bind_rows(region1_car, region2_car, region3_car)
+  }else if(level == "world"){
+    gv <- c("year")
+  }
+  
+  car_data <- car_data %>%
+    group_by_at(gv) %>%
+    summarize(across((contains("children") & !contains("share")) | contains("total") | contains("battle_deaths"), sum, na.rm = T)) %>%
+    mutate(across(contains("risk_children"), ~ round(.x / total_children, 4), .names = "{.col}_share"))
+  
+  return(car_data)
+  
+}
+
 
 ####Dashboard utilities####
 toggle_inputs <- function(input_list,enable_inputs=T,only_buttons=TRUE){
