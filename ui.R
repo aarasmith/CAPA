@@ -139,6 +139,7 @@ sidebar <- dashboardSidebar(width = 400, tags$style(type='text/css', '#info_cust
              )
     ),
     menuItem("Children at Risk", tabName = "children_at_risk", icon = icon("child"),
+             verbatimTextOutput("info_car"),
              actionButton(inputId = "submit_car_default", label = "Submit Default"),
              selectInput("country_car", "Select Country/Region", choices = c(country_choices, "World", region_choices), multiple = T, selected = "World"),
              sliderInput("year_slider_car", "Year Range:", min = 1990, max = 2021, value = c(1990, 2021), sep = ""),

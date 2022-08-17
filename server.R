@@ -370,19 +370,36 @@ server <- function(input, output, session) {
     #Handler for children at risk custom
     observeEvent(input$submit_car_custom, {
       
+      #Stupid proofing#
+        if(length(input$categories_car) != length(input$scores_car)){
+          output$info_car <- renderText("Must have equal amount of category labels and category lower-bounds")
+          return()
+        }
+      
       input_list <- reactiveValuesToList(input)
       toggle_inputs(input_list,F,T)
       
-      CAR_output <- children_in_conflict(iso3c = input$country_car, years = c(input$year_slider_car[1]:input$year_slider_car[2]), period = "yearly", adm1 = FALSE, weights = weights(),
+      CAR_output1 <- children_in_conflict(iso3c = input$country_car, years = c(input$year_slider_car[1]:input$year_slider_car[2]), period = "yearly", adm1 = FALSE, weights = weights(),
                                          score_selection = as.numeric(input$scores_car), cat_names = input$categories_car, exclusive = input$exclusive_car, level = input$level_car)
       
-      output$car_table <- renderDataTable(CAR_output, options = list(scrollX = TRUE))
+      
+      CAR_output <- reactive({
+        if(input$level_car == "Country"){
+          CAR_output1 %>% dplyr::select(-matches("region\\d"), -contains("risk_pop"), -contains("risk_pct")) %>% arrange(country)
+        }else{
+          agg_car(CAR_output1, level = input$level_car)
+        }
+      })
+      
+      
+      
+      output$car_table <- renderDataTable(CAR_output(), options = list(scrollX = TRUE))
       output$body_plot <- renderUI({dataTableOutput("car_table")})
       
       output$download_car <- downloadHandler(
         filename = function(){"CAR_data.xlsx"},
         content = function(fname){
-          write_xlsx(CAR_output, fname)
+          write_xlsx(CAR_output(), fname)
         }
       )
       

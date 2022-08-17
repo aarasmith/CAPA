@@ -543,11 +543,11 @@ children_in_conflict <- function(iso3c, years, period, adm1, weights, threshold 
   conf_out$country[is.na(conf_out$country)] <- "Kosovo"
   conf_out <- conf_out %>% dplyr::select(country, everything())
   
-  if(level != "Country"){
-    conf_out <- agg_car(conf_out, level = level)
-  }
+  # if(level != "Country"){
+  #   conf_out <- agg_car(conf_out, level = level)
+  # }
   
-  conf_out <- conf_out %>% dplyr::select(-matches("region\\d"), -contains("risk_pop"), -contains("risk_pct")) %>% arrange(country)
+  conf_out <- conf_out #%>% dplyr::select(-matches("region\\d"), -contains("risk_pop"), -contains("risk_pct")) %>% arrange(country)
   
   
   return(conf_out)
@@ -562,7 +562,7 @@ agg_car <- function(car_data, level){
     region2_car <- car_data %>% dplyr::select(-region1, -region3) %>% rename(region = region2) %>% filter(!is.na(region))
     region3_car <- car_data %>% dplyr::select(-region1, -region2) %>% rename(region = region3) %>% filter(!is.na(region))
     car_data <- bind_rows(region1_car, region2_car, region3_car)
-  }else if(level == "world"){
+  }else if(level == "Global"){
     gv <- c("year")
   }
   
