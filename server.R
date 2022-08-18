@@ -106,14 +106,14 @@ server <- function(input, output, session) {
       toggle_inputs(input_list,F,T)
       
       if(input$period_long_map != "yearly"){
-        std_agg_output <- get_standard_aggregation(iso = input$country_long_map, years = input$year_long_map, period = input$period_long_map, adm1 = T, weights = weights(),
+        std_agg_output <- get_standard_aggregation(iso = input$country_long_map, years = input$year_long_map, period = input$period_long_map, adm1 = input$adm_long_map, weights = weights(),
                                                    threshold = input$threshold_long_map, selected_period = input$selected_period_long_map)
       }else{
-        std_agg_output <- get_standard_aggregation(iso = input$country_long_map, years = input$year_long_map, period = input$period_long_map, adm1 = T, weights = weights(),
+        std_agg_output <- get_standard_aggregation(iso = input$country_long_map, years = input$year_long_map, period = input$period_long_map, adm1 = input$adm_long_map, weights = weights(),
                                                    threshold = input$threshold_long_map)
       }
       
-      exposure_map <- adm_plot(x = std_agg_output, isos = input$country_long_map, id_col = "capa_id_adm1", input$legend_size_long_map, input$font_size_long_map)
+      exposure_map <- adm_plot(x = std_agg_output, isos = input$country_long_map, adm1 = input$adm_long_map, id_col = "capa_id_adm1", input$legend_size_long_map, input$font_size_long_map)
       
       output$long_map <- renderPlot(exposure_map)
       #plot_height <- reactive(ifelse(!is.null(input$innerWidth),input$innerWidth*3/6,0))
@@ -165,6 +165,7 @@ server <- function(input, output, session) {
   
     #Handler for the Duration tab
     observeEvent(input$submit_dur, {
+      #browser()
       if(is.null(input$country_dur)){
         output$info_dur <- renderText("Please choose at least one country/region")
         return()
@@ -194,7 +195,7 @@ server <- function(input, output, session) {
         )
         
       }else{
-        duration_map <- adm_plot(x = duration_output, iso = input$country_dur, id_col = "capa_id", input$legend_size_dur, input$font_size_dur)
+        duration_map <- adm_plot(x = duration_output, iso = input$country_dur, adm1 = input$adm_dur, id_col = "capa_id", input$legend_size_dur, input$font_size_dur)
         output$duration_map <- renderPlot(duration_map)
         output$body_plot <- renderUI({plotOutput("duration_map", height = "90vh")})
         
@@ -211,14 +212,14 @@ server <- function(input, output, session) {
     })
     
     #handler for dur_plot output type
-    observe({
-      if(input$adm_dur == FALSE){
-        updateRadioButtons(session, "output_type_dur", selected = "Table")
-        shinyjs::disable("output_type_dur")
-      }else{
-        shinyjs::enable("output_type_dur")
-      }
-    })
+    # observe({
+    #   if(input$adm_dur == FALSE){
+    #     updateRadioButtons(session, "output_type_dur", selected = "Table")
+    #     shinyjs::disable("output_type_dur")
+    #   }else{
+    #     shinyjs::enable("output_type_dur")
+    #   }
+    # })
   
   
   #### Frequency tab handlers ####
@@ -259,7 +260,7 @@ server <- function(input, output, session) {
         )
         
       }else{
-        frequency_map <- adm_plot(x = frequency_output, iso = input$country_freq, id_col = "capa_id", input$legend_size_freq, input$font_size_freq)
+        frequency_map <- adm_plot(x = frequency_output, iso = input$country_freq, adm1 = input$adm_freq, id_col = "capa_id", input$legend_size_freq, input$font_size_freq)
         output$frequency_map <- renderPlot(frequency_map)
         output$body_plot <- renderUI({plotOutput("frequency_map", height = "90vh")})
         
@@ -277,7 +278,7 @@ server <- function(input, output, session) {
     
     #handler for freq_plot output type
     observe({
-      if(as.logical(input$adm_freq) & as.logical(input$p_thresh_logic)){
+      if(as.logical(input$p_thresh_logic)){
         shinyjs::enable("output_type_freq")
       }else{
         updateRadioButtons(session, "output_type_freq", selected = "Table")

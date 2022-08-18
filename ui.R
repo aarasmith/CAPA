@@ -50,6 +50,7 @@ sidebar <- dashboardSidebar(width = 400, tags$style(type='text/css', '#info_cust
              numericInput("year_long_map", "Year:", min = 1990, max = 2021, value = 1990, step = 1),
              radioButtons(inputId = "period_long_map", label = "Period size", choices = c("yearly", "biannually", "quarterly", "monthly"), inline = T),
              numericInput("selected_period_long_map", "Period (if less than yearly selected):", min = 1, max = 12, value = 1, step = 1),
+             radioButtons(inputId = "adm_long_map", label = "Admin Level", choiceNames = c("ADM0", "ADM1"), choiceValues = c(FALSE, TRUE), inline = T),
              numericInput(inputId = "threshold_long_map", label = "Intensity Threshold", value = 1, min = 1, max = 1000000, step = 1),
              actionButton(inputId = "submit_long_map", label = "Submit"),
              splitLayout(cellArgs = list(style='white-space: normal;'),

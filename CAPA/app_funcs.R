@@ -1,4 +1,7 @@
 #next up
+#add less than yearly for CAR
+#duration map doesn't like "World" as iso input
+#implement placeholder for temporal aggs
 #implement starting and ending period for frequency/duration
 #use period threshold for table output in frequency
 #clean up gv for global agg
@@ -273,15 +276,51 @@ plot_cell_scores <- function(x, isos, legend_size = 2, font_size = 18){
 
 # plot_cell_scores(x)
 
-adm_plot <- function(x, isos, id_col = "capa_id", legend_size = 2, font_size = 18){
+adm_plot <- function(x, isos, adm1, id_col = "capa_id", legend_size = 2, font_size = 18){
   #browser()
-  isos <- ison(isos)
-  x <- left_join(x, adm1_cgaz %>% dplyr::select(capa_id), by = setNames("capa_id", id_col)) %>% st_as_sf()
+  if(adm1){
+    isos <- ison(isos)
+    x <- left_join(x, adm1_cgaz %>% dplyr::select(capa_id), by = setNames("capa_id", id_col)) %>% st_as_sf()
+    y <- filter(adm0_cgaz, iso3n %in% isos)
+    my_plot <- ggplot() +
+      geom_sf(data = x, aes(fill = risk_pct), col = "grey", size = 0.5) +
+      geom_sf(data = y, col = "black") +
+      scale_fill_viridis_c(limits = c(0,1)) +
+      theme(legend.key.size = unit(legend_size, 'cm'),
+            legend.text = element_text(size = font_size),
+            legend.title = element_text(size = font_size),
+            panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(),
+            panel.background = element_rect(fill="#FFEBCD"))
+  }else{
+    x <- x %>%
+      mutate(iso3c = isoc(iso3n)) %>%
+      left_join(nid_grid %>% dplyr::select(ISOCODE), by = c("iso3c" = "ISOCODE")) %>% st_as_sf()
+    my_plot <- ggplot() +
+      geom_sf(data = x, aes(fill = risk_pct), col = "black", size = 0.5) +
+      scale_fill_viridis_c(limits = c(0,1)) +
+      theme(legend.key.size = unit(legend_size, 'cm'),
+            legend.text = element_text(size = font_size),
+            legend.title = element_text(size = font_size),
+            panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(),
+            panel.background = element_rect(fill="#FFEBCD"))
+  }
+  
+  return(my_plot)
+  
+}
+
+adm0_plot <- function(x, legend_size = 2, font_size = 18){
+  #browser()
+  #isos <- ison(isos)
+  x <- x %>%
+    mutate(iso3c = isoc(iso3n)) %>%
+    left_join(nid_grid %>% dplyr::select(ISOCODE), by = c("iso3c" = "ISOCODE")) %>% st_as_sf() #%>% st_simplify(preserveTopology = T, dTolerance = 0.25)
   #isos <- isos[isos %!in% x$iso3n]
-  y <- filter(adm0_cgaz, iso3n %in% isos)
+  #y <- filter(adm0_cgaz, iso3n %in% isos)
   my_plot <- ggplot() +
-    geom_sf(data = x, aes(fill = risk_pct), col = "grey", size = 0.5) +
-    geom_sf(data = y, col = "black") +
+    geom_sf(data = x, aes(fill = risk_pct), col = "black", size = 0.5) +
     scale_fill_viridis_c(limits = c(0,1)) +
     theme(legend.key.size = unit(legend_size, 'cm'),
           legend.text = element_text(size = font_size),
@@ -289,10 +328,18 @@ adm_plot <- function(x, isos, id_col = "capa_id", legend_size = 2, font_size = 1
           panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(),
           panel.background = element_rect(fill="#FFEBCD"))
-  
+  # my_plot <- tm_shape(x) +
+  #   tm_polygons("risk_pct")
   return(my_plot)
   
 }
+
+
+
+# system.time({x <- get_standard_aggregation("World", 1990:2020, period = "yearly", adm1 = F, weights)})
+# adm0_plot(x)
+# z <- nid_grid %>% st_simplify(preserveTopology = T, dTolerance = 0.1)
+# plot(z['geometry'])
 
 get_temporal <- function(type, iso, years, weights, period = "yearly", start_end = c(1,12), adm1 = FALSE, threshold = 1, p_threshold = NA){
   #not ready to implement the p_threshold just yet. Will be easier once I've gone through the stage to create place-holder 0 entries for periods not matching the thresh condition
