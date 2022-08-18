@@ -3,7 +3,7 @@ library(shiny)
 header <- dashboardHeader(title = "Conflict Affected Populations App (CAPA)", titleWidth = 400)
 
 sidebar <- dashboardSidebar(width = 400, tags$style(type='text/css', '#info_custom {white-space: pre-wrap;}'),
-  sidebarMenu(id = "tab_selection", 
+  sidebarMenu(id = "tab_selection", style = "white-space: normal;",
     menuItem("Info", tabName = "homepage", icon = icon("home"),
              actionButton("guide", label = "Guide"),
              actionButton("codebook", label = "Codebook"),
@@ -139,8 +139,7 @@ sidebar <- dashboardSidebar(width = 400, tags$style(type='text/css', '#info_cust
              )
     ),
     menuItem("Children at Risk", tabName = "children_at_risk", icon = icon("child"),
-             verbatimTextOutput("info_car"),
-             actionButton(inputId = "submit_car_default", label = "Submit Default"),
+             textOutput("info_car"),
              selectInput("country_car", "Select Country/Region", choices = c(country_choices, "World", region_choices), multiple = T, selected = "World"),
              sliderInput("year_slider_car", "Year Range:", min = 1990, max = 2021, value = c(1990, 2021), sep = ""),
              selectizeInput("categories_car", "Select Category Labels", choices = c("low", "medium", "high", "extreme"), selected = c("low", "medium", "high", "extreme"),
@@ -148,7 +147,7 @@ sidebar <- dashboardSidebar(width = 400, tags$style(type='text/css', '#info_cust
              selectizeInput("scores_car", "Select Category Lower-Bounds", choices = c(1, 25, 100, 1000), selected = c(1, 25, 100, 1000), multiple = TRUE, options = list(create = TRUE)),
              radioButtons(inputId = "exclusive_car", label = "Category Types", choiceNames = c("Inclusive", "Exclusive"), choiceValues = c(FALSE, TRUE), selected = TRUE, inline = T),
              radioButtons(inputId = "level_car", label = "Aggregation Level", choices = c("Country", "Region", "Global"), selected = "Country", inline = T),
-             actionButton(inputId = "submit_car_custom", label = "Submit Custom"),
+             actionButton(inputId = "submit_car", label = "Submit"),
              downloadButton("download_car", label = "Download Table"))
   )
 )

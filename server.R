@@ -23,6 +23,11 @@ server <- function(input, output, session) {
     observeEvent(input$citations, {
       output$body_plot <- renderUI({HTML(markdown::markdownToHTML('data_citations.md', fragment.only = T))})
     })
+    observeEvent(input$codebook, {
+      output$body_plot <- renderUI({
+        HTML('<iframe width="560" height="315" src="https://www.youtube.com/embed/j3hOd7u35no" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="true"></iframe>')
+      })
+    })
     
     
     # observeEvent(input$sidebarItemExpanded, {
@@ -342,33 +347,8 @@ server <- function(input, output, session) {
   
   #### Children at Risk handlers ####
   
-    #Handler for children at risk default
-    observeEvent(input$submit_car_default, {
-      
-      input_list <- reactiveValuesToList(input)
-      # weight_list <- input_list[grepl('weight',names(input_list))]
-      # weight_presets(session, weight_list, 'int_50km_unweighted')
-      
-      toggle_inputs(input_list,F,T)
-      
-      CAR_output <- children_in_conflict("World", 1990:2021, "yearly", FALSE, weights = default_car_weights,
-                                         score_selection = c(1, 25, 100, 1000), cat_names = c("low", "medium", "high", "extreme"), exclusive = T)
-      
-      output$car_table <- renderDataTable(CAR_output, options = list(scrollX = TRUE))
-      output$body_plot <- renderUI({dataTableOutput("car_table")})
-      
-      output$download_car <- downloadHandler(
-        filename = function(){"CAR_data.xlsx"},
-        content = function(fname){
-          write_xlsx(CAR_output, fname)
-        }
-      )
-      
-      toggle_inputs(input_list,T,T)
-    })
-    
-    #Handler for children at risk custom
-    observeEvent(input$submit_car_custom, {
+    #Handler for children at risk
+    observeEvent(input$submit_car, {
       
       #Stupid proofing#
         if(length(input$categories_car) != length(input$scores_car)){
@@ -385,12 +365,17 @@ server <- function(input, output, session) {
       
       CAR_output <- reactive({
         if(input$level_car == "Country"){
-          CAR_output1 %>% dplyr::select(-matches("region\\d"), -contains("risk_pop"), -contains("risk_pct")) %>% arrange(country)
+          CAR_output <- CAR_output1 %>% dplyr::select(-matches("region\\d"), -contains("risk_pop"), -contains("risk_pct")) %>% arrange(country)
         }else{
-          agg_car(CAR_output1, level = input$level_car)
+          CAR_output <- agg_car(CAR_output1, level = input$level_car)
         }
+        if(input$exclusive_car){
+          CAR_output <- CAR_output %>%
+            mutate(risk_children_total = rowSums(across(contains("risk_children") & !contains("share")))) %>%
+            mutate(risk_children_total_share = round(risk_children_total/total_children, 4))
+        }
+        CAR_output
       })
-      
       
       
       output$car_table <- renderDataTable(CAR_output(), options = list(scrollX = TRUE))

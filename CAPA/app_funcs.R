@@ -1,9 +1,7 @@
 #next up
 #implement starting and ending period for frequency/duration
 #use period threshold for table output in frequency
-#some risk_pct needs rounding (global, but i believe elsewhere too)
 #clean up gv for global agg
-#add children at risk
 #create tool-tip for weight presets
 #allow ADM0 for adm_map
 #month_abs either needs removing or fixing for when updating stats
@@ -237,7 +235,7 @@ get_cell_scores <- function(iso, years, start_end = c(1,12), weights, draw_adm1 
     conflict_events <- head(conflict_events, n = 0)
   }
   
-  #to avoid confusion in the filter call
+  #assign iso3n to iso3n_vector to avoid name confusion in the filter call
   iso3n_vector <- iso3n
   out_list <- list(cells = data, adm = filter(adm1_cgaz, iso3n %in% iso3n_vector), events = conflict_events)
   
@@ -404,7 +402,7 @@ get_region_aggregation <- function(region, years, weights, period = "monthly", t
   
   data <- query_region_aggregation(iso3n, years, weights, threshold, gv, capa_db) %>%
     left_join(total_pop, by = "year") %>%
-    mutate(risk_pct = risk_pop/total_pop)
+    mutate(risk_pct = round(risk_pop/total_pop, 4))
   
   disconnect_from_capa(capa_db)
   
@@ -436,7 +434,7 @@ get_custom_region_aggregation <- function(isos, years, weights, period = "monthl
   
   data <- query_region_aggregation(isos, years, weights, threshold, gv, capa_db) %>%
     left_join(total_pop, by = "year") %>%
-    mutate(risk_pct = risk_pop/total_pop)
+    mutate(risk_pct = round(risk_pop/total_pop, 4))
   
   disconnect_from_capa(capa_db)
   
