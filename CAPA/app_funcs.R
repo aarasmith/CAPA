@@ -6,7 +6,7 @@
 #use period threshold for table output in frequency
 #clean up gv for global agg
 #create tool-tip for weight presets
-#allow ADM0 for adm_map
+#maybe generate a dynamic problem statement based on inputs
 #month_abs either needs removing or fixing for when updating stats
 #probably best to force period threshold
 #There's something weird where logical choices from the UI are getting passed as strings - need to fix up and cleanup all the temporary as.logical() calls
@@ -26,16 +26,20 @@ disconnect_from_capa <- function(x){
   dbDisconnect(x)
 }
 
-ison <- function(iso3c){
+ison <- function(iso3c, vectorized = FALSE){
   individual_isos <- iso3c[str_length(iso3c) == 3]
-  iso3n <- countrycode(individual_isos, origin = "iso3c", destination = "iso3n")
+  iso3n <- countrycode(individual_isos, origin = "iso3c", destination = "iso3n", custom_match = c("KOS" = 899))
   iso3n <- ifelse(is.na(iso3n), 899, iso3n)
   
   regions <- iso3c[str_length(iso3c) > 3]
   for(region in regions){
     iso3n <- append(iso3n, ison_region(region))
   }
-  return(unique(iso3n))
+  if(vectorized){
+    return(iso3n)
+  }else{
+    return(unique(iso3n))
+  }
 }
 
 ison_region <- function(region){
@@ -50,7 +54,7 @@ ison_region <- function(region){
 }
 
 isoc <- function(iso3n){
-  iso3c <- countrycode(iso3n, origin = "iso3n", destination = "iso3c")
+  iso3c <- countrycode(iso3n, origin = "iso3n", destination = "iso3c", custom_match = c("KOS" = 899))
   iso3c <- ifelse(is.na(iso3c), "KOS", iso3c)
   return(iso3c)
 }
@@ -359,9 +363,14 @@ get_temporal <- function(type, iso, years, weights, period = "yearly", start_end
   capa_db <- connect_to_capa()
   
   gv <- get_temporal_gv(adm1, period, start_end, years)
+  if(iso == "World"){
+    gv[['region']] <- "World"
+  }else{
+    gv[['region']] <- "not_world"
+  }
   
   total_pop <- query_total_pop(iso3n, adm1, years[length(years)], gv, capa_db) %>%
-    rename(capa_id = contains("capa_id"))
+    rename(capa_id = contains("capa_id")) %>% dplyr::select(-year)
   
   if(type == "frequency"){
     data <- query_frequency(iso3n, years, start_end, weights, threshold, gv, capa_db) %>%

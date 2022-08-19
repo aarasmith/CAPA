@@ -223,22 +223,39 @@ get_temporal_gv <- function(adm, period, start_end, years){
   }
   if(period == "monthly"){
     gv['table'] <- "cell_stats"
+    gv['period'] <- "month"
+    gv['max_periods'] <- (max(years) - min(years) + 1) * 12
   }else if(period == "quarterly"){
     gv['table'] <- "cell_stats_qu"
+    gv['period'] <- "quarter"
+    gv['max_periods'] <- (max(years) - min(years) + 1) * 4
   }else if(period == "biannually"){
     gv['table'] <- "cell_stats_bi"
+    gv['period'] <- "half"
+    gv['max_periods'] <- (max(years) - min(years) + 1) * 2
   }else if(period == "yearly"){
     gv['table'] <- "cell_stats_yr"
+    gv['period'] <- "year"
+    gv['max_periods'] <- (max(years) - min(years) + 1)
   }
   
   return(gv)
 }
 
 query_duration <- function(iso3n, years, start_end, weights, threshold, gv, capa_db){
+  #This one is tricky, because the way the data is structured only cells that experienced conflict are in the stats tables, so any non-conflict periods will be missing and won't trigger
+  # a 0 min for the score. To address this, I've included the 'HAVING COUNT' clause to make sure every SID has the same number of entries as the number of possible periods. If this is
+  # less than the maximum number of periods in the time-range, that implies there was at least 1 period where that cell did not experience conflict, and had it been included in the stats
+  # table (which it is not, to save space) it would have dropped the min to 0 and filtered out in the first part of the HAVING clause that filters out min_scores under the threshold.
+  #browser()
+  if(gv[['region']] == "World"){
+    iso_compare <- ""
+  }else{
+    iso3n <- paste(iso3n, collapse = ", ")
+    iso_compare <- glue("iso3n IN ({iso3n}) AND")
+  }
   
-  iso3n <- paste(iso3n, collapse = ", ")
-  
-  sql_query <- glue(
+  sql_query1 <- glue(
     "SELECT
       {gv['grouping_vars']}, SUM(cell_pop) as risk_pop
     FROM
@@ -262,7 +279,7 @@ query_duration <- function(iso3n, years, start_end, weights, threshold, gv, capa
             ((int_50 - int_25) * {weights['int50']}) +
             ((int_100 - int_50) * {weights['int100']}) AS score 
           FROM {gv['table']}
-          WHERE iso3n IN ({iso3n}) AND
+          WHERE {iso_compare}
             year >= {years[1]} AND
             year <= {years[length(years)]}
             {gv['start_end']}
@@ -278,12 +295,62 @@ query_duration <- function(iso3n, years, start_end, weights, threshold, gv, capa
         cell_pop
       FROM cell_pops
       WHERE
-        iso3n IN ({iso3n}) And
+        {iso_compare}
         year = {max(years)}
       ) pops
     
     ON min_query.sid = pops.sid
     WHERE min_score >= {threshold}
+    GROUP BY {gv['grouping_vars']}"
+  )
+  
+  sql_query <- glue(
+    "SELECT
+      {gv['grouping_vars']}, SUM(cell_pop) as risk_pop
+    FROM
+      (
+      SELECT
+        iso3n, sid, capa_id_adm1,
+        MIN(
+          (lo_25 * {weights['L25']}) +
+          ((lo_50 - lo_25) * {weights['L50']}) +
+          ((lo_100 - lo_50) * {weights['L100']}) +
+          (md_25 * {weights['M25']}) +
+          ((md_50 - md_25) * {weights['M50']}) +
+          ((md_100 - md_50) * {weights['M100']}) +
+          (hi_25 * {weights['H25']}) +
+          ((hi_50 - hi_25) * {weights['H50']}) +
+          ((hi_100 - hi_50) * {weights['H100']}) +
+          (int_25 * {weights['int25']}) +
+          ((int_50 - int_25) * {weights['int50']}) +
+          ((int_100 - int_50) * {weights['int100']})
+        ) AS min_score,
+        SUM(cell_pop) FILTER (WHERE year = {max(years)}) as cell_pop
+        FROM {gv['table']}
+        WHERE
+          {iso_compare}
+          year >= {min(years)} AND
+          year <= {max(years)}
+          {gv['start_end']}
+        GROUP BY iso3n, sid, capa_id_adm1
+        HAVING
+          MIN(
+            (lo_25 * {weights['L25']}) +
+            ((lo_50 - lo_25) * {weights['L50']}) +
+            ((lo_100 - lo_50) * {weights['L100']}) +
+            (md_25 * {weights['M25']}) +
+            ((md_50 - md_25) * {weights['M50']}) +
+            ((md_100 - md_50) * {weights['M100']}) +
+            (hi_25 * {weights['H25']}) +
+            ((hi_50 - hi_25) * {weights['H50']}) +
+            ((hi_100 - hi_50) * {weights['H100']}) +
+            (int_25 * {weights['int25']}) +
+            ((int_50 - int_25) * {weights['int50']}) +
+            ((int_100 - int_50) * {weights['int100']})
+          ) >= {threshold}
+          AND COUNT({gv['period']}) = {gv['max_periods']}
+      ) min_query
+    
     GROUP BY {gv['grouping_vars']}"
   )
   
