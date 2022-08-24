@@ -255,55 +255,6 @@ query_duration <- function(iso3n, years, start_end, weights, threshold, gv, capa
     iso_compare <- glue("iso3n IN ({iso3n}) AND")
   }
   
-  sql_query1 <- glue(
-    "SELECT
-      {gv['grouping_vars']}, SUM(cell_pop) as risk_pop
-    FROM
-      (
-      SELECT
-          iso3n, sid, capa_id_adm1, MIN(score) AS min_score
-        FROM 
-          (
-          SELECT 
-            iso3n, sid, capa_id_adm1,
-            (lo_25 * {weights['L25']}) +
-            ((lo_50 - lo_25) * {weights['L50']}) +
-            ((lo_100 - lo_50) * {weights['L100']}) +
-            (md_25 * {weights['M25']}) +
-            ((md_50 - md_25) * {weights['M50']}) +
-            ((md_100 - md_50) * {weights['M100']}) +
-            (hi_25 * {weights['H25']}) +
-            ((hi_50 - hi_25) * {weights['H50']}) +
-            ((hi_100 - hi_50) * {weights['H100']}) +
-            (int_25 * {weights['int25']}) +
-            ((int_50 - int_25) * {weights['int50']}) +
-            ((int_100 - int_50) * {weights['int100']}) AS score 
-          FROM {gv['table']}
-          WHERE {iso_compare}
-            year >= {years[1]} AND
-            year <= {years[length(years)]}
-            {gv['start_end']}
-          ) agg
-        GROUP BY iso3n, sid, capa_id_adm1
-      ) min_query
-      
-      LEFT JOIN
-      
-      (
-      SELECT
-        sid,
-        cell_pop
-      FROM cell_pops
-      WHERE
-        {iso_compare}
-        year = {max(years)}
-      ) pops
-    
-    ON min_query.sid = pops.sid
-    WHERE min_score >= {threshold}
-    GROUP BY {gv['grouping_vars']}"
-  )
-  
   sql_query <- glue(
     "SELECT
       {gv['grouping_vars']}, SUM(cell_pop) as risk_pop
@@ -366,9 +317,15 @@ query_duration <- function(iso3n, years, start_end, weights, threshold, gv, capa
 
 query_frequency <- function(iso3n, years, start_end, weights, threshold, gv, capa_db){
   
-  iso3n <- paste(iso3n, collapse = ", ")
+  if(gv[['region']] == "World"){
+    iso_compare <- ""
+  }else{
+    iso3n <- paste(iso3n, collapse = ", ")
+    iso_compare <- glue("iso3n IN ({iso3n}) AND")
+  }
   
-  sql_query <- glue(
+  #browser()
+  sql_query1 <- glue(
     "SELECT
       {gv['grouping_vars']}, n_periods, SUM(risk_pop) OVER(PARTITION BY {gv['grouping_vars']} ORDER BY n_periods DESC) AS risk_pop
     FROM
@@ -421,6 +378,49 @@ query_frequency <- function(iso3n, years, start_end, weights, threshold, gv, cap
       GROUP BY {gv['grouping_vars']}, n_periods
       ) pre_cumsum"
   )
+  
+  sql_query <- glue(
+    "SELECT
+      {gv['grouping_vars']}, n_periods, SUM(risk_pop) OVER(PARTITION BY {gv['grouping_vars']} ORDER BY n_periods DESC) AS risk_pop
+    FROM
+      (
+      SELECT
+        {gv['grouping_vars']}, n_periods, SUM(cell_pop) as risk_pop
+      FROM
+        (
+        SELECT
+          iso3n, sid, capa_id_adm1, COUNT(sid) AS n_periods,
+          MAX(cell_pop) FILTER (WHERE year = {max(years)}) as cell_pop
+        FROM 
+         (
+          SELECT 
+            iso3n, sid, capa_id_adm1, cell_pop, year,
+            (lo_25 * {weights['L25']}) +
+            ((lo_50 - lo_25) * {weights['L50']}) +
+            ((lo_100 - lo_50) * {weights['L100']}) +
+            (md_25 * {weights['M25']}) +
+            ((md_50 - md_25) * {weights['M50']}) +
+            ((md_100 - md_50) * {weights['M100']}) +
+            (hi_25 * {weights['H25']}) +
+            ((hi_50 - hi_25) * {weights['H50']}) +
+            ((hi_100 - hi_50) * {weights['H100']}) +
+            (int_25 * {weights['int25']}) +
+            ((int_50 - int_25) * {weights['int50']}) +
+            ((int_100 - int_50) * {weights['int100']}) AS score
+          FROM {gv['table']}
+          WHERE
+            {iso_compare}
+            year >= {years[1]} AND
+            year <= {years[length(years)]}
+            {gv['start_end']}
+          ) agg
+          WHERE score >= {threshold}
+          GROUP BY iso3n, sid, capa_id_adm1
+        ) freq
+          
+      GROUP BY {gv['grouping_vars']}, n_periods
+      ) pre_cumsum"
+    )
   
   data <- dbGetQuery(capa_db, sql_query) %>%
     within(risk_pop <- as.numeric(risk_pop)) %>% mutate(across( , ~as.numeric(.)))

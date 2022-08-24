@@ -1,6 +1,6 @@
 #next up
+#frequency weird stuff happening with ADM1 selected
 #add less than yearly for CAR
-#duration map doesn't like "World" as iso input
 #implement placeholder for temporal aggs
 #implement starting and ending period for frequency/duration
 #use period threshold for table output in frequency

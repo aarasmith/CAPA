@@ -672,5 +672,6 @@ observeEvent(input$citations, {
 
 
 
-
+con <- dbConnect(RSQLite::SQLite(), ":memory:")
+DBI::sqlCreateTable(capa_db, "mtcars", mtcars[1:10, ], fields = x)
 
