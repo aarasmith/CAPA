@@ -1,18 +1,23 @@
-#next up
-#frequency weird stuff happening with ADM1 selected
-#add less than yearly for CAR
-#implement placeholder for temporal aggs
-#implement starting and ending period for frequency/duration
-#use period threshold for table output in frequency
-#clean up gv for global agg
-#create tool-tip for weight presets
-#maybe generate a dynamic problem statement based on inputs
-#month_abs either needs removing or fixing for when updating stats
-#probably best to force period threshold
-#There's something weird where logical choices from the UI are getting passed as strings - need to fix up and cleanup all the temporary as.logical() calls
-#simplify or split adm0 rds
-#restrict allowing multi-country input for the cell_score map
-#give more flexibility for when ADM2 is integrated
+#To Do
+#App funcs
+  #frequency weird stuff happening with ADM1 selected (or is there?) - fixed I think
+  #add less than yearly for CAR
+  #implement placeholder for temporal aggs
+  #implement starting and ending period for frequency/duration
+  #use period threshold for table output in frequency
+  #probably best to force period threshold
+#Refactoring
+  #clean up gv for global agg
+  #There's something weird where logical choices from the UI are getting passed as strings - need to fix up and cleanup all the temporary as.logical() calls
+#Usability
+  #create tool-tip for weight presets
+  #maybe generate a dynamic problem statement based on inputs
+  #restrict allowing multi-country input for the cell_score map
+  #move plot options to their own tab and make them reactive
+#Backend
+  #month_abs either needs removing or fixing for when updating stats
+  #simplify or split adm0 rds
+  #give more flexibility for when ADM2 is integrated
 
 
 ####Utilities####
@@ -78,6 +83,34 @@ sanitize_iso <- function(iso){
   }
   
   return(iso3n)
+}
+
+create_placeholder_freq <- function(iso, max_periods, adm1){
+  placeholder <- data.table(iso3n = iso) %>%
+    .[rep(1:.N, max_periods)] %>%
+    .[ , n_periods := 1:max_periods, by = list(iso3n)] %>%
+    setorder(iso3n, n_periods)
+  
+  if(adm1){
+    placeholder <- placeholder %>%
+      left_join(dplyr::select(adm1_cgaz, iso3n, capa_id) %>% st_drop_geometry(), by = "iso3n") %>%
+      rename(capa_id_adm1 = capa_id)
+  }
+  
+  return(placeholder)
+  
+}
+
+placeholder_join_freq <- function(adm1){
+  
+  ph_join_vars <- c("iso3n", "n_periods")
+  
+  if(adm1){
+    ph_join_vars <- c(ph_join_vars, "capa_id_adm1")
+  }
+  
+  return(ph_join_vars)
+  
 }
 
 #create a placeholder dataframe to join with returned conflict data so that observations that did not have any conflict are retained in the data structure
@@ -345,7 +378,7 @@ adm0_plot <- function(x, legend_size = 2, font_size = 18){
 # z <- nid_grid %>% st_simplify(preserveTopology = T, dTolerance = 0.1)
 # plot(z['geometry'])
 
-get_temporal <- function(type, iso, years, weights, period = "yearly", start_end = c(1,12), adm1 = FALSE, threshold = 1, p_threshold = NA){
+get_temporal <- function(type, iso, years, weights, period = "yearly", start_end = c(1,12), adm1 = FALSE, threshold = 1, p_threshold = NA, max_periods = NULL){
   #not ready to implement the p_threshold just yet. Will be easier once I've gone through the stage to create place-holder 0 entries for periods not matching the thresh condition
   #browser()
   if(type %!in% c("duration", "frequency")){
@@ -363,7 +396,7 @@ get_temporal <- function(type, iso, years, weights, period = "yearly", start_end
   capa_db <- connect_to_capa()
   
   gv <- get_temporal_gv(adm1, period, start_end, years)
-  if(iso == "World"){
+  if("World" %in% iso){
     gv[['region']] <- "World"
   }else{
     gv[['region']] <- "not_world"
@@ -375,13 +408,20 @@ get_temporal <- function(type, iso, years, weights, period = "yearly", start_end
   if(type == "frequency"){
     data <- query_frequency(iso3n, years, start_end, weights, threshold, gv, capa_db) %>%
       within(n_periods <- as.numeric(n_periods))
+    temp_out <- create_placeholder_freq(iso3n, max_periods, adm1) %>%
+      left_join(data, by = placeholder_join_freq(adm1)) %>%
+      group_by(across(all_of(unlist(strsplit(gv[['grouping_vars']], ", "))))) %>%
+      fill(everything(), .direction = "up") %>%
+      mutate(across(.cols = everything(), .fns = ~replace_na(., 0))) %>%
+      ungroup()
   }
   if(type == "duration"){
     data <- query_duration(iso3n, years, start_end, weights, threshold, gv, capa_db) %>%
       within(risk_pop <- as.numeric(risk_pop))
+    temp_out <- data
   }
   
-  out_frame <- data %>%
+  out_frame <- temp_out %>%
     rename(capa_id = contains("capa_id")) %>%
     left_join(total_pop, by = gv[['tot_join_vars']]) %>%
     mutate(risk_pct = risk_pop/total_pop)
@@ -400,6 +440,8 @@ get_temporal <- function(type, iso, years, weights, period = "yearly", start_end
         ungroup()
     }
   }
+  
+  out_frame <- out_frame 
   
   disconnect_from_capa(capa_db)
   return(out_frame %>% within(risk_pct <- round(risk_pct, 4)))

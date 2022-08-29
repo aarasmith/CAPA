@@ -241,7 +241,7 @@ server <- function(input, output, session) {
       }
       
       frequency_output <- get_temporal(type = "frequency", iso = input$country_freq, years = c(input$year_slider_freq[1]:input$year_slider_freq[2]), start_end = c(input$start_freq, input$stop_freq),
-                                    period = input$period_freq, adm1 = input$adm_freq, weights = weights(), threshold = input$threshold_freq, p_threshold = p_thresh)
+                                    period = input$period_freq, adm1 = input$adm_freq, weights = weights(), threshold = input$threshold_freq, p_threshold = p_thresh, max_periods = p_thresh_max())
       
       # if(as.logical(input$adm_freq) & as.logical(input$p_thresh_logic)){
       #   frequency_map <- adm_plot(x = frequency_output, iso = input$country_freq, id_col = "capa_id", input$legend_size_freq, input$font_size_freq)
