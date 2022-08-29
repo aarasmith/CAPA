@@ -113,6 +113,31 @@ placeholder_join_freq <- function(adm1){
   
 }
 
+create_placeholder_dur <- function(iso, adm1){
+  placeholder <- data.table(iso3n = iso)
+  
+  if(adm1){
+    placeholder <- placeholder %>%
+      left_join(dplyr::select(adm1_cgaz, iso3n, capa_id) %>% st_drop_geometry(), by = "iso3n") %>%
+      rename(capa_id_adm1 = capa_id)
+  }
+  
+  return(placeholder)
+  
+}
+
+placeholder_join_dur <- function(adm1){
+  
+  ph_join_vars <- c("iso3n")
+  
+  if(adm1){
+    ph_join_vars <- c(ph_join_vars, "capa_id_adm1")
+  }
+  
+  return(ph_join_vars)
+  
+}
+
 #create a placeholder dataframe to join with returned conflict data so that observations that did not have any conflict are retained in the data structure
 create_placeholder <- function(iso, years, period, adm1){
 
@@ -322,7 +347,7 @@ adm_plot <- function(x, isos, adm1, id_col = "capa_id", legend_size = 2, font_si
     my_plot <- ggplot() +
       geom_sf(data = x, aes(fill = risk_pct), col = "grey", size = 0.5) +
       geom_sf(data = y, col = "black") +
-      scale_fill_viridis_c(limits = c(0,1)) +
+      scale_fill_viridis_c(limits = c(0.0001,1)) +
       theme(legend.key.size = unit(legend_size, 'cm'),
             legend.text = element_text(size = font_size),
             legend.title = element_text(size = font_size),
@@ -335,7 +360,7 @@ adm_plot <- function(x, isos, adm1, id_col = "capa_id", legend_size = 2, font_si
       left_join(nid_grid %>% dplyr::select(ISOCODE), by = c("iso3c" = "ISOCODE")) %>% st_as_sf()
     my_plot <- ggplot() +
       geom_sf(data = x, aes(fill = risk_pct), col = "black", size = 0.5) +
-      scale_fill_viridis_c(limits = c(0,1)) +
+      scale_fill_viridis_c(limits = c(0.0001,1)) +
       theme(legend.key.size = unit(legend_size, 'cm'),
             legend.text = element_text(size = font_size),
             legend.title = element_text(size = font_size),
@@ -418,7 +443,9 @@ get_temporal <- function(type, iso, years, weights, period = "yearly", start_end
   if(type == "duration"){
     data <- query_duration(iso3n, years, start_end, weights, threshold, gv, capa_db) %>%
       within(risk_pop <- as.numeric(risk_pop))
-    temp_out <- data
+    temp_out <- create_placeholder_dur(iso3n, adm1) %>%
+      left_join(data, by = placeholder_join_dur(adm1)) %>%
+      mutate(across(.cols = everything(), .fns = ~replace_na(., 0)))
   }
   
   out_frame <- temp_out %>%
