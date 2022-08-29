@@ -3,7 +3,6 @@
   #frequency weird stuff happening with ADM1 selected (or is there?) - fixed I think
   #add less than yearly for CAR
   #implement starting and ending period for frequency/duration
-  #use period threshold for table output in frequency
   #probably best to force period threshold
 #Refactoring
   #clean up gv for global agg
@@ -440,8 +439,18 @@ get_temporal <- function(type, iso, years, weights, period = "yearly", start_end
       ungroup()
   }
   if(type == "duration"){
+    num_p_in_year <- 1
+    if(period == "monthly"){
+      num_p_in_year <- 12
+    }
+    if(period == "quarterly"){
+      num_p_in_year <- 4
+    }
+    if(period == "biannually"){
+      num_p_in_year <- 2
+    }
     data <- query_duration(iso3n, years, start_end, weights, threshold, gv, capa_db) %>%
-      within(risk_pop <- as.numeric(risk_pop))
+      within(risk_pop <- as.numeric(risk_pop) / num_p_in_year)
     temp_out <- create_placeholder_dur(iso3n, adm1) %>%
       left_join(data, by = placeholder_join_dur(adm1)) %>%
       mutate(across(.cols = everything(), .fns = ~replace_na(., 0)))
