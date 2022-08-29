@@ -2,7 +2,6 @@
 #App funcs
   #frequency weird stuff happening with ADM1 selected (or is there?) - fixed I think
   #add less than yearly for CAR
-  #implement placeholder for temporal aggs
   #implement starting and ending period for frequency/duration
   #use period threshold for table output in frequency
   #probably best to force period threshold
@@ -459,16 +458,12 @@ get_temporal <- function(type, iso, years, weights, period = "yearly", start_end
   
   if(adm1){
     out_frame <- left_join(out_frame, dplyr::select(adm1_cgaz, capa_id, shape_name) %>% st_drop_geometry(), by = "capa_id")
-    if(!is.na(p_threshold)){
-      out_frame <- out_frame %>%
-        filter(n_periods >= p_threshold) %>%
-        group_by(capa_id) %>%
-        filter(n_periods == min(n_periods)) %>%
-        ungroup()
-    }
   }
   
-  out_frame <- out_frame 
+  if(!is.na(p_threshold)){
+    out_frame <- out_frame %>%
+      filter(n_periods == p_threshold)
+  } 
   
   disconnect_from_capa(capa_db)
   return(out_frame %>% within(risk_pct <- round(risk_pct, 4)))
