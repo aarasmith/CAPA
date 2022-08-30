@@ -24,6 +24,10 @@ server <- function(input, output, session) {
       output$body_plot <- renderUI({HTML(markdown::markdownToHTML('data_citations.md', fragment.only = T))})
     })
     observeEvent(input$codebook, {
+      insertUI(selector = "#codebook",
+               where = "afterEnd",
+               ui = tags$audio(src = "gnome_sound_effect.mp3", type = "audio/mpeg", autoplay = T, controls = NA, style="display:none;")
+               )
       output$body_plot <- renderUI({
         HTML('<iframe width="560" height="315" src="https://www.youtube.com/embed/j3hOd7u35no" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="true"></iframe>')
       })
