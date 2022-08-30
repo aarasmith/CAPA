@@ -286,19 +286,53 @@ server <- function(input, output, session) {
       }
     })
     
+    #stupid proofing frequency start_stop
+    observe({
+      shinyjs::enable("start_freq")
+      shinyjs::enable("stop_freq")
+      if(input$period_freq == "monthly"){
+        updateNumericInput(session, "stop_freq", max = 12, value = 12)
+        if(input$stop_freq > 12){
+          updateNumericInput(session, "stop_freq", value = 12)
+        }
+      }else if(input$period_freq == "quarterly"){
+        updateNumericInput(session, "stop_freq", max = 4, value = 4)
+        if(input$stop_freq > 4){
+          updateNumericInput(session, "stop_freq", value = 4)
+        }
+      }else if(input$period_freq == "biannually"){
+        updateNumericInput(session, "stop_freq", max = 2, value = 2)
+        if(input$stop_freq > 2){
+          updateNumericInput(session, "stop_freq", value = 2)
+        }
+      }else{
+        shinyjs::disable("start_freq")
+        shinyjs::disable("stop_freq")
+        updateNumericInput(session, "start_freq", value = NULL)
+        updateNumericInput(session, "stop_freq", value = NULL)
+      }
+    })
+    
     #Tool-tip for the maximum periods based on selection under Frequency tab
     p_thresh_max <- reactive({
       if(input$period_freq == "monthly"){
         (((max(input$year_slider_freq) - min(input$year_slider_freq)) + 1) * 12) - (input$start_freq - 1) - (12 - input$stop_freq)
       }else if(input$period_freq == "quarterly"){
-        (((max(input$year_slider_freq) - min(input$year_slider_freq)) + 1) * 4)# - (input$start_freq - 1) - (4 - input$stop_freq)
+        (((max(input$year_slider_freq) - min(input$year_slider_freq)) + 1) * 4) - (input$start_freq - 1) - (4 - input$stop_freq)
       }else if(input$period_freq == "biannually"){
-        (((max(input$year_slider_freq) - min(input$year_slider_freq)) + 1) * 2)# - (input$start_freq - 1) - (2 - input$stop_freq)
+        (((max(input$year_slider_freq) - min(input$year_slider_freq)) + 1) * 2) - (input$start_freq - 1) - (2 - input$stop_freq)
       }else{
         (max(input$year_slider_freq) - min(input$year_slider_freq)) + 1
       }
     })
     output$p_thresh_max <- renderText(glue("Maximum periods in selection = {p_thresh_max()}"))
+    
+    #prohibit a period_threshold over the p_thresh_max
+    observe({
+      if(input$period_threshold > p_thresh_max()){
+        updateNumericInput(session, "period_threshold", value = p_thresh_max())
+      }
+    })
   
   
   #### Regional tab handlers ####

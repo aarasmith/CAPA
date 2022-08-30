@@ -100,8 +100,8 @@ sidebar <- dashboardSidebar(width = 400, tags$style(type='text/css', '#info_cust
              selectInput("country_freq", "Select Country", choices = c(country_choices, "World", region_choices), multiple = T),
              sliderInput("year_slider_freq", "Year Range:", min = 1990, max = 2021, value = c(1990, 2021), sep = ""),
              splitLayout(cellArgs = list(style='white-space: normal;'),
-                         numericInput(inputId = "start_freq", label = "Start Month", value = 1, min = 1, max = 12, step = 1),
-                         numericInput(inputId = "stop_freq", label = "End Month", value = 12, min = 1, max = 12, step = 1)
+                         numericInput(inputId = "start_freq", label = "Start Period", value = 1, min = 1, max = 12, step = 1),
+                         numericInput(inputId = "stop_freq", label = "End Period", value = 12, min = 1, max = 12, step = 1)
              ),
              radioButtons(inputId = "period_freq", label = "Period size", choices = c("yearly", "biannually", "quarterly", "monthly"), inline = T),
              radioButtons(inputId = "adm_freq", label = "Admin Level", choiceNames = c("ADM0", "ADM1"), choiceValues = c(FALSE, TRUE), inline = T),

@@ -213,14 +213,14 @@ get_temporal_gv <- function(adm, period, start_end, years){
     gv['tot_group_vars'] <- "iso3n"
     gv[['tot_join_vars']] <- c("iso3n")
   }
-  if(period != "monthly"){
-    gv['start_end'] <- ""
-  }else{
-    gv['start_end'] <- glue(" AND
-        NOT (month < {start_end[1]} AND year = {min(years)}) AND
-        NOT (month > {start_end[2]} AND year = {max(years)})
-                      ")
-  }
+  # if(period != "monthly"){
+  #   gv['start_end'] <- ""
+  # }else{
+  #   gv['start_end'] <- glue(" AND
+  #       NOT (month < {start_end[1]} AND year = {min(years)}) AND
+  #       NOT (month > {start_end[2]} AND year = {max(years)})
+  #                     ")
+  # }
   
   if(period == "monthly"){
     gv['table'] <- "cell_stats"
@@ -240,14 +240,14 @@ get_temporal_gv <- function(adm, period, start_end, years){
     gv['max_periods'] <- (max(years) - min(years) + 1)
   }
   
-  # if(period == "yearly"){
-  #   gv['start_end'] <- ""
-  # }else{
-  #   gv['start_end'] <- glue(" AND
-  #       NOT ({gv[['period']]} < {start_end[1]} AND year = {min(years)}) AND
-  #       NOT ({gv[['period']]} > {start_end[2]} AND year = {max(years)})
-  #                     ")
-  # }
+  if(period == "yearly"){
+    gv['start_end'] <- ""
+  }else{
+    gv['start_end'] <- glue(" AND
+        NOT ({gv[['period']]} < {start_end[1]} AND year = {min(years)}) AND
+        NOT ({gv[['period']]} > {start_end[2]} AND year = {max(years)})
+                      ")
+  }
   
   return(gv)
 }
