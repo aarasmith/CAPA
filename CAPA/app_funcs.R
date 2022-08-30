@@ -371,31 +371,6 @@ adm_plot <- function(x, isos, adm1, id_col = "capa_id", legend_size = 2, font_si
   
 }
 
-adm0_plot <- function(x, legend_size = 2, font_size = 18){
-  #browser()
-  #isos <- ison(isos)
-  x <- x %>%
-    mutate(iso3c = isoc(iso3n)) %>%
-    left_join(nid_grid %>% dplyr::select(ISOCODE), by = c("iso3c" = "ISOCODE")) %>% st_as_sf() #%>% st_simplify(preserveTopology = T, dTolerance = 0.25)
-  #isos <- isos[isos %!in% x$iso3n]
-  #y <- filter(adm0_cgaz, iso3n %in% isos)
-  my_plot <- ggplot() +
-    geom_sf(data = x, aes(fill = risk_pct), col = "black", size = 0.5) +
-    scale_fill_viridis_c(limits = c(0,1)) +
-    theme(legend.key.size = unit(legend_size, 'cm'),
-          legend.text = element_text(size = font_size),
-          legend.title = element_text(size = font_size),
-          panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank(),
-          panel.background = element_rect(fill="#FFEBCD"))
-  # my_plot <- tm_shape(x) +
-  #   tm_polygons("risk_pct")
-  return(my_plot)
-  
-}
-
-
-
 # system.time({x <- get_standard_aggregation("World", 1990:2020, period = "yearly", adm1 = F, weights)})
 # adm0_plot(x)
 # z <- nid_grid %>% st_simplify(preserveTopology = T, dTolerance = 0.1)

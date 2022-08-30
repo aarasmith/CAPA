@@ -335,59 +335,6 @@ query_frequency <- function(iso3n, years, start_end, weights, threshold, gv, cap
   }
   
   #browser()
-  sql_query1 <- glue(
-    "SELECT
-      {gv['grouping_vars']}, n_periods, SUM(risk_pop) OVER(PARTITION BY {gv['grouping_vars']} ORDER BY n_periods DESC) AS risk_pop
-    FROM
-      (
-      SELECT
-        {gv['grouping_vars']}, n_periods, SUM(cell_pop) as risk_pop
-      FROM
-        (
-        SELECT
-            iso3n, sid, capa_id_adm1, COUNT(sid) AS n_periods
-          FROM 
-            (
-            SELECT 
-              iso3n, sid, capa_id_adm1,
-              (lo_25 * {weights['L25']}) +
-              ((lo_50 - lo_25) * {weights['L50']}) +
-              ((lo_100 - lo_50) * {weights['L100']}) +
-              (md_25 * {weights['M25']}) +
-              ((md_50 - md_25) * {weights['M50']}) +
-              ((md_100 - md_50) * {weights['M100']}) +
-              (hi_25 * {weights['H25']}) +
-              ((hi_50 - hi_25) * {weights['H50']}) +
-              ((hi_100 - hi_50) * {weights['H100']}) +
-              (int_25 * {weights['int25']}) +
-              ((int_50 - int_25) * {weights['int50']}) +
-              ((int_100 - int_50) * {weights['int100']}) AS score 
-            FROM {gv['table']}
-            WHERE iso3n IN ({iso3n}) AND
-              year >= {years[1]} AND
-              year <= {years[length(years)]}
-              {gv['start_end']}
-            ) agg
-          WHERE score >= {threshold}
-          GROUP BY iso3n, sid, capa_id_adm1
-        ) freq_query
-        
-        LEFT JOIN
-        
-        (
-        SELECT
-          sid,
-          cell_pop
-        FROM cell_pops
-        WHERE
-          iso3n IN ({iso3n}) And
-          year = {max(years)}
-        ) pops
-      
-      ON freq_query.sid = pops.sid
-      GROUP BY {gv['grouping_vars']}, n_periods
-      ) pre_cumsum"
-  )
   
   sql_query <- glue(
     "SELECT
