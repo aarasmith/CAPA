@@ -27,6 +27,8 @@ drop_path <- "C:/Users/andara/PRIO Dropbox/Andrew Arasmith/R Scripts/HDR/"
 #source("credentials.R")
 source("CAPA/query_funcs.R")
 source("CAPA/app_funcs.R")
+source("manual_regions.R")
+#source("mod.R")
 
 aws_host <- Sys.getenv("AWS_DB_HOST")
 aws_user <- Sys.getenv("AWS_DB_USER")
@@ -44,7 +46,7 @@ country_choices <- sort(c(unique(adm1_cgaz$shape_group), "PSE"))
 nid_grid <- readRDS("data/nid_grid.RDS")
 all_country_choices <- sort(unique(nid_grid$ISOCODE))
 capa_db <- connect_to_capa()
-region_choices <- sort(dbGetQuery(capa_db, "SELECT DISTINCT region FROM region_key")$region)
+region_choices <- c(sort(dbGetQuery(capa_db, "SELECT DISTINCT region FROM region_key")$region), names(manual_regions))
 ged <- readRDS("data/ged22.RDS")
 un_demos <- readRDS("data/un_demos.RDS")
 un_geoscheme <- readRDS("data/un_geoscheme.RDS")
@@ -78,6 +80,8 @@ weight_presets_list[['int_25km_unweighted']] <- c(rep(0, 3), 0, 1, 0, rep(0, 6))
 
 default_car_weights <- list(L25 = 0, L50 = 0, L100 = 0, M25 = 0, M50 = 0, M100 = 0, H25 = 0, H50 = 0, H100 = 0,
                 int25 = 1, int50 = 1, int100 = 0)
+
+
 
 
 disconnect_from_capa(capa_db)
