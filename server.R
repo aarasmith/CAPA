@@ -354,7 +354,7 @@ server <- function(input, output, session) {
       if(input$region_global == "Custom Region"){
         region_agg_output <- get_custom_region_aggregation(isos = ison(custom_region()), years = c(input$year_slider_global[1]:input$year_slider_global[2]), period = input$period_global,
                                                     weights = weights(), threshold = input$threshold_global)
-      }else if(any(grepl("prio", input$region_global))){
+      }else if(any(grepl("GWNO", input$region_global))){
         region_agg_output <- get_custom_region_aggregation(isos = manual_regions[[input$region_global]], years = c(input$year_slider_global[1]:input$year_slider_global[2]), period = input$period_global,
                                                            weights = weights(), threshold = input$threshold_global)
       }else{
@@ -378,7 +378,7 @@ server <- function(input, output, session) {
     
     #Handler for custom region
     custom_region <- reactive({
-      if(any(grepl("prio", input$region_custom))){
+      if(any(grepl("GWNO", input$region_custom))){
         c(isoc(manual_regions[[input$region_custom]]), input$region_add)[c(isoc(manual_regions[[input$region_custom]]), input$region_add) %!in% input$region_subtract]
       }else{
         c(isoc(ison(input$region_custom)), input$region_add)[c(isoc(ison(input$region_custom)), input$region_add) %!in% input$region_subtract]

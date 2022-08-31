@@ -27,7 +27,8 @@ drop_path <- "C:/Users/andara/PRIO Dropbox/Andrew Arasmith/R Scripts/HDR/"
 #source("credentials.R")
 source("CAPA/query_funcs.R")
 source("CAPA/app_funcs.R")
-source("manual_regions.R")
+#source("manual_regions.R")
+manual_regions <- readRDS("data/manual_regions.RDS")
 #source("mod.R")
 
 aws_host <- Sys.getenv("AWS_DB_HOST")
