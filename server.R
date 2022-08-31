@@ -18,7 +18,8 @@ server <- function(input, output, session) {
     
     #Handler for markdown homepage
     observeEvent(input$guide, {
-      output$body_plot <- renderUI({HTML(markdown::markdownToHTML('home_page.md', fragment.only = T))})
+      #output$body_plot <- renderUI({HTML(markdown::markdownToHTML('home_page.md', fragment.only = T))})
+      output$body_plot <- mod_guide_server("module")
     })
     observeEvent(input$citations, {
       output$body_plot <- renderUI({HTML(markdown::markdownToHTML('data_citations.md', fragment.only = T))})
