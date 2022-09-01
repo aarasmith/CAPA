@@ -49,6 +49,8 @@ ison_region <- function(region){
   capa_db <- connect_to_capa()
   if(region == "World"){
     iso3n <- unique(dbGetQuery(capa_db, glue("SELECT * FROM region_key"))$iso3n)
+  }else if(any(grepl("GWNO", region))){
+    iso3n <- manual_regions[[region]]
   }else{
     iso3n <- dbGetQuery(capa_db, glue("SELECT * FROM region_key WHERE region = '{region}'"))$iso3n
   }
