@@ -28,6 +28,10 @@ demos_proj <- demos_proj %>% mutate(ages_15_18 = ages_15_19 * (4/5)) %>%
 un_demos <- bind_rows(demos_est, demos_proj) %>%
   dplyr::select(iso3n, year, un_total, child_pct)
 
+un_demos_breakdown <- bind_rows(demos_est, demos_proj) %>%
+  dplyr::select(iso3n, year, un_total, child_pct, ages_0_4:ages_10_14, ages_15_18) %>%
+  mutate(across(contains("ages"), function(x) x/un_total))
+
 
 un_isos <- unique(demos$iso3n)
 nid_isos <- unique(nid_grid$ISOCODE) %>% ison()
@@ -230,3 +234,40 @@ agg_car <- function(car_data, level){
 }
 
 x2 <- agg_car(x1, level = "Region")
+
+#new_regions is created in manual_regions.R
+my_weights <- list(L25 = 1, L50 = 1, L100 = 0, M25 = 1, M50 = 1, M100 = 0, H25 = 1, H50 = 1, H100 = 0,
+                   int25 = 0, int50 = 0, int100 = 0)
+x <- get_standard_aggregation("World", 1990:2021, "yearly", FALSE, my_weights)
+x1 <- x %>% left_join(un_demos_breakdown, by = c("iso3n", "year")) %>%
+  mutate(total_children = round(child_pct * total_pop)) %>%
+  mutate(across(contains(c("child_pct", "age")), function(x) round(x*risk_pop))) %>%
+  rename(children_at_risk = child_pct) %>%
+  left_join(new_regions, by = "iso3n")
+
+age_group_tables <- list()
+age_group_tables[["Country"]] <- x1 %>%
+  mutate(
+    across(
+      contains(c("children_at_risk", "age")),
+      function(x) round(x/total_children),
+      .names = "{.col}_pct"
+    )
+  )
+age_group_tables[["Country"]] <- x1 %>%
+  mutate(iso3c = isoc(iso3n)) %>%
+  dplyr::select(iso3c, iso3n, region, year, everything())
+age_group_tables[["GWNO_regions"]] <- x1 %>%
+  filter(!is.na(region)) %>%
+  group_by(region, year) %>%
+  summarize(across(risk_pop:total_children, function(x) sum(x, na.rm = TRUE))) %>%
+  ungroup() %>%
+  mutate(risk_pct = round(risk_pop/total_pop, 4))
+age_group_tables[["GWNO_all"]] <- x1 %>%
+  filter(!is.na(region)) %>%
+  group_by(year) %>%
+  summarize(across(risk_pop:total_children, function(x) sum(x, na.rm = TRUE))) %>%
+  ungroup() %>%
+  mutate(risk_pct = round(risk_pop/total_pop, 4))
+
+#write_xlsx(age_group_tables, paste0(drop_path, "gwno_CAR.xlsx"))

@@ -94,3 +94,7 @@ gwno_region_names <- unique(gwno_regions$region)
 manual_regions <- lapply(gwno_region_names, function(x) filter(gwno_regions, region == x) %>% pull(iso3n))
 names(manual_regions) <- paste0("GWNO_", gwno_region_names)
 
+new_regions <- gwno_regions %>% dplyr::select(iso3n, region) %>%
+  mutate(region = gsub(" ", "_", paste0("GWNO_", region)))
+
+#dbWriteTable(connect_to_capa(), "region_key", new_regions, overwrite = T)
