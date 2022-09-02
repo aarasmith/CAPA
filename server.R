@@ -295,17 +295,17 @@ server <- function(input, output, session) {
       shinyjs::enable("start_freq")
       shinyjs::enable("stop_freq")
       if(input$period_freq == "monthly"){
-        updateNumericInput(session, "stop_freq", max = 12, value = 12)
+        updateNumericInput(session, "stop_freq", max = 12)
         if(input$stop_freq > 12){
           updateNumericInput(session, "stop_freq", value = 12)
         }
       }else if(input$period_freq == "quarterly"){
-        updateNumericInput(session, "stop_freq", max = 4, value = 4)
+        updateNumericInput(session, "stop_freq", max = 4)
         if(input$stop_freq > 4){
           updateNumericInput(session, "stop_freq", value = 4)
         }
       }else if(input$period_freq == "biannually"){
-        updateNumericInput(session, "stop_freq", max = 2, value = 2)
+        updateNumericInput(session, "stop_freq", max = 2)
         if(input$stop_freq > 2){
           updateNumericInput(session, "stop_freq", value = 2)
         }

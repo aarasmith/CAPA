@@ -2,7 +2,7 @@
 #App funcs
   #frequency weird stuff happening with ADM1 selected (or is there?) - fixed I think
   #add less than yearly for CAR
-  #implement starting and ending period for frequency/duration
+  #regional handling for CAR is not sustainable
   #probably best to force period threshold
 #Refactoring
   #clean up gv for global agg
@@ -59,7 +59,7 @@ ison_region <- function(region){
 }
 
 isoc <- function(iso3n){
-  iso3c <- countrycode(iso3n, origin = "iso3n", destination = "iso3c", custom_match = c("KOS" = 899))
+  iso3c <- countrycode(iso3n, origin = "iso3n", destination = "iso3c", custom_match = c("899" = "KOS"))
   iso3c <- ifelse(is.na(iso3c), "KOS", iso3c)
   return(iso3c)
 }
