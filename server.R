@@ -3,7 +3,7 @@
 server <- function(input, output, session) {
   
   #### Initial state ####
-  output$body_plot <- renderUI({HTML(markdown::markdownToHTML('home_page.md', fragment.only = T))})
+  output$body_plot <- renderUI({HTML(markdown::markdownToHTML('markdown/home_page.md', fragment.only = T))})
   output$weight_system <- renderText(paste("Current Weight System:", "events_100km_unweighted"))
   #output$body_plot <- renderUI({testuiServer("test1")})
 
@@ -18,10 +18,10 @@ server <- function(input, output, session) {
     
     #Handler for markdown homepage
     observeEvent(input$guide, {
-      output$body_plot <- renderUI({HTML(markdown::markdownToHTML('home_page.md', fragment.only = T))})
+      output$body_plot <- renderUI({HTML(markdown::markdownToHTML('markdown/home_page.md', fragment.only = T))})
     })
     observeEvent(input$citations, {
-      output$body_plot <- renderUI({HTML(markdown::markdownToHTML('data_citations.md', fragment.only = T))})
+      output$body_plot <- renderUI({HTML(markdown::markdownToHTML('markdown/data_citations.md', fragment.only = T))})
     })
     observeEvent(input$codebook, {
       insertUI(selector = "#codebook",
