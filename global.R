@@ -29,7 +29,7 @@ source("R/app_helpers/query_funcs.R")
 source("R/app_helpers/app_funcs.R")
 #source("manual_regions.R")
 manual_regions <- readRDS("data/manual_regions.RDS")
-#source("mod.R")
+source("R/mod.R")
 
 aws_host <- Sys.getenv("AWS_DB_HOST")
 aws_user <- Sys.getenv("AWS_DB_USER")
