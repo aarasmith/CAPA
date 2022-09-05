@@ -9,28 +9,7 @@ sidebar <- dashboardSidebar(width = 400, tags$style(type='text/css', '#info_cust
                                                  mod_info_ui("info")
                                         ),
                                         menuItem("Weights", tabName = "weights", icon = icon("weight-hanging"),
-                                                 selectInput("preset", "Select preset weights", choices = names(weight_presets_list)),
-                                                 actionButton("apply_preset", "Apply preset weights"),
-                                                 splitLayout(cellArgs = list(style='white-space: normal;'),
-                                                             numericInput(inputId = "L25_weight", label = "Low 25km Weight", value = 1, min = 0, max = 100, step = 1),
-                                                             numericInput(inputId = "L50_weight", label = "Low 50km Weight", value = 1, min = 0, max = 100, step = 1),
-                                                             numericInput(inputId = "L100_weight", label = "Low 100km Weight", value = 1, min = 0, max = 100, step = 1)
-                                                 ),
-                                                 splitLayout(cellArgs = list(style='white-space: normal;'),
-                                                             numericInput(inputId = "M25_weight", label = "Medium 25km Weight", value = 1, min = 0, max = 100, step = 1),
-                                                             numericInput(inputId = "M50_weight", label = "Medium 50km Weight", value = 1, min = 0, max = 100, step = 1),
-                                                             numericInput(inputId = "M100_weight", label = "Medium 100km Weight", value = 1, min = 0, max = 100, step = 1)
-                                                 ),
-                                                 splitLayout(cellArgs = list(style='white-space: normal;'),
-                                                             numericInput(inputId = "H25_weight", label = "High 25km Weight", value = 1, min = 0, max = 100, step = 1),
-                                                             numericInput(inputId = "H50_weight", label = "High 50km Weight", value = 1, min = 0, max = 100, step = 1),
-                                                             numericInput(inputId = "H100_weight", label = "High 100km Weight", value = 1, min = 0, max = 100, step = 1)
-                                                 ),
-                                                 splitLayout(cellArgs = list(style='white-space: normal;'),
-                                                             numericInput(inputId = "int25_weight", label = "B-deaths 25km Weight", value = 0, min = 0, max = 100, step = 1),
-                                                             numericInput(inputId = "int50_weight", label = "B-deaths 50km Weight", value = 0, min = 0, max = 100, step = 1),
-                                                             numericInput(inputId = "int100_weight", label = "B-deaths 100km Weight", value = 0, min = 0, max = 100, step = 1)
-                                                 )
+                                                 mod_weights_ui("weights")
                                         ),
                                         menuItem("Conflict Exposure", tabName = "std_exposure", icon = icon("users"),
                                                  textOutput("info"),

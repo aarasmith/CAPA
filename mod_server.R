@@ -20,7 +20,7 @@ server <- function(input, output, session) {
   # observeEvent(input$guide, {
   #   output$body_plot <- renderUI({HTML(markdown::markdownToHTML('markdown/home_page.md', fragment.only = T))})
   # })
-  rv <- reactiveValues(submit = NULL, payload = NULL)
+  rv <- reactiveValues(submit = NULL, payload = NULL, weight_system = NULL, weights = NULL)
   # v <- reactive({
   #   mod_guide_server("guide")
   # })
@@ -30,9 +30,17 @@ server <- function(input, output, session) {
   # mod_guide_server("guide", rv = rv, md_file = 'markdown/home_page.md')
   # mod_guide_server("citations", rv = rv, md_file = 'markdown/data_citations.md')
   mod_info_server("info", rv = rv)
+  mod_weights_server("weights", rv = rv)
   observeEvent(rv$payload, {
     output$body_plot <- rv$payload
   })
+  observeEvent(rv$weight_system, {
+    output$weight_system <- rv$weight_system
+  })
+  # observeEvent(rv$weights, {
+  #   weights <- rv$weights
+  # })
+  
 
   # observeEvent(input$citations, {
   #   output$body_plot <- renderUI({HTML(markdown::markdownToHTML('markdown/data_citations.md', fragment.only = T))})
@@ -58,20 +66,20 @@ server <- function(input, output, session) {
   #### Weights tab handlers ####
   
   #Handler for weight presets
-  observeEvent(input$apply_preset, {
-    input_list <- reactiveValuesToList(input)
-    weight_list <- input_list[grepl('weight',names(input_list))]
-    weight_presets(session, weight_list, input$preset)
-    curent_weight_system <- input$preset
-    output$weight_system <- renderText(paste("Current Weight System:", curent_weight_system))
-  })
+  # observeEvent(input$apply_preset, {
+  #   input_list <- reactiveValuesToList(input)
+  #   weight_list <- input_list[grepl('weight',names(input_list))]
+  #   weight_presets(session, weight_list, input$preset)
+  #   curent_weight_system <- input$preset
+  #   output$weight_system <- renderText(paste("Current Weight System:", curent_weight_system))
+  # })
   
   #Reactive list of weights based on input from the Weights tab
-  weights <- reactive(sanitize_weights(
-    list(L25 = input$L25_weight, L50 = input$L50_weight, L100 = input$L100_weight, M25 = input$M25_weight, M50 = input$M50_weight, M100 = input$M100_weight,
-         H25 = input$H25_weight, H50 = input$H50_weight, H100 = input$H100_weight, int25 = input$int25_weight, int50 = input$int50_weight, int100 = input$int100_weight)
-  )
-  )
+  # weights <- reactive(sanitize_weights(
+  #   list(L25 = input$L25_weight, L50 = input$L50_weight, L100 = input$L100_weight, M25 = input$M25_weight, M50 = input$M50_weight, M100 = input$M100_weight,
+  #        H25 = input$H25_weight, H50 = input$H50_weight, H100 = input$H100_weight, int25 = input$int25_weight, int50 = input$int50_weight, int100 = input$int100_weight)
+  # )
+  # )
   
   
   #### Exposure tab handlers ####
@@ -90,7 +98,7 @@ server <- function(input, output, session) {
     
     
     
-    std_agg_output <- get_standard_aggregation(iso = input$country, years = c(input$year_slider[1]:input$year_slider[2]), period = input$period, adm1 = input$adm, weights = weights(),
+    std_agg_output <- get_standard_aggregation(iso = input$country, years = c(input$year_slider[1]:input$year_slider[2]), period = input$period, adm1 = input$adm, weights = rv$weights(),
                                                threshold = input$threshold)
     
     
