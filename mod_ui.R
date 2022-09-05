@@ -40,26 +40,7 @@ sidebar <- dashboardSidebar(width = 400, tags$style(type='text/css', '#info_cust
                                                  downloadButton("download_dur", label = "Download Output")
                                         ),
                                         menuItem("Conflict Frequency", tabName = "frequency", icon = icon("wave-square"),
-                                                 textOutput("info_freq"),
-                                                 selectInput("country_freq", "Select Country", choices = c(country_choices, "World", region_choices), multiple = T),
-                                                 sliderInput("year_slider_freq", "Year Range:", min = 1990, max = 2021, value = c(1990, 2021), sep = ""),
-                                                 splitLayout(cellArgs = list(style='white-space: normal;'),
-                                                             numericInput(inputId = "start_freq", label = "Start Period", value = 1, min = 1, max = 12, step = 1),
-                                                             numericInput(inputId = "stop_freq", label = "End Period", value = 12, min = 1, max = 12, step = 1)
-                                                 ),
-                                                 radioButtons(inputId = "period_freq", label = "Period size", choices = c("yearly", "biannually", "quarterly", "monthly"), inline = T),
-                                                 radioButtons(inputId = "adm_freq", label = "Admin Level", choiceNames = c("ADM0", "ADM1"), choiceValues = c(FALSE, TRUE), inline = T),
-                                                 numericInput(inputId = "threshold_freq", label = "Intensity Threshold", value = 1, min = 1, max = 1000000, step = 1),
-                                                 radioButtons(inputId = "p_thresh_logic", label = "Use a period threshold?", choiceNames = c("Yes", "No"), choiceValues = c(TRUE, FALSE), inline = T),
-                                                 textOutput("p_thresh_max"),
-                                                 numericInput(inputId = "period_threshold", label = "Period Threshold", value = 1, min = 1, step = 1),
-                                                 actionButton(inputId = "submit_freq", "submit"),
-                                                 radioButtons(inputId = "output_type_freq", label = "Output type", choices = c("Table", "Map"), inline = T),
-                                                 splitLayout(cellArgs = list(style='white-space: normal;'),
-                                                             numericInput(inputId = "font_size_freq", label = "Legend font size", value = 18, min = 1, max = 100, step = 1),
-                                                             numericInput(inputId = "legend_size_freq", label = "Legend key size (in CM)", value = 2, min = 0.1, max = 100, step = 0.1)
-                                                 ),
-                                                 downloadButton("download_freq", label = "Download Table")
+                                                 mod_frequency_ui("frequency")
                                         ),
                                         menuItem("Regional Aggregation", tabName = "regional_aggregation", icon = icon("layer-group"),
                                                  tabsetPanel(
