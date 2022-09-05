@@ -45,21 +45,10 @@ sidebar <- dashboardSidebar(width = 400, tags$style(type='text/css', '#info_cust
                                         menuItem("Regional Aggregation", tabName = "regional_aggregation", icon = icon("layer-group"),
                                                  tabsetPanel(
                                                    tabPanel("Parameters", fluid = TRUE, style = "height: 95vh; overflow-y: auto;",
-                                                            textOutput("info_global"),
-                                                            selectInput("region_global", "Select Region", choices = c("World", region_choices, "Custom Region")),
-                                                            sliderInput("year_slider_global", "Year Range:", min = 1990, max = 2021, value = c(1990, 2021), sep = ""),
-                                                            radioButtons(inputId = "period_global", label = "Period size", choices = c("yearly", "biannually", "quarterly", "monthly"), inline = T),
-                                                            numericInput(inputId = "threshold_global", label = "Intensity Threshold", min = 1, value = 1, step = 1),
-                                                            actionButton(inputId = "submit_global", label = "Submit"),
-                                                            downloadButton("download_global", label = "Download Table")
+                                                            mod_regional_parameters_ui("regional")
                                                    ),
-                                                   tabPanel("Custom Region", fluid = TRUE,
-                                                            style = "height: 95vh; overflow-y: auto;",
-                                                            verbatimTextOutput("info_custom"),
-                                                            selectInput("region_custom", "Select Region", choices = c("World", region_choices)),
-                                                            selectInput("region_add", "Countries to add", choices = all_country_choices, multiple = T),
-                                                            selectInput("region_subtract", "Countries to remove", choices = all_country_choices, multiple = T),
-                                                            actionButton(inputId = "submit_custom", label = "Display custom region")
+                                                   tabPanel("Custom Region", fluid = TRUE, style = "height: 95vh; overflow-y: auto;",
+                                                            mod_regional_custom_ui("regional")
                                                             
                                                    )
                                                  )

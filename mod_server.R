@@ -109,54 +109,7 @@ server <- function(input, output, session) {
   
   #### Regional tab handlers ####
   
-  #Handler for regional aggregations
-  observeEvent(input$submit_global, {
-    if(is.null(input$region_global)){
-      output$info_global <- renderText("Please choose a region")
-      return()
-    }
-    input_list <- reactiveValuesToList(input)
-    toggle_inputs(input_list,F,T)
-    
-    
-    if(input$region_global == "Custom Region"){
-      region_agg_output <- get_custom_region_aggregation(isos = ison(custom_region()), years = c(input$year_slider_global[1]:input$year_slider_global[2]), period = input$period_global,
-                                                         weights = weights(), threshold = input$threshold_global)
-    }else if(any(grepl("GWNO", input$region_global))){
-      region_agg_output <- get_custom_region_aggregation(isos = manual_regions[[input$region_global]], years = c(input$year_slider_global[1]:input$year_slider_global[2]), period = input$period_global,
-                                                         weights = weights(), threshold = input$threshold_global)
-    }else{
-      region_agg_output <- get_region_aggregation(region = input$region_global, years = c(input$year_slider_global[1]:input$year_slider_global[2]), period = input$period_global,
-                                                  weights = weights(), threshold = input$threshold_global) 
-    }
-    
-    
-    output$global_table <- renderDataTable(region_agg_output)
-    output$body_plot <- renderUI({dataTableOutput("global_table")})
-    
-    
-    output$download_global <- downloadHandler(
-      filename = function(){"hdr_data.xlsx"},
-      content = function(fname){
-        write_xlsx(region_agg_output, fname)
-      }
-    )
-    toggle_inputs(input_list,T,T)
-  })
-  
-  #Handler for custom region
-  custom_region <- reactive({
-    if(any(grepl("GWNO", input$region_custom))){
-      c(isoc(manual_regions[[input$region_custom]]), input$region_add)[c(isoc(manual_regions[[input$region_custom]]), input$region_add) %!in% input$region_subtract]
-    }else{
-      c(isoc(ison(input$region_custom)), input$region_add)[c(isoc(ison(input$region_custom)), input$region_add) %!in% input$region_subtract]
-    }
-  })
-  
-  #Handler for displaying custom region
-  observeEvent(input$submit_custom, {
-    output$info_custom <- renderText(sort(custom_region()))
-  })
+  mod_regional_server("regional", rv = rv)
   
   
   #### Children at Risk handlers ####
