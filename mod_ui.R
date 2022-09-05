@@ -12,29 +12,10 @@ sidebar <- dashboardSidebar(width = 400, tags$style(type='text/css', '#info_cust
                                                  mod_weights_ui("weights")
                                         ),
                                         menuItem("Conflict Exposure", tabName = "std_exposure", icon = icon("users"),
-                                                 textOutput("info"),
-                                                 selectInput("country", "Select Country", choices = c(country_choices, "World", region_choices), multiple = T),
-                                                 sliderInput("year_slider", "Year Range:", min = 1990, max = 2021, value = c(1990, 2021), sep = ""),
-                                                 radioButtons(inputId = "period", label = "Period size", choices = c("yearly", "biannually", "quarterly", "monthly"), inline = T),
-                                                 radioButtons(inputId = "adm", label = "Admin Level", choiceNames = c("ADM0", "ADM1"), choiceValues = c(FALSE, TRUE), inline = T),
-                                                 numericInput(inputId = "threshold", label = "Intensity Threshold", value = 1, min = 1, step = 1),
-                                                 actionButton(inputId = "submit", label = "Submit"),
-                                                 downloadButton("download", label = "Download Table")
+                                                 mod_exposure_ui("exposure")
                                         ),
                                         menuItem("Exposure Map", tabName = "exposure_map", icon = icon("globe"),
-                                                 textOutput("info_long_map"),
-                                                 selectInput("country_long_map", "Select Country", choices = c(country_choices, "World", region_choices), multiple = T),
-                                                 numericInput("year_long_map", "Year:", min = 1990, max = 2021, value = 1990, step = 1),
-                                                 radioButtons(inputId = "period_long_map", label = "Period size", choices = c("yearly", "biannually", "quarterly", "monthly"), inline = T),
-                                                 numericInput("selected_period_long_map", "Period (if less than yearly selected):", min = 1, max = 12, value = 1, step = 1),
-                                                 radioButtons(inputId = "adm_long_map", label = "Admin Level", choiceNames = c("ADM0", "ADM1"), choiceValues = c(FALSE, TRUE), inline = T),
-                                                 numericInput(inputId = "threshold_long_map", label = "Intensity Threshold", value = 1, min = 1, max = 1000000, step = 1),
-                                                 actionButton(inputId = "submit_long_map", label = "Submit"),
-                                                 splitLayout(cellArgs = list(style='white-space: normal;'),
-                                                             numericInput(inputId = "font_size_long_map", label = "Legend font size", value = 18, min = 1, max = 100, step = 1),
-                                                             numericInput(inputId = "legend_size_long_map", label = "Legend key size (in CM)", value = 2, min = 0.1, max = 100, step = 0.1)
-                                                 ),
-                                                 downloadButton("download_exposure_map", label = "Download Plot")
+                                                 mod_exposure_map_ui("exposure_map")
                                         ),
                                         menuItem("Score Map", tabName = "score_map", icon = icon("border-all"),
                                                  textOutput("info_map"),

@@ -70,3 +70,21 @@
 #       })
 #     })
 # }
+
+
+mod_xxx_ui <- function(id){
+  ns <- NS(id)
+  tagList(
+    
+  )
+}
+
+mod_xxx_server <- function(id, rv){
+  moduleServer(
+    id,
+    function(input, output, session){
+      ns <- session$ns
+      
+    }
+  )
+}

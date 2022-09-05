@@ -5,156 +5,34 @@ server <- function(input, output, session) {
   #### Initial state ####
   output$body_plot <- renderUI({HTML(markdown::markdownToHTML('markdown/home_page.md', fragment.only = T))})
   output$weight_system <- renderText(paste("Current Weight System:", "events_100km_unweighted"))
-  #output$body_plot <- renderUI({testuiServer("test1")})
+  rv <- reactiveValues(submit = NULL, payload = NULL, weight_system = NULL, weights = NULL)
   
   
   #### Info tab handlers ####
-  
-  #handler for un geoscheme
-  # observeEvent(input$un_geoscheme, {
-  #   output$un_geoscheme <- renderDataTable(un_geoscheme)
-  #   output$body_plot <- renderUI({dataTableOutput("un_geoscheme")})
-  # })
-  
-  #Handler for markdown homepage
-  # observeEvent(input$guide, {
-  #   output$body_plot <- renderUI({HTML(markdown::markdownToHTML('markdown/home_page.md', fragment.only = T))})
-  # })
-  rv <- reactiveValues(submit = NULL, payload = NULL, weight_system = NULL, weights = NULL)
-  # v <- reactive({
-  #   mod_guide_server("guide")
-  # })
-  # observeEvent(input$guide, {
-  #   output$body_plot <- renderUI({mod_guide_server("guide")})
-  # })
-  # mod_guide_server("guide", rv = rv, md_file = 'markdown/home_page.md')
-  # mod_guide_server("citations", rv = rv, md_file = 'markdown/data_citations.md')
+
   mod_info_server("info", rv = rv)
-  mod_weights_server("weights", rv = rv)
+  
   observeEvent(rv$payload, {
     output$body_plot <- rv$payload
   })
   observeEvent(rv$weight_system, {
     output$weight_system <- rv$weight_system
   })
-  # observeEvent(rv$weights, {
-  #   weights <- rv$weights
-  # })
-  
 
-  # observeEvent(input$citations, {
-  #   output$body_plot <- renderUI({HTML(markdown::markdownToHTML('markdown/data_citations.md', fragment.only = T))})
-  # })
-  # observeEvent(input$codebook, {
-  #   insertUI(selector = "#codebook",
-  #            where = "afterEnd",
-  #            ui = tags$audio(src = "gnome_sound_effect.mp3", type = "audio/mpeg", autoplay = T, controls = NA, style="display:none;")
-  #   )
-  #   output$body_plot <- renderUI({
-  #     HTML('<iframe width="560" height="315" src="https://www.youtube.com/embed/j3hOd7u35no" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="true"></iframe>')
-  #   })
-  # })
-  
-  
-  # observeEvent(input$sidebarItemExpanded, {
-  #   print(input$sidebarItemExpanded)
-  #   if(input$sidebarItemExpanded == "Homepage"){
-  #     output$body_plot <- renderUI({HTML(markdown::markdownToHTML('home_page.md', fragment.only = T))})
-  #   }
-  # })
   
   #### Weights tab handlers ####
-  
-  #Handler for weight presets
-  # observeEvent(input$apply_preset, {
-  #   input_list <- reactiveValuesToList(input)
-  #   weight_list <- input_list[grepl('weight',names(input_list))]
-  #   weight_presets(session, weight_list, input$preset)
-  #   curent_weight_system <- input$preset
-  #   output$weight_system <- renderText(paste("Current Weight System:", curent_weight_system))
-  # })
-  
-  #Reactive list of weights based on input from the Weights tab
-  # weights <- reactive(sanitize_weights(
-  #   list(L25 = input$L25_weight, L50 = input$L50_weight, L100 = input$L100_weight, M25 = input$M25_weight, M50 = input$M50_weight, M100 = input$M100_weight,
-  #        H25 = input$H25_weight, H50 = input$H50_weight, H100 = input$H100_weight, int25 = input$int25_weight, int50 = input$int50_weight, int100 = input$int100_weight)
-  # )
-  # )
-  
+
+  mod_weights_server("weights", rv = rv)
   
   #### Exposure tab handlers ####
   
   #Handler for the Exposure tab 
-  observeEvent(input$submit, {
-    if(is.null(input$country)){
-      output$info <- renderText("Please choose at least one country/region")
-      return()
-    }
-    input_list <- reactiveValuesToList(input)
-    #weight_list <- input_list[grepl('weight',names(input_list))]
-    #print(weight_list)
-    #browser()
-    toggle_inputs(input_list,F,T)
-    
-    
-    
-    std_agg_output <- get_standard_aggregation(iso = input$country, years = c(input$year_slider[1]:input$year_slider[2]), period = input$period, adm1 = input$adm, weights = rv$weights(),
-                                               threshold = input$threshold)
-    
-    
-    # if(input$adm){
-    #   worst_adm_output <- worst_adm_output %>% dplyr::select(-geometry, -shape_id)
-    # }
-    
-    output$Table <- renderDataTable(std_agg_output)
-    output$body_plot <- renderUI({dataTableOutput("Table")})
-    
-    
-    output$download <- downloadHandler(
-      filename = function(){"hdr_data.xlsx"},
-      content = function(fname){
-        write_xlsx(std_agg_output, fname)
-      }
-    )
-    toggle_inputs(input_list,T,T)
-  })
+  mod_exposure_server("exposure", rv = rv)
   
   
   #### Exposure Map tab handlers ####
   
-  #Handler for the Exposure Map tab
-  observeEvent(input$submit_long_map, {
-    if(is.null(input$country_long_map)){
-      output$info_long_map <- renderText("Please choose at least one country/region")
-      return()
-    }
-    input_list <- reactiveValuesToList(input)
-    toggle_inputs(input_list,F,T)
-    
-    if(input$period_long_map != "yearly"){
-      std_agg_output <- get_standard_aggregation(iso = input$country_long_map, years = input$year_long_map, period = input$period_long_map, adm1 = input$adm_long_map, weights = weights(),
-                                                 threshold = input$threshold_long_map, selected_period = input$selected_period_long_map)
-    }else{
-      std_agg_output <- get_standard_aggregation(iso = input$country_long_map, years = input$year_long_map, period = input$period_long_map, adm1 = input$adm_long_map, weights = weights(),
-                                                 threshold = input$threshold_long_map)
-    }
-    
-    exposure_map <- adm_plot(x = std_agg_output, isos = input$country_long_map, adm1 = input$adm_long_map, id_col = "capa_id_adm1", input$legend_size_long_map, input$font_size_long_map)
-    
-    output$long_map <- renderPlot(exposure_map)
-    #plot_height <- reactive(ifelse(!is.null(input$innerWidth),input$innerWidth*3/6,0))
-    #print(plot_height())
-    output$body_plot <- renderUI({plotOutput("long_map", height = "90vh")})
-    
-    output$download_exposure_map <- downloadHandler(
-      filename = function(){"hdr_exposure_map.pdf"},
-      content = function(fname){
-        ggsave(fname, plot = exposure_map, device = "pdf")
-      }
-    )
-    
-    toggle_inputs(input_list,T,T)
-  })
+  mod_exposure_map_server("exposure_map", rv = rv)
   
   
   #### Score Map tab handlers ####
