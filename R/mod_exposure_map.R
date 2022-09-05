@@ -16,7 +16,7 @@ mod_exposure_map_ui <- function(id){
                 numericInput(inputId = ns("font_size"), label = "Legend font size", value = 18, min = 1, max = 100, step = 1),
                 numericInput(inputId = ns("legend_size"), label = "Legend key size (in CM)", value = 2, min = 0.1, max = 100, step = 0.1)
     ),
-    downloadButton(ns("download"), label = "Download Plot")
+    mod_download_ui(ns("download"), output_type = "Plot")
   )
 }
 
@@ -42,17 +42,12 @@ mod_exposure_map_server <- function(id, rv){
                                                      threshold = input$threshold)
         }
         
-        exposure_map <- adm_plot(x = std_agg_output, isos = input$country, adm1 = input$adm, id_col = "capa_id_adm1", input$legend_size, input$font_size)
+        data_output <- adm_plot(x = std_agg_output, isos = input$country, adm1 = input$adm, id_col = "capa_id_adm1", input$legend_size, input$font_size)
         
-        output$long_map <- renderPlot(exposure_map)
+        output$long_map <- renderPlot(data_output)
         rv$payload <- renderUI({plotOutput(ns("long_map"), height = "90vh")})
         
-        output$download <- downloadHandler(
-          filename = function(){"hdr_exposure_map.pdf"},
-          content = function(fname){
-            ggsave(fname, plot = exposure_map, device = "pdf")
-          }
-        )
+        mod_download_server("download", data_output = data_output, output_type = "Plot")
         
         toggle_inputs(input_list,T,T)
       })

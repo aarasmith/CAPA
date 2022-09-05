@@ -11,7 +11,7 @@ mod_exposure_ui <- function(id){
     radioButtons(inputId = ns("adm"), label = "Admin Level", choiceNames = c("ADM0", "ADM1"), choiceValues = c(FALSE, TRUE), inline = T),
     numericInput(inputId = ns("threshold"), label = "Intensity Threshold", value = 1, min = 1, step = 1),
     actionButton(inputId = ns("submit"), label = "Submit"),
-    downloadButton(ns("download"), label = "Download Table")
+    mod_download_ui(ns("download"), output_type = "Table")
   )
 }
 
@@ -28,20 +28,16 @@ mod_exposure_server <- function(id, rv){
         input_list <- reactiveValuesToList(input)
         toggle_inputs(input_list,F,T)
         
-        std_agg_output <- get_standard_aggregation(iso = input$country, years = c(input$year_slider[1]:input$year_slider[2]), period = input$period, adm1 = input$adm, weights = rv$weights(),
+        data_output <- get_standard_aggregation(iso = input$country, years = c(input$year_slider[1]:input$year_slider[2]), period = input$period, adm1 = input$adm, weights = rv$weights(),
                                                    threshold = input$threshold)
 
         rv$payload <- renderUI({
-          renderDataTable(std_agg_output)
+          renderDataTable(data_output)
         })
         
         
-        output$download <- downloadHandler(
-          filename = function(){"hdr_data.xlsx"},
-          content = function(fname){
-            write_xlsx(std_agg_output, fname)
-          }
-        )
+        mod_download_server("download", data_output = data_output, output_type = "Table")
+        
         toggle_inputs(input_list,T,T)
       })
     }

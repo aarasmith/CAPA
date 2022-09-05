@@ -11,7 +11,7 @@ mod_regional_parameters_ui <- function(id){
     radioButtons(inputId = ns("period"), label = "Period size", choices = c("yearly", "biannually", "quarterly", "monthly"), inline = T),
     numericInput(inputId = ns("threshold"), label = "Intensity Threshold", min = 1, value = 1, step = 1),
     actionButton(inputId = ns("submit"), label = "Submit"),
-    downloadButton(ns("download"), label = "Download Table")
+    mod_download_ui(ns("download"), output_type = "Table")
   )
 }
 
@@ -42,24 +42,20 @@ mod_regional_server <- function(id, rv){
         
         
         if(input$region == "Custom Region"){
-          region_agg_output <- get_custom_region_aggregation(isos = ison(custom_region()), years = c(input$year_slider[1]:input$year_slider[2]), period = input$period,
+          data_output <- get_custom_region_aggregation(isos = ison(custom_region()), years = c(input$year_slider[1]:input$year_slider[2]), period = input$period,
                                                              weights = rv$weights(), threshold = input$threshold)
         }else if(any(grepl("GWNO", input$region))){
-          region_agg_output <- get_custom_region_aggregation(isos = manual_regions[[input$region]], years = c(input$year_slider[1]:input$year_slider[2]), period = input$period,
+          data_output <- get_custom_region_aggregation(isos = manual_regions[[input$region]], years = c(input$year_slider[1]:input$year_slider[2]), period = input$period,
                                                              weights = rv$weights(), threshold = input$threshold)
         }else{
-          region_agg_output <- get_region_aggregation(region = input$region, years = c(input$year_slider[1]:input$year_slider[2]), period = input$period,
+          data_output <- get_region_aggregation(region = input$region, years = c(input$year_slider[1]:input$year_slider[2]), period = input$period,
                                                       weights = rv$weights(), threshold = input$threshold) 
         }
         
-        rv$payload <- renderUI({renderDataTable(region_agg_output)})
+        rv$payload <- renderUI({renderDataTable(data_output)})
         
-        output$download <- downloadHandler(
-          filename = function(){"hdr_data.xlsx"},
-          content = function(fname){
-            write_xlsx(region_agg_output, fname)
-          }
-        )
+        mod_download_server("download", data_output = data_output, output_type = "Table")
+        
         toggle_inputs(input_list,T,T)
       })
       

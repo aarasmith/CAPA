@@ -8,6 +8,7 @@ source("R/mod_score_map.R")
 source("R/mod_frequency.R")
 source("R/mod_regional.R")
 source("R/mod_car.R")
+source("R/util_modules/mod_download.R")
 source("mod_server.R")
 source("mod_ui.R")
 

@@ -19,7 +19,7 @@ mod_score_map_ui <- function(id){
                 numericInput(inputId = ns("font_size"), label = "Legend font size", value = 18, min = 1, max = 100, step = 1),
                 numericInput(inputId = ns("legend_size"), label = "Legend key size (in CM)", value = 2, min = 0.1, max = 100, step = 0.1)
     ),
-    downloadButton(ns("download"), label = "Download Plot")
+    mod_download_ui(ns("download"), output_type = "Plot")
   )
 }
 
@@ -39,17 +39,12 @@ mod_score_map_server <- function(id, rv){
         out_plot <- get_cell_scores(iso = input$country, years = c(input$year_slider[1]:input$year_slider[2]), start_end = c(input$start, input$stop),
                                     weights = rv$weights(), draw_adm1 = input$draw_adm1, draw_points = input$draw_points)
         
-        score_map <- plot_cell_scores(x = out_plot, isos = input$country, legend_size = input$legend_size, font_size = input$font_size)
+        data_output <- plot_cell_scores(x = out_plot, isos = input$country, legend_size = input$legend_size, font_size = input$font_size)
         
-        output$map <- renderPlot(score_map)
+        output$map <- renderPlot(data_output)
         rv$payload <- renderUI({plotOutput(ns("map"), height = "90vh")})
         
-        output$download <- downloadHandler(
-          filename = function(){"hdr_score_map.pdf"},
-          content = function(fname){
-            ggsave(fname, plot = score_map, device = "pdf")
-          }
-        )
+        mod_download_server("download", data_output = data_output, output_type = "Plot")
         
         toggle_inputs(input_list,T,T)
       })

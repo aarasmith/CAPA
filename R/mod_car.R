@@ -14,7 +14,7 @@ mod_car_ui <- function(id){
     radioButtons(inputId = ns("exclusive"), label = "Category Types", choiceNames = c("Inclusive", "Exclusive"), choiceValues = c(FALSE, TRUE), selected = TRUE, inline = T),
     radioButtons(inputId = ns("level"), label = "Aggregation Level", choices = c("Country", "Region", "Global"), selected = "Country", inline = T),
     actionButton(inputId = ns("submit"), label = "Submit"),
-    downloadButton(ns("download"), label = "Download Table")
+    mod_download_ui(ns("download"), output_type = "Table")
   )
 }
 
@@ -51,6 +51,9 @@ mod_car_server <- function(id, rv){
               mutate(risk_children_total = rowSums(across(contains("risk_children") & !contains("share")))) %>%
               mutate(risk_children_total_share = round(risk_children_total/total_children, 4))
           }
+          
+          mod_download_server("download", data_output = CAR_output(), output_type = "Table")
+          
           CAR_output
         })
         
@@ -58,12 +61,7 @@ mod_car_server <- function(id, rv){
         output$car_table <- renderDataTable(CAR_output(), options = list(scrollX = TRUE))
         rv$payload <- renderUI({dataTableOutput(ns("car_table"))})
         
-        output$download <- downloadHandler(
-          filename = function(){"CAR_data.xlsx"},
-          content = function(fname){
-            write_xlsx(CAR_output(), fname)
-          }
-        )
+        
         
         toggle_inputs(input_list,T,T)
       })

@@ -24,7 +24,7 @@ mod_frequency_ui <- function(id){
                 numericInput(inputId = ns("font_size"), label = "Legend font size", value = 18, min = 1, max = 100, step = 1),
                 numericInput(inputId = ns("legend_size"), label = "Legend key size (in CM)", value = 2, min = 0.1, max = 100, step = 0.1)
     ),
-    downloadButton(ns("download"), label = "Download Table")
+    mod_download_ui(ns("download"), output_type = "Plot")
   )
 }
 
@@ -49,30 +49,20 @@ mod_frequency_server <- function(id, rv){
           p_thresh <- NA
         }
         
-        frequency_output <- get_temporal(type = "frequency", iso = input$country, years = c(input$year_slider[1]:input$year_slider[2]), start_end = c(input$start, input$stop),
+        data_output <- get_temporal(type = "frequency", iso = input$country, years = c(input$year_slider[1]:input$year_slider[2]), start_end = c(input$start, input$stop),
                                          period = input$period, adm1 = input$adm, weights = rv$weights(), threshold = input$threshold, p_threshold = p_thresh, max_periods = p_thresh_max())
         
         if(input$output_type == "Table"){
-          rv$payload <- renderUI({renderDataTable(frequency_output)})
+          rv$payload <- renderUI({renderDataTable(data_output)})
           
-          output$download <- downloadHandler(
-            filename = function(){"hdr_data.xlsx"},
-            content = function(fname){
-              write_xlsx(frequency_output, fname)
-            }
-          )
+          mod_download_server("download", data_output = data_output, output_type = "Table")
           
         }else{
-          frequency_map <- adm_plot(x = frequency_output, iso = input$country, adm1 = input$adm, id_col = "capa_id", input$legend_size, input$font_size)
-          output$frequency_map <- renderPlot(frequency_map)
+          data_output <- adm_plot(x = data_output, iso = input$country, adm1 = input$adm, id_col = "capa_id", input$legend_size, input$font_size)
+          output$frequency_map <- renderPlot(data_output)
           rv$payload <- renderUI({plotOutput(ns("frequency_map"), height = "90vh")})
           
-          output$download <- downloadHandler(
-            filename = function(){"hdr_frequency_map.pdf"},
-            content = function(fname){
-              ggsave(fname, plot = frequency_map, device = "pdf")
-            }
-          )
+          mod_download_server("download", data_output = data_output, output_type = "Plot")
           
         }
         
