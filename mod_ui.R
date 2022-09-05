@@ -18,21 +18,7 @@ sidebar <- dashboardSidebar(width = 400, tags$style(type='text/css', '#info_cust
                                                  mod_exposure_map_ui("exposure_map")
                                         ),
                                         menuItem("Score Map", tabName = "score_map", icon = icon("border-all"),
-                                                 textOutput("info_map"),
-                                                 selectInput("country_map", "Select Country", choices = c(country_choices, "World", region_choices), multiple = T),
-                                                 sliderInput("year_slider_map", "Year Range:", min = 1990, max = 2021, value = c(1990, 2021), sep = ""),
-                                                 splitLayout(cellArgs = list(style='white-space: normal;'),
-                                                             numericInput(inputId = "start_map", label = "Start Month", value = 1, min = 1, max = 12, step = 1),
-                                                             numericInput(inputId = "stop_map", label = "End Month", value = 12, min = 1, max = 12, step = 1)
-                                                 ),
-                                                 checkboxInput(inputId = "draw_adm1_map", label = "show ADM1 boundaries"),
-                                                 checkboxInput(inputId = "draw_points_map", label = "show conflict events"),
-                                                 actionButton(inputId = "submit_map", "generate map"),
-                                                 splitLayout(cellArgs = list(style='white-space: normal;'),
-                                                             numericInput(inputId = "font_size_map", label = "Legend font size", value = 18, min = 1, max = 100, step = 1),
-                                                             numericInput(inputId = "legend_size_map", label = "Legend key size (in CM)", value = 2, min = 0.1, max = 100, step = 0.1)
-                                                 ),
-                                                 downloadButton("download_score_map", label = "Download Plot")
+                                                 mod_score_map_ui("score_map")
                                         ),
                                         menuItem("Conflict Duration", tabName = "duration", icon = icon("stopwatch"),
                                                  textOutput("info_dur"),

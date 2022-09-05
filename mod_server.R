@@ -38,31 +38,7 @@ server <- function(input, output, session) {
   #### Score Map tab handlers ####
   
   #Handler for the Score Map tab
-  observeEvent(input$submit_map, {
-    if(is.null(input$country_map)){
-      output$info_map <- renderText("Please choose at least one country/region")
-      return()
-    }
-    input_list <- reactiveValuesToList(input)
-    toggle_inputs(input_list,F,T)
-    
-    out_plot <- get_cell_scores(iso = input$country_map, years = c(input$year_slider_map[1]:input$year_slider_map[2]), start_end = c(input$start_map, input$stop_map),
-                                weights = weights(), draw_adm1 = input$draw_adm1_map, draw_points = input$draw_points_map)
-    
-    score_map <- plot_cell_scores(x = out_plot, isos = input$country_map, legend_size = input$legend_size_map, font_size = input$font_size_map)
-    
-    output$map <- renderPlot(score_map)
-    output$body_plot <- renderUI({plotOutput("map", height = "90vh")})
-    
-    output$download_score_map <- downloadHandler(
-      filename = function(){"hdr_score_map.pdf"},
-      content = function(fname){
-        ggsave(fname, plot = score_map, device = "pdf")
-      }
-    )
-    
-    toggle_inputs(input_list,T,T)
-  })
+  mod_score_map_server("score_map", rv = rv)
   
   
   #### Duration tab handlers ####
