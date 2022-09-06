@@ -42,12 +42,14 @@ mod_exposure_map_server <- function(id, rv){
                                                      threshold = input$threshold)
         }
         
-        data_output <- adm_plot(x = std_agg_output, isos = input$country, adm1 = input$adm, id_col = "capa_id_adm1", input$legend_size, input$font_size)
+        country <- input$country
+        adm <- input$adm
+        data_output <- reactive({adm_plot(x = std_agg_output, isos = country, adm1 = adm, id_col = "capa_id_adm1", input$legend_size, input$font_size)})
         
-        output$long_map <- renderPlot(data_output)
+        output$long_map <- renderPlot(data_output())
         rv$payload <- renderUI({plotOutput(ns("long_map"), height = "90vh")})
         
-        mod_download_server("download", data_output = data_output, output_type = "Plot")
+        mod_download_server("download", data_output = data_output(), output_type = "Plot")
         
         toggle_inputs(input_list,T,T)
       })

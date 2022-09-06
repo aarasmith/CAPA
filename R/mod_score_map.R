@@ -39,12 +39,13 @@ mod_score_map_server <- function(id, rv){
         out_plot <- get_cell_scores(iso = input$country, years = c(input$year_slider[1]:input$year_slider[2]), start_end = c(input$start, input$stop),
                                     weights = rv$weights(), draw_adm1 = input$draw_adm1, draw_points = input$draw_points)
         
-        data_output <- plot_cell_scores(x = out_plot, isos = input$country, legend_size = input$legend_size, font_size = input$font_size)
+        country <- input$country
+        data_output <- reactive({plot_cell_scores(x = out_plot, isos = country, legend_size = input$legend_size, font_size = input$font_size)})
         
-        output$map <- renderPlot(data_output)
+        output$map <- renderPlot(data_output())
         rv$payload <- renderUI({plotOutput(ns("map"), height = "90vh")})
         
-        mod_download_server("download", data_output = data_output, output_type = "Plot")
+        mod_download_server("download", data_output = data_output(), output_type = "Plot")
         
         toggle_inputs(input_list,T,T)
       })

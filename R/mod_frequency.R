@@ -58,11 +58,13 @@ mod_frequency_server <- function(id, rv){
           mod_download_server("download", data_output = data_output, output_type = "Table")
           
         }else{
-          data_output <- adm_plot(x = data_output, iso = input$country, adm1 = input$adm, id_col = "capa_id", input$legend_size, input$font_size)
-          output$frequency_map <- renderPlot(data_output)
+          country <- input$country
+          adm <- input$adm
+          plot_output <- reactive({adm_plot(x = data_output, iso = country, adm1 = adm, id_col = "capa_id", input$legend_size, input$font_size)})
+          output$frequency_map <- renderPlot(plot_output())
           rv$payload <- renderUI({plotOutput(ns("frequency_map"), height = "90vh")})
           
-          mod_download_server("download", data_output = data_output, output_type = "Plot")
+          mod_download_server("download", data_output = plot_output(), output_type = "Plot")
           
         }
         
