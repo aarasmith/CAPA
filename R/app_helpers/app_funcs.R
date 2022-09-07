@@ -65,6 +65,14 @@ isoc <- function(iso3n){
   return(iso3c)
 }
 
+cnames <- function(df){
+  df <- df %>%
+    within(iso3c <- isoc(iso3n)) %>%
+    within(country <- countrycode(iso3c, origin = "iso3c", destination = "country.name", custom_match = c("KOS" = "Kosovo"))) %>%
+    dplyr::select(country, iso3c, everything())
+  return(df)
+}
+
 sanitize_weights <- function(x){
   
   weight_list <- lapply(x, function(x){if(!is.numeric(x)){return(0)}else{return(x)}})
@@ -200,6 +208,8 @@ placeholder_join <- function(period, adm1){
 }
 
 
+
+
 ####Work Horses####
 get_standard_aggregation <- function(iso, years, period = "monthly", adm1 = TRUE, weights, threshold = 1, selected_period = NA){
   #browser()
@@ -232,7 +242,7 @@ get_standard_aggregation <- function(iso, years, period = "monthly", adm1 = TRUE
     out_frame <- out_frame %>% filter(quarter == selected_period)
   }
   
-  out_frame <- out_frame %>% within(risk_pct <- round(risk_pct, 4))
+  out_frame <- out_frame %>% within(risk_pct <- round(risk_pct, 4)) %>% cnames()
   
   disconnect_from_capa(capa_db)
   return(out_frame)
@@ -274,7 +284,7 @@ get_score_aggregation <- function(iso, years, period = "monthly", adm1 = TRUE, w
     out_frame <- out_frame %>% filter(score %in% score_selection)
   }
   
-  out_frame <- out_frame %>% within(risk_pct <- round(risk_pct, 4))
+  out_frame <- out_frame %>% within(risk_pct <- round(risk_pct, 4)) %>% cnames()
   
   disconnect_from_capa(capa_db)
   return(out_frame)
@@ -311,7 +321,7 @@ get_cell_scores <- function(iso, years, start_end = c(1,12), weights, draw_adm1 
   
   disconnect_from_capa(capa_db)
   
-  return(out_list)
+  return(out_list %>% cnames())
   
 }
 
@@ -453,7 +463,7 @@ get_temporal <- function(type, iso, years, weights, period = "yearly", start_end
   } 
   
   disconnect_from_capa(capa_db)
-  return(out_frame %>% within(risk_pct <- round(risk_pct, 4)))
+  return(out_frame %>% within(risk_pct <- round(risk_pct, 4)) %>% cnames())
   
 }
 
