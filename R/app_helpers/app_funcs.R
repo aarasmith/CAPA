@@ -219,16 +219,16 @@ get_standard_aggregation <- function(iso, years, period = "monthly", adm1 = TRUE
 
   capa_db <- connect_to_capa()
   
-  gv <- get_standard_gv(adm1, period)
+  gv <- query_standard_gv(adm1, period)
   
-  total_pop <- query_total_pop(iso3n, adm1, years, gv, capa_db)
+  total_pop <- query_total_pop(iso3n, adm1, years, capa_db)
   
   data <- query_standard_aggregation(iso3n, years, weights, threshold, gv, capa_db, score = FALSE)
   ph <- create_placeholder(iso = iso3n, years = years, period = period, adm1 = adm1)
   
   out_frame <- ph %>% left_join(data, by = placeholder_join(period, adm1)) %>%
     mutate(risk_pop = ifelse(is.na(risk_pop), 0, risk_pop)) %>%
-    left_join(total_pop, by = gv[['tot_join_vars']]) %>%
+    left_join(total_pop, by = gv$tot_join_vars) %>%
     mutate(risk_pct = risk_pop/total_pop)
   
   #This section is dependent on a supplied value to "selected_period" and is for filtering the df before plotting
@@ -256,7 +256,7 @@ get_score_aggregation <- function(iso, years, period = "monthly", adm1 = TRUE, w
   
   capa_db <- connect_to_capa()
   
-  gv <- get_standard_gv(adm1, period)
+  gv <- query_standard_gv(adm1, period)
   
   total_pop <- query_total_pop(iso3n, adm1, years, gv, capa_db)
   
@@ -264,13 +264,13 @@ get_score_aggregation <- function(iso, years, period = "monthly", adm1 = TRUE, w
   
   data <- data %>%
     mutate(score = as.numeric(score)) %>%
-    left_join(total_pop, by = gv[['tot_join_vars']]) %>%
+    left_join(total_pop, by = gv$tot_join_vars) %>%
     mutate(risk_pct = risk_pop/total_pop)
   
-  max_scores <- data %>% group_by_at(gv[['dplyr_group_vars']]) %>% summarize(max = max(score)) %>% filter(max != 0)
+  max_scores <- data %>% group_by_at(gv$grouping_vars) %>% summarize(max = max(score)) %>% filter(max != 0)
   
   out_frame <- max_scores[rep(seq_len(dim(max_scores)[1]), max_scores$max), ] %>%
-    group_by_at(gv[['dplyr_group_vars']]) %>%
+    group_by_at(gv$grouping_vars) %>%
     mutate(score = dplyr::row_number()) %>%
     ungroup() %>%
     left_join(data, by = c("score", names(max_scores)[-ncol(max_scores)])) %>%
