@@ -27,6 +27,7 @@ query_standard_aggregation <- function(iso3n, years, weights, threshold, gv, cap
   #' 
   #' @details 
   #' Dependencies: DBI, glue, dplyr
+  #' Uses: query_standard_gv()
   #' Used-in: get_standard_aggregation(), get_score_aggregation()
   
   if(score){

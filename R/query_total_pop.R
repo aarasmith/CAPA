@@ -19,6 +19,7 @@ query_total_pop <- function(iso3n, adm1, years, capa_db){
   #' 
   #' @details
   #' Dependencies: glue, dplyr, DBI
+  #' Used-in: get_standard_aggregation(), get_score_aggregation(), get_temporal()
   
   
   if(adm1){
