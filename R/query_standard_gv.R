@@ -4,6 +4,27 @@
 
 query_standard_gv <- function(adm1, period){
   
+  #' Create grouping variables for standard aggregation query
+  #' 
+  #' @description
+  #' Returns a list of vectors used for grouping in the SQL query depending on spatial and temporal parameters
+  #' 
+  #' @usage
+  #' query_standard_gv(adm1, period)
+  #' 
+  #' @param adm1 boolean: if false will use ADM0
+  #' @param period character: a character string of either "yearly", "biannually, "quarterly", or "monthly"
+  #' 
+  #' @returns
+  #' list of length 3 containing character vectors
+  #' 
+  #' @examples
+  #' query_standard_gv(adm1 = TRUE, period = "yearly")
+  #' 
+  #' @details
+  #' Dependencies: none
+  #' Used-in: get_standard_aggregation(), get_score_aggregation() 
+  
   gv <- list()
   
   gv$tot_join_vars <- c("iso3n", "year")
