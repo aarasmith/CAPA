@@ -6,6 +6,29 @@
 
 query_standard_aggregation <- function(iso3n, years, weights, threshold, gv, capa_db, score = FALSE){
   
+  #' Query the CAPA database for the standard aggregation
+  #' 
+  #' @description Writes and sends an SQL query to the CAPA db based on user supplied inputs
+  #' 
+  #' @usage query_standard_aggregation(iso3n, years, weights, threshold, gv, capa_db, score = FALSE)
+  #' 
+  #' @param iso3n numeric: a single or vector of numeric iso3n values
+  #' @param years numeric: a single or vector containing a range of years
+  #' @param weights list: a list of named weight elements containing a single whole number value
+  #' @param threshold numeric: a single whole number score threshold value
+  #' @param gv list: a list of grouping variables obtained from the query_standard_gv function
+  #' @param capa_db connection: a connection to the database hosting the CAPA data
+  #' @param score boolean: if TRUE will group by cell-scores and return risk_pop at all levels of cell-score rather than
+  #' aggregating risk_pop to a single value above the specified threshold
+  #' 
+  #' @examples 
+  #' query_standard_aggregation(iso3n = c(760, 4), years = 1990:2021, weights = list(L25 = 1, L50 = 1, ..., int100 = 0), threshold = 1,
+  #'                            gv = query_standard_gv(adm1 = FALSE, period = "yearly"), capa_db = conn, score = FALSE)
+  #' 
+  #' @details 
+  #' Dependencies: DBI, glue, dplyr
+  #' Used-in: get_standard_aggregation(), get_score_aggregation()
+  
   if(score){
     select_score <- DBI::SQL(", score")
   }else{
