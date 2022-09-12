@@ -12,7 +12,10 @@ query_region_pop <- function(region, years, capa_db){
   #' @param years a single numeric year or a vector range of years
   #' @param capa_db a database connection to the CAPA database
   #' 
-  #' @usage
+  #' @usage 
+  #' query_region_pop(region, years, capa_db)
+  #' 
+  #' @examples
   #' query_region_pop("World", years = 2001, capa_db = con)
   #' query_region_pop("Western Asia", years = 1990:2021, capa_db = con)
   #' 
