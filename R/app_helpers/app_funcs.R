@@ -60,17 +60,24 @@ ison_region <- function(region){
 }
 
 isoc <- function(iso3n){
+  if(is.character(iso3n)){
+    return(iso3n)
+  }
   iso3c <- countrycode(iso3n, origin = "iso3n", destination = "iso3c", custom_match = c("899" = "KOS"))
   iso3c <- ifelse(is.na(iso3c), "KOS", iso3c)
   return(iso3c)
 }
 
 cnames <- function(df){
-  df <- df %>%
-    within(iso3c <- isoc(iso3n)) %>%
-    within(country <- countrycode(iso3c, origin = "iso3c", destination = "country.name", custom_match = c("KOS" = "Kosovo"))) %>%
-    dplyr::select(country, iso3c, everything())
-  return(df)
+  if(nrow(df) > 0){
+    df <- df %>%
+      within(iso3c <- isoc(iso3n)) %>%
+      within(country <- countrycode(iso3c, origin = "iso3c", destination = "country.name", custom_match = c("KOS" = "Kosovo"))) %>%
+      dplyr::select(country, iso3c, everything())
+    return(df)
+  }else{
+    return(df)
+  }
 }
 
 sanitize_weights <- function(x){
@@ -84,6 +91,7 @@ sanitize_threshold <- function(x){
   if(!is.numeric(x)){return(0)}else{return(x)}
 }
 
+#currently doesn't support mix of numeric and character
 sanitize_iso <- function(iso){
   if(is.numeric(iso)){
     iso3n <- iso
@@ -408,9 +416,9 @@ get_temporal <- function(type, iso, years, weights, period = "yearly", start_end
   
   gv <- get_temporal_gv(adm1, period, start_end, years)
   if("World" %in% iso){
-    gv[['region']] <- "World"
+    gv$region <- "World"
   }else{
-    gv[['region']] <- "not_world"
+    gv$region <- "not_world"
   }
   
   total_pop <- query_total_pop(iso3n, adm1, years[length(years)], gv, capa_db) %>%
@@ -446,7 +454,7 @@ get_temporal <- function(type, iso, years, weights, period = "yearly", start_end
   
   out_frame <- temp_out %>%
     rename(capa_id = contains("capa_id")) %>%
-    left_join(total_pop, by = gv[['tot_join_vars']]) %>%
+    left_join(total_pop, by = gv$tot_join_vars) %>%
     mutate(risk_pct = risk_pop/total_pop)
   
   if(!is.null(out_frame$capa_id)){
