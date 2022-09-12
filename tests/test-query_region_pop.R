@@ -1,4 +1,4 @@
-source("../R/query_total_pop.R")
+source("../R/query_region_pop.R")
 
 #query_region_pop(region, years, capa_db)
 
