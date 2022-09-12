@@ -10,7 +10,7 @@ query_custom_region_pop <- function(isos, years, capa_db){
   #' 
   #' @usage query_custom_region_pop(isos, year, capa_db)
   #' 
-  #' @param isos character: A vector of strings containing the iso3n values for the custom region
+  #' @param isos numeric: A vector of numeric iso3n values for the custom region
   #' @param years a single numeric year or a vector range of years
   #' @param capa_db a database connection to the CAPA database
   #' 
