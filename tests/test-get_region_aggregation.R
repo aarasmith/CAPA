@@ -16,7 +16,11 @@ test_that("get_region_aggregation", {
     (32 * 12)
   )
   expect_equal(
-    nrow(get_region_aggregation(region = "Western Asia", years = 1990:2021, weights = test_weights, period = "biannually", threshold = 1)),
+    nrow(get_region_aggregation(region = c(760, 4, 887), years = 1990:2021, weights = test_weights, period = "biannually", threshold = 1)),
     (32 * 2)
+  )
+  expect_equal(
+    nrow(get_region_aggregation(region = c("SYR", "AFG", "YEM"), years = 1990:2021, weights = test_weights, period = "quarterly", threshold = 1)),
+    (32 * 4)
   )
 })

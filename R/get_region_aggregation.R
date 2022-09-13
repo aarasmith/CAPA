@@ -10,7 +10,8 @@ get_region_aggregation <- function(region, years, weights, period, threshold = 1
   #' 
   #' @usage get_region_aggregation(region, years, weights, period, threshold = 1)
   #' 
-  #' @param region character: a single character string of an exact region name from the UN geoscheme or (GWNO definition - future addition)
+  #' @param region character/numeric: a single character string of an exact region name from the UN geoscheme or (GWNO definition - future addition)
+  #' OR a vector of iso3c or iso3n values making up a custom regional definition
   #' @param years numeric: a single or vector containing a range of years
   #' @param weights list: a list of named weight elements containing a single whole number value
   #' @param period character: a character string of either "yearly", "biannually, "quarterly", or "monthly"
@@ -20,7 +21,8 @@ get_region_aggregation <- function(region, years, weights, period, threshold = 1
   #' 
   #' get_region_aggregation(region = "World", years = 1990:2021, weights = list(L25 = 1, L50 = 1, ..., int100 = 0), period = "yearly", threshold = 1)
   #' get_region_aggregation(region = "Western Asia", years = 1990:2021, weights = list(L25 = 1, L50 = 1, ..., int100 = 0), period = "monthly", threshold = 1)
-  #'                          
+  #' get_region_aggregation(region = c("SYR", "AFG", "YEM"), years = 1990:2021, weights = test_weights, period = "quarterly", threshold = 1)
+  #'                         
   #' @returns dataframe
   #' 
   #' @details 
@@ -31,16 +33,23 @@ get_region_aggregation <- function(region, years, weights, period, threshold = 1
   
   capa_db <- connect_to_capa()
   
-  gv <- query_region_gv(region, period)
+  if(length(region) == 1){ #region is a single character string
+    
+    if(region == "World"){
+      iso3n <- unique(dbGetQuery(capa_db, glue("SELECT * FROM region_key"))$iso3n)
+    }else{
+      iso3n <- dbGetQuery(capa_db, glue("SELECT * FROM region_key WHERE region = '{region}'"))$iso3n
+    }
+    
+    total_pop <- query_region_pop(region, years, capa_db)
   
-  #could move this into query_region_gv? Or just improve it by removing the requirement for a DB query
-  if(region == "World"){
-    iso3n <- unique(dbGetQuery(capa_db, glue("SELECT * FROM region_key"))$iso3n)
-  }else{
-    iso3n <- dbGetQuery(capa_db, glue("SELECT * FROM region_key WHERE region = '{region}'"))$iso3n
+  }else{ #region is a vector of isos
+    iso3n <- sanitize_iso(region)
+    total_pop <- query_custom_region_pop(iso3n, years, capa_db)
+    region <- "custom"
   }
-  
-  total_pop <- query_region_pop(region, years, capa_db)
+
+  gv <- query_region_gv(region, period)
   
   data <- query_region_aggregation(iso3n, years, weights, threshold, gv, capa_db) %>%
     left_join(total_pop, by = "year") %>%
