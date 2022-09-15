@@ -34,6 +34,7 @@ get_score_aggregation <- function(iso, years, period, adm1, weights, threshold, 
   #' Dependencies: dplyr, data.table
   #' Uses: sanitize_iso(), sanitize_threshold(), connect_to_capa(), query_standard_gv(), query_total_pop(), query_standard_aggregation()
   #'       cnames(), disconnect_from_capa()
+  #' Used-in: get_CAR()
   
   iso3n <- sanitize_iso(iso)
   
