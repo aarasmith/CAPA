@@ -2,10 +2,7 @@
 #App funcs
   #frequency weird stuff happening with ADM1 selected (or is there?) - fixed I think
   #add less than yearly for CAR
-  #regional handling for CAR is not sustainable
-  #probably best to force period threshold
   #check out DT::renderDataTable
-  #incorporate GWNO regions properly
 #Refactoring
   #There's something weird where logical choices from the UI are getting passed as strings - need to fix up and cleanup all the temporary as.logical() calls
 #Usability
