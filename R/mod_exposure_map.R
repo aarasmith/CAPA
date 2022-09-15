@@ -44,7 +44,7 @@ mod_exposure_map_server <- function(id, rv){
         
         country <- input$country
         adm <- input$adm
-        data_output <- reactive({adm_plot(x = std_agg_output, isos = country, adm1 = adm, id_col = "capa_id_adm1", input$legend_size, input$font_size)})
+        data_output <- reactive({plot_adm(df = std_agg_output, isos = country, adm1 = adm, id_col = "capa_id_adm1", input$legend_size, input$font_size)})
         
         output$long_map <- renderPlot(data_output())
         rv$payload <- renderUI({plotOutput(ns("long_map"), height = "90vh")})

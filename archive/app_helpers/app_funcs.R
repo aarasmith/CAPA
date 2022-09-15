@@ -5,14 +5,14 @@
   #regional handling for CAR is not sustainable
   #probably best to force period threshold
   #check out DT::renderDataTable
+  #incorporate GWNO regions properly
 #Refactoring
-  #clean up gv for global agg
   #There's something weird where logical choices from the UI are getting passed as strings - need to fix up and cleanup all the temporary as.logical() calls
 #Usability
   #create tool-tip for weight presets
   #maybe generate a dynamic problem statement based on inputs
   #restrict allowing multi-country input for the cell_score map
-  #move plot options to their own tab and make them reactive
+  #move plot options to their own tab
 #Backend
   #month_abs either needs removing or fixing for when updating stats
   #simplify or split adm0 rds

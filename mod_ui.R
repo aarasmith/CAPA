@@ -20,25 +20,25 @@ sidebar <- dashboardSidebar(width = 400, tags$style(type='text/css', '#info_cust
                                         menuItem("Score Map", tabName = "score_map", icon = icon("border-all"),
                                                  mod_score_map_ui("score_map")
                                         ),
-                                        menuItem("Conflict Duration", tabName = "duration", icon = icon("stopwatch"),
-                                                 textOutput("info_dur"),
-                                                 selectInput("country_dur", "Select Country", choices = c(country_choices, "World", region_choices), multiple = T),
-                                                 sliderInput("year_slider_dur", "Year Range:", min = 1990, max = 2021, value = c(1990, 2021), sep = ""),
-                                                 splitLayout(cellArgs = list(style='white-space: normal;'),
-                                                             numericInput(inputId = "start_dur", label = "Start Month", value = 1, min = 1, max = 12, step = 1),
-                                                             numericInput(inputId = "stop_dur", label = "End Month", value = 12, min = 1, max = 12, step = 1)
-                                                 ),
-                                                 radioButtons(inputId = "period_dur", label = "Period size", choices = c("yearly", "biannually", "quarterly", "monthly"), inline = T),
-                                                 radioButtons(inputId = "adm_dur", label = "Admin Level", choiceNames = c("ADM0", "ADM1"), choiceValues = c(FALSE, TRUE), inline = T),
-                                                 numericInput(inputId = "threshold_dur", label = "Intensity Threshold", value = 1, min = 1, step = 1),
-                                                 actionButton(inputId = "submit_dur", "submit"),
-                                                 radioButtons(inputId = "output_type_dur", label = "Output type", choices = c("Table", "Map"), inline = T),
-                                                 splitLayout(cellArgs = list(style='white-space: normal;'),
-                                                             numericInput(inputId = "font_size_dur", label = "Legend font size", value = 18, min = 1, max = 100, step = 1),
-                                                             numericInput(inputId = "legend_size_dur", label = "Legend key size (in CM)", value = 2, min = 0.1, max = 100, step = 0.1)
-                                                 ),
-                                                 downloadButton("download_dur", label = "Download Output")
-                                        ),
+                                        # menuItem("Conflict Duration", tabName = "duration", icon = icon("stopwatch"),
+                                        #          textOutput("info_dur"),
+                                        #          selectInput("country_dur", "Select Country", choices = c(country_choices, "World", region_choices), multiple = T),
+                                        #          sliderInput("year_slider_dur", "Year Range:", min = 1990, max = 2021, value = c(1990, 2021), sep = ""),
+                                        #          splitLayout(cellArgs = list(style='white-space: normal;'),
+                                        #                      numericInput(inputId = "start_dur", label = "Start Month", value = 1, min = 1, max = 12, step = 1),
+                                        #                      numericInput(inputId = "stop_dur", label = "End Month", value = 12, min = 1, max = 12, step = 1)
+                                        #          ),
+                                        #          radioButtons(inputId = "period_dur", label = "Period size", choices = c("yearly", "biannually", "quarterly", "monthly"), inline = T),
+                                        #          radioButtons(inputId = "adm_dur", label = "Admin Level", choiceNames = c("ADM0", "ADM1"), choiceValues = c(FALSE, TRUE), inline = T),
+                                        #          numericInput(inputId = "threshold_dur", label = "Intensity Threshold", value = 1, min = 1, step = 1),
+                                        #          actionButton(inputId = "submit_dur", "submit"),
+                                        #          radioButtons(inputId = "output_type_dur", label = "Output type", choices = c("Table", "Map"), inline = T),
+                                        #          splitLayout(cellArgs = list(style='white-space: normal;'),
+                                        #                      numericInput(inputId = "font_size_dur", label = "Legend font size", value = 18, min = 1, max = 100, step = 1),
+                                        #                      numericInput(inputId = "legend_size_dur", label = "Legend key size (in CM)", value = 2, min = 0.1, max = 100, step = 0.1)
+                                        #          ),
+                                        #          downloadButton("download_dur", label = "Download Output")
+                                        # ),
                                         menuItem("Conflict Frequency", tabName = "frequency", icon = icon("wave-square"),
                                                  mod_frequency_ui("frequency")
                                         ),

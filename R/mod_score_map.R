@@ -40,7 +40,7 @@ mod_score_map_server <- function(id, rv){
                                     weights = rv$weights(), draw_adm1 = input$draw_adm1, draw_points = input$draw_points)
         
         country <- input$country
-        data_output <- reactive({plot_cell_scores(x = out_plot, isos = country, legend_size = input$legend_size, font_size = input$font_size)})
+        data_output <- reactive({plot_cell_scores(data_list = out_plot, isos = country, legend_size = input$legend_size, font_size = input$font_size)})
         
         output$map <- renderPlot(data_output())
         rv$payload <- renderUI({plotOutput(ns("map"), height = "90vh")})

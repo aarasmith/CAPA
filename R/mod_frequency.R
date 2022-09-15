@@ -49,7 +49,7 @@ mod_frequency_server <- function(id, rv){
           p_thresh <- NA
         }
         
-        data_output <- get_temporal(type = "frequency", iso = input$country, years = c(input$year_slider[1]:input$year_slider[2]), start_end = c(input$start, input$stop),
+        data_output <- get_temporal(iso = input$country, years = c(input$year_slider[1]:input$year_slider[2]), start_end = c(input$start, input$stop),
                                          period = input$period, adm1 = input$adm, weights = rv$weights(), threshold = input$threshold, p_threshold = p_thresh, max_periods = p_thresh_max())
         
         if(input$output_type == "Table"){
@@ -60,7 +60,7 @@ mod_frequency_server <- function(id, rv){
         }else{
           country <- input$country
           adm <- input$adm
-          plot_output <- reactive({adm_plot(x = data_output, iso = country, adm1 = adm, id_col = "capa_id", input$legend_size, input$font_size)})
+          plot_output <- reactive({plot_adm(df = data_output, iso = country, adm1 = adm, id_col = "capa_id", input$legend_size, input$font_size)})
           output$frequency_map <- renderPlot(plot_output())
           rv$payload <- renderUI({plotOutput(ns("frequency_map"), height = "90vh")})
           
@@ -124,7 +124,9 @@ mod_frequency_server <- function(id, rv){
       
       #prohibit a period_threshold over the p_thresh_max
       observe({
-        if(input$period_threshold > p_thresh_max()){
+        if(!is.numeric(input$period_threshold)){
+          updateNumericInput(session, "period_threshold", value = 0)
+        }else if(input$period_threshold > p_thresh_max()){
           updateNumericInput(session, "period_threshold", value = p_thresh_max())
         }
       })

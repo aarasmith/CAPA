@@ -42,10 +42,10 @@ mod_regional_server <- function(id, rv){
         
         
         if(input$region == "Custom Region"){
-          data_output <- get_custom_region_aggregation(isos = ison(custom_region()), years = c(input$year_slider[1]:input$year_slider[2]), period = input$period,
+          data_output <- get_region_aggregation(region = ison(custom_region()), years = c(input$year_slider[1]:input$year_slider[2]), period = input$period,
                                                              weights = rv$weights(), threshold = input$threshold)
         }else if(any(grepl("GWNO", input$region))){
-          data_output <- get_custom_region_aggregation(isos = manual_regions[[input$region]], years = c(input$year_slider[1]:input$year_slider[2]), period = input$period,
+          data_output <- get_region_aggregation(region = manual_regions[[input$region]], years = c(input$year_slider[1]:input$year_slider[2]), period = input$period,
                                                              weights = rv$weights(), threshold = input$threshold)
         }else{
           data_output <- get_region_aggregation(region = input$region, years = c(input$year_slider[1]:input$year_slider[2]), period = input$period,
