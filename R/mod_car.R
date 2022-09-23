@@ -36,7 +36,7 @@ mod_car_server <- function(id, rv){
         toggle_inputs(input_list,F,T)
         
         CAR_output1 <- get_CAR(iso3c = input$country, years = c(input$year_slider[1]:input$year_slider[2]), period = "yearly", adm1 = FALSE, weights = rv$weights(),
-                                            score_selection = as.numeric(input$scores), cat_names = input$categories, exclusive = input$exclusive, level = input$level)
+                                            score_selection = as.numeric(input$scores), cat_names = input$categories, exclusive = input$exclusive)
         
         
         CAR_output <- reactive({
