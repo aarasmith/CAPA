@@ -23,6 +23,8 @@ load_dot_env()
 
 sf_use_s2(FALSE)
 
+source("R/db_handlers.R")
+
 drop_path <- "C:/Users/andara/PRIO Dropbox/Andrew Arasmith/R Scripts/HDR/"
 #source("credentials.R")
 #source("R/app_helpers/query_funcs.R")
