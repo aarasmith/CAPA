@@ -83,8 +83,47 @@ The code for doing this looks like:
     #I recommend saving these as .RDS for ease of use etc.
     saveRDS(ged25, paste0(drop_path, "ged25.RDS"))
 
+Before updating the database I suggest making a backup. The simplest way to currently do this is to connect to the database in PG Admin, right click the database, and create a backup. It is probably best to make the backup without an owner or priviledges (uncheck these options). This will download a backup to the machine you're running PG Admin on. At the time of writing the DB is about 56GB and a backup takes about 5 minutes and yields a file around 1.5GB. Restoring will take about 1.5 hours, which is vastly shorter than the time required to rebuild the data. 
 
+If you're tasked with maintaining this data over an extended period, I would highly suggest lobbying for the resources to implement a more robust backup/restore solution. This could be having the System Admin provision more storage on the server to run a secondary DB on the CAPA server, or better yet, a modestly priced cloud deployment into AWS RDS (~$10/month) where you can simply create on-demand snapshots. DBT would also be a good option if the decision is made to scale the app towards a wider audience and sufficient resources are available.
 
+To update the DB, first we want to load in the population raster/s into a list:
+
+    poprast_list <- lapply(raster_files, raster)
+    #e.g. raster_files <- list("C:/Users/andara/PRIO Dropbox/Andrew Arasmith/R Scripts/HDR/new_rasters1/ipolated/ipop_2021.tif")
+    
+You can then pass all the data from these last few steps into `update_from_pops` function found in the `assembly.R file`. This is a wrapper function that calls the required functions from the `data_generation.R` file to update the DB. 
+
+*NOTE* if there are events in the new GED data that take place in a country that has never previously been in the GED dataset (or it was previously excluded with the `non_conflict` function e.g. USA) *YOU MUST* generate grid-cells for the country and add them to the DB. You can check which countries have grid-cells by querying the DB:
+
+    dbGetQuery(capa_db, "SELECT DISTINCT iso3n FROM grid_geos) %>% isoc()
+    #isoc is a utility funciton that simplifies the iso3n -> iso3c conversion with the countrycodes package found in `CAPA/R/utils-iso_handlers.R`
+
+If you need to add a country, you will have to run steps 2 and 3 in `data_generation.R` for each country you wish to add and append the resultant `cell_geos`, `grid_geos`, and `cell_pops` to the DB before continuing
+
+Assuming all the required cell data is present in the DB, we will now use `update_from_pops` to update the data. If you want to be cautious, you can run this on 1 country or a small list of countries and set the `write_db` parameter to NULL in order to look at the data before actually committing it to the DB. Once you're satisfied, you can run lapply over the function with the `write_db` set and it will automatically generate everything and commit to the DB.
+
+To update for 2021 I ran the following:
+    
+    #test
+    capa_db <- connect_to_capa() #source("CAPA/R/db_handlers.R") - creds found in the .env file - load_dot_env()
+    nid_grid <- readRDS("data/nid_grid.RDS")
+    vector_of_isos <- c("AFG", "SYR", "IRQ")
+    test <- update_from_pops(vector_of_isos, year_range = c(2021), nid_grid, poprast_list, ged25, ged50, ged100, source_db = capa_db, write_db = NULL)
+    
+    #actual run
+    lapply(vector_of_all_isos, update_from_pops, year_range = c(2021), nid_grid, poprast_list, ged25, ged50, ged100, source_db = capa_db, write_db = capa_db)
+    
+If the GED update includes backchanges to previous years (very likely) you will need to update only the pops from the newest year and then entirely rebuild the stats table. You can do this with `update_pops` for the newest year and then `update_from_stats` for all years. You'll need to drop the cell_stats table before doing this (always good to backup). The cell_stats table has multiple dependent materialized views that will also need dropping and rebuilding. The rebuilds can be found in `CAPA/assembly/schema.R`. This will take some time to run and I suggest you use parallel processing by running plan(multisession) before executing the `update_from_stats`
+
+    lapply(vector_of_all_isos, update_pops, year_range = c(2021), nid_grid, poprast_list, source_db = capa_db, write_db = capa_db)
+    dbExecute(capa_db, "DROP TABLE cell_stats")
+    source("assembly/schema.R")
+    dbExecute(capa_db, cell_stats_schema)
+    lapply(vector_of_all_isos, update_from_stats, year_range = c(1990:2021), nid_grid, ged25, ged50, ged100, source_db = capa_db, write_db = capa_db)
+    dbExecute(capa_db, cell_stats_qu_view)
+    dbExecute(capa_db, cell_stats_bi_view)
+    dbExecute(capa_db, cell_stats_yr_view)
 ```{R}
 1 + 1
 ```
