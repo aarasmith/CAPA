@@ -1,7 +1,7 @@
 #library(shiny)
 
 server <- function(input, output, session) {
-  
+  track_usage(storage_mode = store_json(path = "/root/logs"))
   #### Initial state ####
   output$body_plot <- renderUI({HTML(markdown::markdownToHTML('markdown/home_page.md', fragment.only = T))})
   output$weight_system <- renderText(paste("Current Weight System:", "events_100km_unweighted"))

@@ -17,6 +17,7 @@ library(dotenv)
 library(countrycode)
 library(shinydashboard)
 library(markdown)
+library(shinylogs)
 load_dot_env()
 
 `%!in%` = Negate(`%in%`)
