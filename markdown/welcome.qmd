@@ -134,7 +134,19 @@ If this persists and the data is needed urgently, I suggest downloading the proj
 
 Disregard, if you have the domain name (i.e. hdro.prio.org) set as the database host address instead of the IP address (currently: 192:168..8.150), after the app crashes once, for some reason you will get `Error: could not translate host name 'hdro.prio.org' to address: Temporary failure in name resolution` for an unspecified period of time. This will not show up in any app logs you write, nor any shinyproxy logs. The only way to see these is to `sudo docker logs <container id>` of the broken container before it gets terminated.
 
-*HOWEVER*, in my prior investigation, the app gets about to the 8th or 9th (out of 10) try to start during a normal launch, so if the app load time increases you may run into issues and you will need to update the application.yml in the shinyproxy folder to increase the heartbeat-timout parameter in order to ensure shinyproxy gives it enough time to spin up.
+*HOWEVER*, in my prior investigation, the app gets about to the 8th or 9th (out of 10) try to start during a normal launch, so if the app load time increases you may run into issues and you will need to update the application.yml in the shinyproxy folder to increase the `container-wait-time` parameter in order to ensure shinyproxy gives it enough time to spin up. I've increased this from 20 seconds to 30 seconds to provide some wiggle room.
+
+## Troubleshooting
+
+Here is the current workflow for debugging and troubleshooting issues on the server:
+
+shinyproxy logs are not saving properly right now. To access shinyproxy logs you need to run `sudo docker logs <container id of shinyproxy>` . Shinyproxy must still be running for this and they will be deleted (or I suspect difficult to find) once the container is terminated. Although, historical versions of these logs will not be very interesting unless you're interested in monitoring who is logging in and using what. These logs will also show you startup info for the service and will show you the attempts to spin up app proxy containers. So if you're having problems accessing shinyproxy, launching it, or getting container timeouts, these will be helpful.
+
+container logs: These logs are the most useful for figuring out why a container is experiencing issues or crashing *ESPECIALLY* if this is only happening when running online and not locally in R. They will save the std error and std out for the container session *inside the shinyproxy container*. This means you need to `sudo docker exec -it <container id of shinyproxy> bash` from the host to get a shell inside the container. This will drop you in /opt/shinyproxy and you will see the `container-logs` folder that contains all the container logs with the proxy instance ID and the date (YMD) as a filename. The std error is what you will be interested in.
+
+app logs: The app is also using shinylogs to write out app logs in json format. Check out the shinylogs package documentation for details. This is mostly useful for if this gets scaled out and you need to analyze usage/access patterns. The error logging is very lackluster, so you will need container logs to figure out what the crash error was, but this will show you all the buttons your user pressed, inputs they made, etc. so you can figure out how they managed to crash it this time. The shiny app saves these into the /root/logs folder of the proxy container and this is mounted to the host server at /var/log/shinylogs
+
+It is useful to note that container logs are configured in the application.yml file attached to the shinyproxy image when it is built. Shinyproxy logs would in theory be configured here as well if they were working. App logs are configured within the app itself and a destination directory for them is created when building the app docker image and then configured to mount onto the host in the shinyproxy's application.yml file.
 ```{R}
 1 + 1
 ```
