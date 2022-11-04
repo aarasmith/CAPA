@@ -124,6 +124,17 @@ If the GED update includes backchanges to previous years (very likely) you will 
     dbExecute(capa_db, cell_stats_qu_view)
     dbExecute(capa_db, cell_stats_bi_view)
     dbExecute(capa_db, cell_stats_yr_view)
+
+
+## Deployment administration notes
+
+There is currently an occasional error when running the Children at Risk function in the app which will cause the app to grey out and become unresponsive. This is very difficult to replicate and only happens when deployed through shinyproxy. Logging for the app and shinyproxy itself both fail to produce any relevant information as to the cause of this. I suspect it could be some sort of memory overload. When this happens, shinyproxy does not register that the app container is unhealthy and you will get an `error 500 container did not respond in time`. One would think redeploying CAPA would fix this, but that is not always the case. Sometimes a rebuild of the images and a redeploy will fix it, otherwise waiting a few hours usually solves it. An issue similar to this is discussed here: https://github.com/openanalytics/shinyproxy/issues/306 
+
+If this persists and the data is needed urgently, I suggest downloading the project to a local machine and running from R Studio as this issue has never occurred locally for me. Ensure that you obtain the .env file with the DB credentials as this is *not* stored in the github repo.
+
+Disregard, if you have the domain name (i.e. hdro.prio.org) set as the database host address instead of the IP address (currently: 192:168..8.150), after the app crashes once, for some reason you will get `Error: could not translate host name 'hdro.prio.org' to address: Temporary failure in name resolution` for an unspecified period of time. This will not show up in any app logs you write, nor any shinyproxy logs. The only way to see these is to `sudo docker logs <container id>` of the broken container before it gets terminated.
+
+*HOWEVER*, in my prior investigation, the app gets about to the 8th or 9th (out of 10) try to start during a normal launch, so if the app load time increases you may run into issues and you will need to update the application.yml in the shinyproxy folder to increase the heartbeat-timout parameter in order to ensure shinyproxy gives it enough time to spin up.
 ```{R}
 1 + 1
 ```
