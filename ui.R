@@ -55,7 +55,10 @@ sidebar <- dashboardSidebar(width = 400, tags$style(type='text/css', '#info_cust
                                         ),
                                         menuItem("Children at Risk", tabName = "children_at_risk", icon = icon("child"),
                                                  mod_car_ui("CAR")
-                                                 )
+                                        ),
+                                        menuItem("Debug", tabName = "debug", icon = icon("bug"),
+                                                 actionButton(inputId = "crash_app", label = "Crash app")
+                                        )
                             )
 )
 

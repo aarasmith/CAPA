@@ -2,6 +2,10 @@
 
 server <- function(input, output, session) {
   track_usage(storage_mode = store_json(path = "/root/logs"))
+  #debug
+  observeEvent(input$crash_app, {
+    crash_my_app(.jpg)
+  })
   #### Initial state ####
   output$body_plot <- renderUI({HTML(markdown::markdownToHTML('markdown/home_page.md', fragment.only = T))})
   output$weight_system <- renderText(paste("Current Weight System:", "events_100km_unweighted"))
