@@ -2,6 +2,8 @@ source("assembly/data_generation.R")
 source("adm_assembly.R")
 
 
+#this is how isos are transformed in making the spatial ID's (sid) to ensure they're all 3 digits long (e.g. 4 -> 104)
+#countries without iso numbers (currently just Kosovo) are assigned 899 as their iso number which transforms to 999
 iso3n_transform <- function(vector){
   return(vector + 100)
 }
@@ -66,6 +68,8 @@ generate_full <- function(iso, year_range = 1990:2020, nid_grid, poprast_list, g
 }
 
 update_from_pops <- function(iso, year_range = c(2021), nid_grid, poprast_list, ged25, ged50, ged100, source_db = capa_db, write_db = NULL){
+  
+  iso3n <- ison(iso)
   
   #read
   cell_geos <- st_read(source_db, query = glue("SELECT * FROM cell_geos WHERE iso3n = {iso3n}")) %>%
