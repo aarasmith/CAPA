@@ -2,16 +2,14 @@
 #App funcs
   #frequency weird stuff happening with ADM1 selected (or is there?) - fixed I think
   #add less than yearly for CAR
-  #regional handling for CAR is not sustainable
-  #probably best to force period threshold
+  #check out DT::renderDataTable
 #Refactoring
-  #clean up gv for global agg
   #There's something weird where logical choices from the UI are getting passed as strings - need to fix up and cleanup all the temporary as.logical() calls
 #Usability
   #create tool-tip for weight presets
   #maybe generate a dynamic problem statement based on inputs
   #restrict allowing multi-country input for the cell_score map
-  #move plot options to their own tab and make them reactive
+  #move plot options to their own tab
 #Backend
   #month_abs either needs removing or fixing for when updating stats
   #simplify or split adm0 rds
@@ -59,9 +57,24 @@ ison_region <- function(region){
 }
 
 isoc <- function(iso3n){
+  if(is.character(iso3n)){
+    return(iso3n)
+  }
   iso3c <- countrycode(iso3n, origin = "iso3n", destination = "iso3c", custom_match = c("899" = "KOS"))
   iso3c <- ifelse(is.na(iso3c), "KOS", iso3c)
   return(iso3c)
+}
+
+cnames <- function(df){
+  if(nrow(df) > 0){
+    df <- df %>%
+      within(iso3c <- isoc(iso3n)) %>%
+      within(country <- countrycode(iso3c, origin = "iso3c", destination = "country.name", custom_match = c("KOS" = "Kosovo"))) %>%
+      dplyr::select(country, iso3c, everything())
+    return(df)
+  }else{
+    return(df)
+  }
 }
 
 sanitize_weights <- function(x){
@@ -75,6 +88,7 @@ sanitize_threshold <- function(x){
   if(!is.numeric(x)){return(0)}else{return(x)}
 }
 
+#currently doesn't support mix of numeric and character
 sanitize_iso <- function(iso){
   if(is.numeric(iso)){
     iso3n <- iso
@@ -199,6 +213,8 @@ placeholder_join <- function(period, adm1){
 }
 
 
+
+
 ####Work Horses####
 get_standard_aggregation <- function(iso, years, period = "monthly", adm1 = TRUE, weights, threshold = 1, selected_period = NA){
   #browser()
@@ -208,16 +224,16 @@ get_standard_aggregation <- function(iso, years, period = "monthly", adm1 = TRUE
 
   capa_db <- connect_to_capa()
   
-  gv <- get_standard_gv(adm1, period)
+  gv <- query_standard_gv(adm1, period)
   
-  total_pop <- query_total_pop(iso3n, adm1, years, gv, capa_db)
+  total_pop <- query_total_pop(iso3n, adm1, years, capa_db)
   
   data <- query_standard_aggregation(iso3n, years, weights, threshold, gv, capa_db, score = FALSE)
   ph <- create_placeholder(iso = iso3n, years = years, period = period, adm1 = adm1)
   
   out_frame <- ph %>% left_join(data, by = placeholder_join(period, adm1)) %>%
     mutate(risk_pop = ifelse(is.na(risk_pop), 0, risk_pop)) %>%
-    left_join(total_pop, by = gv[['tot_join_vars']]) %>%
+    left_join(total_pop, by = gv$tot_join_vars) %>%
     mutate(risk_pct = risk_pop/total_pop)
   
   #This section is dependent on a supplied value to "selected_period" and is for filtering the df before plotting
@@ -231,7 +247,7 @@ get_standard_aggregation <- function(iso, years, period = "monthly", adm1 = TRUE
     out_frame <- out_frame %>% filter(quarter == selected_period)
   }
   
-  out_frame <- out_frame %>% within(risk_pct <- round(risk_pct, 4))
+  out_frame <- out_frame %>% within(risk_pct <- round(risk_pct, 4)) %>% cnames()
   
   disconnect_from_capa(capa_db)
   return(out_frame)
@@ -245,7 +261,7 @@ get_score_aggregation <- function(iso, years, period = "monthly", adm1 = TRUE, w
   
   capa_db <- connect_to_capa()
   
-  gv <- get_standard_gv(adm1, period)
+  gv <- query_standard_gv(adm1, period)
   
   total_pop <- query_total_pop(iso3n, adm1, years, gv, capa_db)
   
@@ -253,13 +269,13 @@ get_score_aggregation <- function(iso, years, period = "monthly", adm1 = TRUE, w
   
   data <- data %>%
     mutate(score = as.numeric(score)) %>%
-    left_join(total_pop, by = gv[['tot_join_vars']]) %>%
+    left_join(total_pop, by = gv$tot_join_vars) %>%
     mutate(risk_pct = risk_pop/total_pop)
   
-  max_scores <- data %>% group_by_at(gv[['dplyr_group_vars']]) %>% summarize(max = max(score)) %>% filter(max != 0)
+  max_scores <- data %>% group_by_at(gv$grouping_vars) %>% summarize(max = max(score)) %>% filter(max != 0)
   
   out_frame <- max_scores[rep(seq_len(dim(max_scores)[1]), max_scores$max), ] %>%
-    group_by_at(gv[['dplyr_group_vars']]) %>%
+    group_by_at(gv$grouping_vars) %>%
     mutate(score = dplyr::row_number()) %>%
     ungroup() %>%
     left_join(data, by = c("score", names(max_scores)[-ncol(max_scores)])) %>%
@@ -273,7 +289,7 @@ get_score_aggregation <- function(iso, years, period = "monthly", adm1 = TRUE, w
     out_frame <- out_frame %>% filter(score %in% score_selection)
   }
   
-  out_frame <- out_frame %>% within(risk_pct <- round(risk_pct, 4))
+  out_frame <- out_frame %>% within(risk_pct <- round(risk_pct, 4)) %>% cnames()
   
   disconnect_from_capa(capa_db)
   return(out_frame)
@@ -310,7 +326,7 @@ get_cell_scores <- function(iso, years, start_end = c(1,12), weights, draw_adm1 
   
   disconnect_from_capa(capa_db)
   
-  return(out_list)
+  return(out_list %>% cnames())
   
 }
 
@@ -397,9 +413,9 @@ get_temporal <- function(type, iso, years, weights, period = "yearly", start_end
   
   gv <- get_temporal_gv(adm1, period, start_end, years)
   if("World" %in% iso){
-    gv[['region']] <- "World"
+    gv$region <- "World"
   }else{
-    gv[['region']] <- "not_world"
+    gv$region <- "not_world"
   }
   
   total_pop <- query_total_pop(iso3n, adm1, years[length(years)], gv, capa_db) %>%
@@ -435,7 +451,7 @@ get_temporal <- function(type, iso, years, weights, period = "yearly", start_end
   
   out_frame <- temp_out %>%
     rename(capa_id = contains("capa_id")) %>%
-    left_join(total_pop, by = gv[['tot_join_vars']]) %>%
+    left_join(total_pop, by = gv$tot_join_vars) %>%
     mutate(risk_pct = risk_pop/total_pop)
   
   if(!is.null(out_frame$capa_id)){
@@ -452,7 +468,7 @@ get_temporal <- function(type, iso, years, weights, period = "yearly", start_end
   } 
   
   disconnect_from_capa(capa_db)
-  return(out_frame %>% within(risk_pct <- round(risk_pct, 4)))
+  return(out_frame %>% within(risk_pct <- round(risk_pct, 4)) %>% cnames())
   
 }
 

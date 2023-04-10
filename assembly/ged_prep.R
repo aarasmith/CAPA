@@ -4,9 +4,17 @@
 
 
 ged_country_fix <- function(ged){
+  
+  #some countries split off within the GED timeframe and need pre-split events to be duplicated so they can be assigned
+  # as affecting both countries prior to the split. Other interstate conflicts need to have events duplicated so that
+  # events will affect both countries' populations regardless of which country the event took place in. This is because
+  # normally events are not allowed to 'spill out' of a country's borders unless there is a justification for allowing this
+  
+  #Sudan pre-split
   ged_ssd <- ged %>% filter(country == "Sudan" & (year < 2012)) %>% # until july 2011
     filter(!(year == 2011 & month > 7)) %>%
     mutate(iso3c = "SSD")
+  #Balkans pre-breakup of yugoslavia
   ged_yugo <- ged %>% filter(country_id == 345) #croatia/slovenia/serbia/nmacedonia/bosnia/
   ged_croatia <- ged_yugo %>% mutate(iso3c = "HRV")
   ged_slovenia <- ged_yugo %>% mutate(iso3c = "SVN")
@@ -15,22 +23,29 @@ ged_country_fix <- function(ged){
   ged_macedonia <- ged_yugo %>% mutate(iso3c = "MKD")
   ged_bosnia <- ged_yugo %>% mutate(iso3c = "BIH")
   ged_kosovo <- ged_yugo %>% mutate(iso3c = "KOS")
+  #Eritrea pre-split from ethiopia
   ged_eritrea <- ged %>% filter(country_id == 530 & (year < 2001)) %>% #531 - until Dec 2000
     mutate(iso3c = "ERI")
+  #angola/namibia conflict
   ged_namibia <- ged %>% filter(country_id == 560 & (year < 1991)) %>% #angola conflict gwnoa
     filter(!(year == 1990 & month > 3)) %>%
     mutate(iso3c = "NAM")
+  #Early 90's soviet states fix
   ged_soviets <- ged %>% filter(country_id == 365) #azerbaijan armenia 1990/1991
   ged_azerbaijan <- ged_soviets %>% filter(year %in% c(1989, 1990, 1991)) %>% mutate(iso3c = "AZE")
-  ged_azerbaijan2 <- filter(ged, iso3c == "ARM")
   ged_armenia <- ged_soviets %>% filter(year %in% c(1989, 1990, 1991)) %>% mutate(iso3c = "ARM")
+  #Azerbaijan/Armenia war
+  ged_azerbaijan2 <- filter(ged, iso3c == "ARM")
   ged_armenia2 <- filter(ged, iso3c == "AZE")
+  #setting palestine as equal to israel
   ged_palestine <- ged %>% filter(country_id == 666) %>% #palestine
     mutate(iso3c = "PSE")
+  #iso code for Western Sahara
   ged_wsh <- ged %>% filter(country_id == 600) %>%
     mutate(iso3c = "ESH")
   #ged_test1 <- ged %>% filter(country_id == 551)
   
+  #join all the fixes together with the entire dataset
   ged_list <- list(ged_ssd, ged_croatia, ged_slovenia, ged_serbia, ged_montenegro, ged_macedonia, ged_bosnia, ged_kosovo, ged_eritrea, ged_namibia, ged_azerbaijan, ged_armenia, ged_palestine,
                    ged_wsh, ged_azerbaijan2, ged_armenia2)
   ged_fix <- rbindlist(ged_list) %>% st_as_sf()
@@ -41,14 +56,18 @@ ged_country_fix <- function(ged){
 }
 
 non_conflict <- function(ged){
+  
+  #This removes countries and events from the dataset where the events are deemed as 'one-off' terror incidents or otherwise
+  # should not be considered as constituting 'conflict' that would put the population at risk
+  
   nc_names <- c("Australia", "Belgium", "France", "Netherlands", "United States", "Austria", "Germany", "United Arab Emirates", "Sweden", "Benin", "Bhutan", "Botswana", "Switzerland")
   nc_codes <- c(900, 211, 220, 210, 2, 305, 260, 696, 380, 434, 760, 571, 225)
   ged_nc <- ged %>% filter(country_id %!in% nc_codes)
-  #Spain
+  #Spain - keep Basque rebels
   ged_nc <- ged_nc %>% filter(!(country_id == 230 & year > 2016))
-  #uk
+  #uk - keep the troubles
   ged_nc <- ged_nc %>% filter(!(country_id == 200 & year > 1999))
-  #Tunisia
+  #Tunisia - remove 1-off, keep the rest
   ged_nc <- ged_nc %>% filter(!(country_id == 616 & year == 2002))
   
   return(ged_nc)

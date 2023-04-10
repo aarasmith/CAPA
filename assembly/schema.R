@@ -210,5 +210,7 @@ adm1_pops_view <- "CREATE MATERIALIZED VIEW adm1_pops AS
     iso3n, capa_id_adm1, year, sum(cell_pop) AS total_pop
   FROM
       cell_pops
+  WHERE
+      capa_id_adm1 is not null
   GROUP BY
       iso3n, capa_id_adm1, year"

@@ -85,7 +85,7 @@
 #                     "Nauru"
 #                     ) %>% countrycode(origin = "country.name", destination = "iso3n")
 
-
+library(readxl)
 gwno_regions <- read_xlsx(paste0(drop_path, "USDP_GWNO_regions.xlsx"))
 gwno_regions$iso3n <- countrycode(gwno_regions$code, origin = "gwc", destination = "iso3n", custom_match = c("KOS" = 899, "DRV"= 704, "YEM" = 887))
 gwno_regions <- gwno_regions %>%
@@ -97,4 +97,7 @@ names(manual_regions) <- paste0("GWNO_", gwno_region_names)
 new_regions <- gwno_regions %>% dplyr::select(iso3n, region) %>%
   mutate(region = gsub(" ", "_", paste0("GWNO_", region)))
 
-#dbWriteTable(connect_to_capa(), "region_key", new_regions, overwrite = T)
+old_key <- dbGetQuery(connect_to_capa(), "SELECT * FROM region_key")
+dbWriteTable(connect_to_capa(), "region_key", new_regions, append = T)
+
+#dbWriteTable(connect_to_capa(), "region_key", old_key, overwrite = T)
