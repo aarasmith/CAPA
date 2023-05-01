@@ -7,7 +7,7 @@ mod_regional_parameters_ui <- function(id){
   tagList(
     textOutput(ns("info")),
     selectInput(ns("region"), "Select Region", choices = c("World", region_choices, "Custom Region")),
-    sliderInput(ns("year_slider"), "Year Range:", min = 1990, max = max_year, value = c(1990, max_year), sep = ""),
+    sliderInput(ns("year_slider"), "Year Range:", min = 1990, max = max_year, value = c(1990, max_year), sep = "", step = 1),
     radioButtons(inputId = ns("period"), label = "Period size", choices = c("yearly", "biannually", "quarterly", "monthly"), inline = T),
     numericInput(inputId = ns("threshold"), label = "Intensity Threshold", min = 1, value = 1, step = 1),
     actionButton(inputId = ns("submit"), label = "Submit"),

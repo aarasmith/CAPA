@@ -7,7 +7,7 @@ mod_car_ui <- function(id){
   tagList(
     textOutput(ns("info")),
     selectInput(ns("country"), "Select Country/Region", choices = c(country_choices, "World", region_choices), multiple = T, selected = "World"),
-    sliderInput(ns("year_slider"), "Year Range:", min = 1990, max = max_year, value = c(1990, max_year), sep = ""),
+    sliderInput(ns("year_slider"), "Year Range:", min = 1990, max = max_year, value = c(1990, max_year), sep = "", step = 1),
     selectizeInput(ns("categories"), "Select Category Labels", choices = c("low", "medium", "high", "extreme"), selected = c("low", "medium", "high", "extreme"),
                    multiple = TRUE, options = list(create = TRUE)),
     selectizeInput(ns("scores"), "Select Category Lower-Bounds", choices = c(1, 25, 100, 1000), selected = c(1, 25, 100, 1000), multiple = TRUE, options = list(create = TRUE)),
