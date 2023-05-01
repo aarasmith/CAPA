@@ -6,7 +6,7 @@ mod_exposure_map_ui <- function(id){
   tagList(
     textOutput(ns("info")),
     selectInput(ns("country"), "Select Country", choices = c(country_choices, "World", region_choices), multiple = T),
-    numericInput(ns("year"), "Year:", min = 1990, max = 2021, value = 1990, step = 1),
+    numericInput(ns("year"), "Year:", min = 1990, max = max_year, value = 1990, step = 1),
     radioButtons(inputId = ns("period"), label = "Period size", choices = c("yearly", "biannually", "quarterly", "monthly"), inline = T),
     numericInput(ns("selected_period"), "Period (if less than yearly selected):", min = 1, max = 12, value = 1, step = 1),
     radioButtons(inputId = ns("adm"), label = "Admin Level", choiceNames = c("ADM0", "ADM1"), choiceValues = c(FALSE, TRUE), inline = T),

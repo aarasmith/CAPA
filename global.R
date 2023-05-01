@@ -51,7 +51,8 @@ nid_grid <- readRDS("data/nid_grid.RDS")
 all_country_choices <- sort(unique(nid_grid$ISOCODE))
 capa_db <- connect_to_capa()
 region_choices <- c(sort(dbGetQuery(capa_db, "SELECT DISTINCT region FROM region_key")$region), names(manual_regions))
-ged <- readRDS("data/ged22.RDS")
+max_year <- dbGetQuery(capa_db, "SELECT max(year) as year from country_pops")$year
+ged <- readRDS("data/ged23.RDS")
 un_demos <- readRDS("data/un_demos.RDS")
 un_geoscheme <- readRDS("data/un_geoscheme.RDS")
 

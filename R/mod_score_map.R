@@ -7,7 +7,7 @@ mod_score_map_ui <- function(id){
   tagList(
     textOutput(ns("info")),
     selectInput(ns("country"), "Select Country", choices = c(country_choices, "World", region_choices), multiple = T),
-    sliderInput(ns("year_slider"), "Year Range:", min = 1990, max = 2021, value = c(1990, 2021), sep = ""),
+    sliderInput(ns("year_slider"), "Year Range:", min = 1990, max = max_year, value = c(1990, max_year), sep = ""),
     splitLayout(cellArgs = list(style='white-space: normal;'),
                 numericInput(inputId = ns("start"), label = "Start Month", value = 1, min = 1, max = 12, step = 1),
                 numericInput(inputId = ns("stop"), label = "End Month", value = 12, min = 1, max = 12, step = 1)
